@@ -714,6 +714,66 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/job_posting_import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fetch a job ad from a link and return a draft posting
+         * @description Nothing is saved. Review the draft, then create it with POST /api/v1/job_postings.
+         *     Only public http(s) pages are fetched; internal addresses, other ports and non-HTML files are refused.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uri */
+                        url: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description draft */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            draft: components["schemas"]["JobPostingInput"];
+                            /** @description The page had schema.org JobPosting data */
+                            structured_data: boolean;
+                        };
+                    };
+                };
+                /** @description couldn't fetch or refused */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_postings": {
         parameters: {
             query?: never;

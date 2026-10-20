@@ -72,3 +72,5 @@ group :test do
   gem "simplecov", "~> 1.3", require: false
   gem "webmock", "~> 3.34"
 end
+
+gem "nokogiri", "~> 1.19"

@@ -466,6 +466,7 @@ DEPENDENCIES
   faker (~> 3.8)
   kamal
   letter_opener_web (~> 3.0)
+  nokogiri (~> 1.19)
   omniauth (~> 2.1)
   omniauth-entra-id (~> 3.1)
   omniauth-google-oauth2 (~> 1.2)

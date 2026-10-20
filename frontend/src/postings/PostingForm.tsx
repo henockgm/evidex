@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { ApiError, type JobPosting, type JobPostingInput } from '../api/client'
+import { ApiError, type JobPostingInput } from '../api/client'
 import { Alert, Button, Field, Select, TextArea } from '../components/ui'
 import { workModelLabels } from './labels'
 
@@ -13,7 +13,7 @@ function text(form: FormData, name: string) {
 }
 
 interface Props {
-  initial?: JobPosting
+  initial?: JobPostingInput
   submitLabel: string
   pending: boolean
   error: Error | null
@@ -43,8 +43,8 @@ export function PostingForm({ initial, submitLabel, pending, error, onSubmit, on
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && !apiError?.problem?.errors && <Alert tone="error">{error.message}</Alert>}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Job title" name="title" required maxLength={200} defaultValue={initial?.title} errors={errorsFor('title')} />
-        <Field label="Company" name="company" required maxLength={200} defaultValue={initial?.company} errors={errorsFor('company')} />
+        <Field label="Job title" name="title" required maxLength={200} defaultValue={initial?.title ?? ''} errors={errorsFor('title')} />
+        <Field label="Company" name="company" required maxLength={200} defaultValue={initial?.company ?? ''} errors={errorsFor('company')} />
         <Field
           label="Location"
           name="location"
@@ -80,7 +80,7 @@ export function PostingForm({ initial, submitLabel, pending, error, onSubmit, on
         name="description"
         required
         rows={14}
-        defaultValue={initial?.description}
+        defaultValue={initial?.description ?? ''}
         hint="Paste the whole ad: responsibilities, requirements, how to apply."
         errors={errorsFor('description')}
       />

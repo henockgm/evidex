@@ -421,6 +421,51 @@ paths:
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/job_posting_import":
+    post:
+      summary: Fetch a job ad from a link and return a draft posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: |
+        Nothing is saved. Review the draft, then create it with POST /api/v1/job_postings.
+        Only public http(s) pages are fetched; internal addresses, other ports and non-HTML files are refused.
+      parameters: []
+      responses:
+        '200':
+          description: draft
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - draft
+                - structured_data
+                properties:
+                  draft:
+                    "$ref": "#/components/schemas/JobPostingInput"
+                  structured_data:
+                    type: boolean
+                    description: The page had schema.org JobPosting data
+        '422':
+          description: couldn't fetch or refused
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - url
+              properties:
+                url:
+                  type: string
+                  format: uri
   "/api/v1/job_postings":
     get:
       summary: List your job postings, newest first

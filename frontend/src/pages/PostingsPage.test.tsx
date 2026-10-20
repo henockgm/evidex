@@ -160,4 +160,57 @@ describe('Job postings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Remove "Ruby on Rails"' }))
     await waitFor(() => expect(screen.queryByText('Ruby on Rails')).not.toBeInTheDocument())
   })
+
+  it('imports a posting from a link into the form for review', async () => {
+    let fetched: unknown
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'POST /api/v1/job_posting_import': async (request) => {
+        fetched = await request.json()
+        return json({
+          draft: {
+            title: 'Platform Engineer',
+            company: 'Acme Oy',
+            location: 'Espoo, FI',
+            work_model: 'remote',
+            deadline: '2026-12-01',
+            source_url: 'https://jobs.example.com/9',
+            description: 'Run Rails in production.',
+          },
+          structured_data: true,
+        })
+      },
+    })
+
+    renderApp('/postings/new')
+    await userEvent.type(await screen.findByLabelText('Link to the job ad'), 'https://jobs.example.com/9')
+    await userEvent.click(screen.getByRole('button', { name: 'Fetch' }))
+
+    expect(await screen.findByText(/Imported the job details the site publishes/)).toBeInTheDocument()
+    expect(fetched).toEqual({ url: 'https://jobs.example.com/9' })
+    expect(screen.getByLabelText('Job title')).toHaveValue('Platform Engineer')
+    expect(screen.getByLabelText('Work model')).toHaveValue('remote')
+    expect(screen.getByLabelText('Application deadline')).toHaveValue('2026-12-01')
+    expect(screen.getByLabelText('Job ad text')).toHaveValue('Run Rails in production.')
+  })
+
+  it('suggests pasting the text when a link can\'t be imported', async () => {
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'POST /api/v1/job_posting_import': () =>
+        new Response(
+          JSON.stringify({ type: 'about:blank', title: "Couldn't import that link", status: 422, detail: 'The website answered with an error (HTTP 403)' }),
+          { status: 422, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+    })
+
+    renderApp('/postings/new')
+    await userEvent.type(await screen.findByLabelText('Link to the job ad'), 'https://www.linkedin.com/jobs/view/1')
+    await userEvent.click(screen.getByRole('button', { name: 'Fetch' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('HTTP 403')
+    expect(screen.getByRole('alert')).toHaveTextContent('paste the ad')
+  })
 })

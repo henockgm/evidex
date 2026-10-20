@@ -20,6 +20,7 @@ Rails.application.routes.draw do
       end
       resource :password_reset, only: %i[create update]
 
+      resource :job_posting_import, only: :create
       resources :job_postings, only: %i[index show create update destroy] do
         resources :requirements, only: %i[create update destroy], shallow: true
       end

@@ -106,7 +106,7 @@ RSpec.configure do |config|
           },
           JobPostingInput: {
             type: :object,
-            required: %w[title company description],
+            description: "title, company and description are required when creating.",
             properties: {
               title: { type: :string, maxLength: 200 },
               company: { type: :string, maxLength: 200 },

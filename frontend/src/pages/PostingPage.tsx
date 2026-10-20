@@ -1,15 +1,26 @@
-import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
 import { api, unwrap } from '../api/client'
-import { Alert, Card, Spinner } from '../components/ui'
+import { Alert, Button, Card, Spinner } from '../components/ui'
 import { formatDate, workModelLabels } from '../postings/labels'
-import { postingQueryKey } from '../postings/queries'
+import { postingQueryKey, postingsQueryKey } from '../postings/queries'
+import { usePosting } from '../postings/usePosting'
 
 export function PostingPage() {
   const id = Number(useParams().id)
-  const { data: posting, isPending, error } = useQuery({
-    queryKey: postingQueryKey(id),
-    queryFn: async () => (await unwrap(api.GET('/api/v1/job_postings/{id}', { params: { path: { id } } }))).job_posting,
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { data: posting, isPending, error } = usePosting(id)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
+  const destroy = useMutation({
+    mutationFn: () => unwrap(api.DELETE('/api/v1/job_postings/{id}', { params: { path: { id } } })),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: postingQueryKey(id) })
+      void queryClient.invalidateQueries({ queryKey: postingsQueryKey, exact: true })
+      navigate('/postings')
+    },
   })
 
   if (isPending) return <Spinner />
@@ -28,8 +39,40 @@ export function PostingPage() {
         <Link to="/postings" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
           ← All postings
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">{posting.title}</h1>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+          <h1 className="text-2xl font-bold tracking-tight">{posting.title}</h1>
+          <div className="flex gap-3">
+            <Link
+              to={`/postings/${id}/edit`}
+              className="rounded-md bg-white px-3.5 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-900 dark:ring-slate-700 dark:hover:bg-slate-800"
+            >
+              Edit
+            </Link>
+            {!confirmingDelete && (
+              <Button variant="secondary" onClick={() => setConfirmingDelete(true)}>
+                Delete
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
+
+      {confirmingDelete && (
+        <Alert tone="error">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span>Delete this posting? This can't be undone.</span>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => setConfirmingDelete(false)} disabled={destroy.isPending}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={() => destroy.mutate()} disabled={destroy.isPending}>
+                {destroy.isPending ? 'Deleting…' : 'Delete posting'}
+              </Button>
+            </div>
+          </div>
+          {destroy.isError && <p className="mt-2">{destroy.error.message}</p>}
+        </Alert>
+      )}
 
       <Card title="Details">
         <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">

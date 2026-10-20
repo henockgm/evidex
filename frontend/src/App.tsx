@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { GuestOnly, RequireAuth } from './auth/guards'
 import { Layout } from './components/Layout'
 import { DashboardPage } from './pages/DashboardPage'
+import { EditPostingPage } from './pages/EditPostingPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewPostingPage } from './pages/NewPostingPage'
@@ -29,6 +30,7 @@ export function AppRoutes() {
           <Route path="postings" element={<PostingsPage />} />
           <Route path="postings/new" element={<NewPostingPage />} />
           <Route path="postings/:id" element={<PostingPage />} />
+          <Route path="postings/:id/edit" element={<EditPostingPage />} />
           <Route path="settings/security" element={<SecurityPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -499,6 +499,56 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Problem"
+    patch:
+      summary: Update a job posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Send only the fields to change.
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: not one of your postings
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - job_posting
+              properties:
+                job_posting:
+                  "$ref": "#/components/schemas/JobPostingInput"
+    delete:
+      summary: Delete a job posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: deleted
+        '404':
+          description: not one of your postings
   "/api/v1/status":
     get:
       summary: Returns API and database status
@@ -693,10 +743,7 @@ components:
           "$ref": "#/components/schemas/JobPosting"
     JobPostingInput:
       type: object
-      required:
-      - title
-      - company
-      - description
+      description: title, company and description are required when creating.
       properties:
         title:
           type: string

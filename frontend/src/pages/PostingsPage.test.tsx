@@ -78,4 +78,53 @@ describe('Job postings', () => {
 
     expect(await screen.findByText('Link must be an http or https link')).toBeInTheDocument()
   })
+
+  it('edits a posting, sending the changed form', async () => {
+    let current = { ...posting, description: 'Build APIs.' }
+    let sent: { job_posting: Record<string, unknown> } | undefined
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: current }),
+      'PATCH /api/v1/job_postings/7': async (request) => {
+        sent = await request.json()
+        current = { ...current, ...(sent!.job_posting as object) }
+        return json({ job_posting: current })
+      },
+    })
+
+    renderApp('/postings/7/edit')
+    const title = await screen.findByLabelText('Job title')
+    expect(title).toHaveValue('Senior Rails Developer')
+    expect(screen.getByLabelText('Work model')).toHaveValue('hybrid')
+    await userEvent.clear(title)
+    await userEvent.type(title, 'Lead Rails Developer')
+    await userEvent.clear(screen.getByLabelText('Application deadline'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByRole('heading', { name: 'Lead Rails Developer' })).toBeInTheDocument()
+    expect(sent?.job_posting).toMatchObject({ title: 'Lead Rails Developer', deadline: null, company: 'Acme Oy' })
+  })
+
+  it('asks for confirmation before deleting', async () => {
+    let deleted = false
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.' } }),
+      'GET /api/v1/job_postings': () => json({ job_postings: [] }),
+      'DELETE /api/v1/job_postings/7': () => {
+        deleted = true
+        return new Response(null, { status: 204 })
+      },
+    })
+
+    renderApp('/postings/7')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    expect(deleted).toBe(false)
+    await userEvent.click(screen.getByRole('button', { name: 'Delete posting' }))
+
+    expect(await screen.findByText(/No postings yet/)).toBeInTheDocument()
+    expect(deleted).toBe(true)
+  })
 })

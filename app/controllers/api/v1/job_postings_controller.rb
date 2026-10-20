@@ -19,6 +19,19 @@ module Api
         end
       end
 
+      def update
+        if job_posting.update(job_posting_params)
+          render json: { job_posting: JobPostingSerializer.new(job_posting, include_description: true) }
+        else
+          render_validation_errors(job_posting)
+        end
+      end
+
+      def destroy
+        job_posting.destroy!
+        head :no_content
+      end
+
       private
         def job_posting
           @job_posting ||= Current.user.job_postings.find(params[:id])

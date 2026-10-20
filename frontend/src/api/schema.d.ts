@@ -830,10 +830,86 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a job posting */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update a job posting
+         * @description Send only the fields to change.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        job_posting: components["schemas"]["JobPostingInput"];
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/api/v1/status": {
@@ -945,9 +1021,10 @@ export interface components {
         JobPostingEnvelope: {
             job_posting: components["schemas"]["JobPosting"];
         };
+        /** @description title, company and description are required when creating. */
         JobPostingInput: {
-            title: string;
-            company: string;
+            title?: string;
+            company?: string;
             location?: string | null;
             /** @enum {string|null} */
             work_model?: "onsite" | "hybrid" | "remote" | null;
@@ -956,7 +1033,7 @@ export interface components {
             /** Format: uri */
             source_url?: string | null;
             /** @description The posting text */
-            description: string;
+            description?: string;
         };
         Session: {
             id: number;

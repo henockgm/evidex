@@ -84,6 +84,68 @@ RSpec.describe "Job postings API", type: :request do
         run_test!
       end
     end
+
+    patch "Update a job posting" do
+      tags "Job postings"
+      consumes "application/json"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      description "Send only the fields to change."
+      parameter name: :body, in: :body, schema: {
+        type: :object, required: %w[job_posting],
+        properties: { job_posting: { "$ref" => "#/components/schemas/JobPostingInput" } }
+      }
+
+      let(:posting) { create(:job_posting, user:) }
+      let(:id) { posting.id }
+
+      response "200", "updated" do
+        schema "$ref" => "#/components/schemas/JobPostingEnvelope"
+        let(:body) { { job_posting: { title: "Lead Rails Developer", deadline: nil } } }
+
+        run_test! do
+          expect(posting.reload).to have_attributes(title: "Lead Rails Developer", deadline: nil, company: "Acme Oy")
+        end
+      end
+
+      response "422", "invalid" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:body) { { job_posting: { company: "" } } }
+        run_test!
+      end
+
+      response "404", "not one of your postings" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:id) { create(:job_posting).id }
+        let(:body) { { job_posting: { title: "Hijacked" } } }
+
+        run_test! do
+          expect(JobPosting.find(id).title).not_to eq("Hijacked")
+        end
+      end
+    end
+
+    delete "Delete a job posting" do
+      tags "Job postings"
+      security [ { session_cookie: [], csrf_token: [] } ]
+
+      response "204", "deleted" do
+        let(:id) { create(:job_posting, user:).id }
+
+        run_test! do
+          expect(JobPosting.exists?(id)).to be(false)
+        end
+      end
+
+      response "404", "not one of your postings" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:id) { create(:job_posting).id }
+
+        run_test! do
+          expect(JobPosting.exists?(id)).to be(true)
+        end
+      end
+    end
   end
 
   it "requires signing in" do

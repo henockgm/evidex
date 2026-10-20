@@ -878,6 +878,80 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Counts per status, upcoming deadlines, next actions and recent activity */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description dashboard */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status_counts: {
+                                saved: number;
+                                preparing: number;
+                                applied: number;
+                                interviewing: number;
+                                offer: number;
+                                rejected: number;
+                                withdrawn: number;
+                            };
+                            total: number;
+                            /** @description Not applied yet, deadline within 14 days */
+                            upcoming_deadlines: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                /** Format: date */
+                                deadline: string;
+                            }[];
+                            /** @description Due within 7 days, overdue included */
+                            next_actions: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                next_action: string | null;
+                                /** Format: date */
+                                next_action_on: string;
+                                overdue: boolean;
+                            }[];
+                            recent_activity: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                from_status?: components["schemas"]["ApplicationStatus"] | null;
+                                to_status: components["schemas"]["ApplicationStatus"];
+                                /** Format: date-time */
+                                created_at: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{id}": {
         parameters: {
             query?: never;

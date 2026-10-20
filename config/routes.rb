@@ -20,6 +20,7 @@ Rails.application.routes.draw do
       end
       resource :password_reset, only: %i[create update]
 
+      resource :dashboard, only: :show
       resource :job_posting_import, only: :create
       resources :job_applications, only: :update do
         post :transitions, on: :member, action: :transition

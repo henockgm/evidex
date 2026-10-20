@@ -567,6 +567,127 @@ paths:
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/dashboard":
+    get:
+      summary: Counts per status, upcoming deadlines, next actions and recent activity
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status_counts
+                - total
+                - upcoming_deadlines
+                - next_actions
+                - recent_activity
+                properties:
+                  status_counts:
+                    type: object
+                    required:
+                    - saved
+                    - preparing
+                    - applied
+                    - interviewing
+                    - offer
+                    - rejected
+                    - withdrawn
+                    properties:
+                      saved:
+                        type: integer
+                      preparing:
+                        type: integer
+                      applied:
+                        type: integer
+                      interviewing:
+                        type: integer
+                      offer:
+                        type: integer
+                      rejected:
+                        type: integer
+                      withdrawn:
+                        type: integer
+                  total:
+                    type: integer
+                  upcoming_deadlines:
+                    type: array
+                    description: Not applied yet, deadline within 14 days
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - deadline
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        deadline:
+                          type: string
+                          format: date
+                  next_actions:
+                    type: array
+                    description: Due within 7 days, overdue included
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - next_action
+                      - next_action_on
+                      - overdue
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        next_action:
+                          type: string
+                          nullable: true
+                        next_action_on:
+                          type: string
+                          format: date
+                        overdue:
+                          type: boolean
+                  recent_activity:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - to_status
+                      - created_at
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        from_status:
+                          allOf:
+                          - "$ref": "#/components/schemas/ApplicationStatus"
+                          nullable: true
+                        to_status:
+                          "$ref": "#/components/schemas/ApplicationStatus"
+                        created_at:
+                          type: string
+                          format: date-time
   "/api/v1/job_applications/{id}":
     parameters:
     - name: id

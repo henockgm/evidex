@@ -51,7 +51,7 @@ export function Field({
         <ul id={`${id}-errors`} className="text-xs text-red-600 dark:text-red-400">
           {errors.map((error) => (
             <li key={error}>
-              {label} {error}
+              {error}
             </li>
           ))}
         </ul>

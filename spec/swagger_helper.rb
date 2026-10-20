@@ -79,6 +79,44 @@ RSpec.configure do |config|
             type: :object, required: %w[user],
             properties: { user: { "$ref" => "#/components/schemas/User" } }
           },
+          JobPostingSummary: {
+            type: :object,
+            required: %w[id title company created_at updated_at],
+            properties: {
+              id: { type: :integer },
+              title: { type: :string },
+              company: { type: :string },
+              location: { type: :string, nullable: true },
+              work_model: { type: :string, enum: JobPosting::WORK_MODELS, nullable: true },
+              deadline: { type: :string, format: :date, nullable: true },
+              source_url: { type: :string, nullable: true },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" }
+            }
+          },
+          JobPosting: {
+            allOf: [
+              { "$ref" => "#/components/schemas/JobPostingSummary" },
+              { type: :object, required: %w[description], properties: { description: { type: :string } } }
+            ]
+          },
+          JobPostingEnvelope: {
+            type: :object, required: %w[job_posting],
+            properties: { job_posting: { "$ref" => "#/components/schemas/JobPosting" } }
+          },
+          JobPostingInput: {
+            type: :object,
+            required: %w[title company description],
+            properties: {
+              title: { type: :string, maxLength: 200 },
+              company: { type: :string, maxLength: 200 },
+              location: { type: :string, maxLength: 200, nullable: true },
+              work_model: { type: :string, enum: JobPosting::WORK_MODELS, nullable: true },
+              deadline: { type: :string, format: :date, nullable: true },
+              source_url: { type: :string, format: :uri, nullable: true },
+              description: { type: :string, maxLength: JobPosting::DESCRIPTION_MAX_LENGTH, description: "The posting text" }
+            }
+          },
           Session: {
             type: :object,
             required: %w[id current created_at last_active_at],

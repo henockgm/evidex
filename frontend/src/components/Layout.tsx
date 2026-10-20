@@ -21,6 +21,9 @@ export function Layout() {
           </Link>
           {user && (
             <div className="flex items-center gap-4 text-sm">
+              <NavLink to="/postings" className="hover:underline">
+                Postings
+              </NavLink>
               <NavLink to="/settings/security" className="hover:underline">
                 Security
               </NavLink>

@@ -714,6 +714,128 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/job_postings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List your job postings, newest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description postings (without the full description) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            job_postings: components["schemas"]["JobPostingSummary"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Add a job posting from pasted text */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        job_posting: components["schemas"]["JobPostingInput"];
+                    };
+                };
+            };
+            responses: {
+                /** @description created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_postings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** Show a job posting with its full text */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description posting */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/status": {
         parameters: {
             query?: never;
@@ -801,6 +923,40 @@ export interface components {
         };
         UserEnvelope: {
             user: components["schemas"]["User"];
+        };
+        JobPostingSummary: {
+            id: number;
+            title: string;
+            company: string;
+            location?: string | null;
+            /** @enum {string|null} */
+            work_model?: "onsite" | "hybrid" | "remote" | null;
+            /** Format: date */
+            deadline?: string | null;
+            source_url?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        JobPosting: components["schemas"]["JobPostingSummary"] & {
+            description: string;
+        };
+        JobPostingEnvelope: {
+            job_posting: components["schemas"]["JobPosting"];
+        };
+        JobPostingInput: {
+            title: string;
+            company: string;
+            location?: string | null;
+            /** @enum {string|null} */
+            work_model?: "onsite" | "hybrid" | "remote" | null;
+            /** Format: date */
+            deadline?: string | null;
+            /** Format: uri */
+            source_url?: string | null;
+            /** @description The posting text */
+            description: string;
         };
         Session: {
             id: number;

@@ -5,6 +5,9 @@ import { Layout } from './components/Layout'
 import { DashboardPage } from './pages/DashboardPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { LoginPage } from './pages/LoginPage'
+import { NewPostingPage } from './pages/NewPostingPage'
+import { PostingPage } from './pages/PostingPage'
+import { PostingsPage } from './pages/PostingsPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SecurityPage } from './pages/SecurityPage'
@@ -23,6 +26,9 @@ export function AppRoutes() {
         <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route element={<RequireAuth />}>
           <Route index element={<DashboardPage />} />
+          <Route path="postings" element={<PostingsPage />} />
+          <Route path="postings/new" element={<NewPostingPage />} />
+          <Route path="postings/:id" element={<PostingPage />} />
           <Route path="settings/security" element={<SecurityPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

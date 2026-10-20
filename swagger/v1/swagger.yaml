@@ -421,6 +421,84 @@ paths:
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/job_postings":
+    get:
+      summary: List your job postings, newest first
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: postings (without the full description)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - job_postings
+                properties:
+                  job_postings:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/JobPostingSummary"
+    post:
+      summary: Add a job posting from pasted text
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - job_posting
+              properties:
+                job_posting:
+                  "$ref": "#/components/schemas/JobPostingInput"
+  "/api/v1/job_postings/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Show a job posting with its full text
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: posting
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '404':
+          description: not one of your postings
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/status":
     get:
       summary: Returns API and database status
@@ -559,6 +637,96 @@ components:
       properties:
         user:
           "$ref": "#/components/schemas/User"
+    JobPostingSummary:
+      type: object
+      required:
+      - id
+      - title
+      - company
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+        location:
+          type: string
+          nullable: true
+        work_model:
+          type: string
+          enum:
+          - onsite
+          - hybrid
+          - remote
+          nullable: true
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    JobPosting:
+      allOf:
+      - "$ref": "#/components/schemas/JobPostingSummary"
+      - type: object
+        required:
+        - description
+        properties:
+          description:
+            type: string
+    JobPostingEnvelope:
+      type: object
+      required:
+      - job_posting
+      properties:
+        job_posting:
+          "$ref": "#/components/schemas/JobPosting"
+    JobPostingInput:
+      type: object
+      required:
+      - title
+      - company
+      - description
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        company:
+          type: string
+          maxLength: 200
+        location:
+          type: string
+          maxLength: 200
+          nullable: true
+        work_model:
+          type: string
+          enum:
+          - onsite
+          - hybrid
+          - remote
+          nullable: true
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        source_url:
+          type: string
+          format: uri
+          nullable: true
+        description:
+          type: string
+          maxLength: 100000
+          description: The posting text
     Session:
       type: object
       required:

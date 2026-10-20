@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_102723) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_135413) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -37,6 +37,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_102723) do
     t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
     t.index ["user_id", "provider"], name: "index_identities_on_user_id_and_provider", unique: true
     t.index ["user_id"], name: "index_identities_on_user_id"
+  end
+
+  create_table "job_postings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "title", null: false
+    t.string "company", null: false
+    t.string "location"
+    t.string "work_model"
+    t.date "deadline"
+    t.string "source_url"
+    t.text "description", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "created_at"], name: "index_job_postings_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_job_postings_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -66,5 +81,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_102723) do
 
   add_foreign_key "audit_events", "users"
   add_foreign_key "identities", "users"
+  add_foreign_key "job_postings", "users"
   add_foreign_key "sessions", "users"
 end

@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { Link } from 'react-router'
 import { api, unwrap } from '../api/client'
 import { useMe } from '../auth/useAuth'
 import { Alert, Button, Card } from '../components/ui'
@@ -29,8 +30,10 @@ export function DashboardPage() {
         </Alert>
       )}
 
-      <Card title="Job postings" description="Coming in milestone M2: import postings and track applications.">
-        <p className="text-sm text-slate-500">Nothing here yet.</p>
+      <Card title="Job postings" description="Save the job ads you're interested in and keep their full text.">
+        <Link to="/postings" className="text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+          Go to your postings →
+        </Link>
       </Card>
     </div>
   )

@@ -20,6 +20,8 @@ Rails.application.routes.draw do
       end
       resource :password_reset, only: %i[create update]
 
+      resources :job_postings, only: %i[index show create]
+
       resource :me, only: %i[show destroy], controller: "me" do
         scope module: :me do
           resources :sessions, only: %i[index destroy] do

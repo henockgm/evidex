@@ -19,3 +19,8 @@ updates:
     # One PR for routine minor/patch updates instead of one per package
     frontend-minor-and-patch:
       update-types: [minor, patch]
+  ignore:
+    # openapi-typescript (API type generation) uses the TypeScript 5/6 compiler
+    # API, which TypeScript 7 doesn't provide. Remove once it supports TS 7.
+    - dependency-name: typescript
+      update-types: ["version-update:semver-major"]

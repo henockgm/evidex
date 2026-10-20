@@ -4,6 +4,7 @@ import { api, unwrap } from '../api/client'
 import { Alert, Spinner } from '../components/ui'
 import { formatDate, workModelLabels } from '../postings/labels'
 import { postingsQueryKey } from '../postings/queries'
+import { StatusBadge } from '../applications/StatusBadge'
 
 export function PostingsPage() {
   const { data: postings, isPending, error } = useQuery({
@@ -36,7 +37,10 @@ export function PostingsPage() {
           {postings.map((posting) => (
             <li key={posting.id}>
               <Link to={`/postings/${posting.id}`} className="block px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                <p className="font-medium">{posting.title}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">{posting.title}</p>
+                  <StatusBadge status={posting.status} />
+                </div>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {[posting.company, posting.location, posting.work_model && workModelLabels[posting.work_model]]
                     .filter(Boolean)

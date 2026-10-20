@@ -21,6 +21,9 @@ Rails.application.routes.draw do
       resource :password_reset, only: %i[create update]
 
       resource :job_posting_import, only: :create
+      resources :job_applications, only: [] do
+        post :transitions, on: :member, action: :transition
+      end
       resources :job_postings, only: %i[index show create update destroy] do
         resources :requirements, only: %i[create update destroy], shallow: true
       end

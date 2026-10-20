@@ -421,6 +421,60 @@ paths:
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/job_applications/{id}/transitions":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Move an application to a new status
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Allowed next statuses are listed in the application's available_transitions.
+      parameters: []
+      responses:
+        '200':
+          description: moved; returns the application with its timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - application
+                properties:
+                  application:
+                    "$ref": "#/components/schemas/JobApplication"
+        '422':
+          description: not allowed from the current status
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - to_status
+              properties:
+                to_status:
+                  "$ref": "#/components/schemas/ApplicationStatus"
+                note:
+                  type: string
+                  maxLength: 2000
+                  description: Optional, shown in the timeline
   "/api/v1/job_posting_import":
     post:
       summary: Fetch a job ad from a link and return a draft posting
@@ -860,6 +914,7 @@ components:
       - id
       - title
       - company
+      - status
       - created_at
       - updated_at
       properties:
@@ -886,12 +941,67 @@ components:
         source_url:
           type: string
           nullable: true
+        status:
+          "$ref": "#/components/schemas/ApplicationStatus"
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+    ApplicationStatus:
+      type: string
+      enum:
+      - saved
+      - preparing
+      - applied
+      - interviewing
+      - offer
+      - rejected
+      - withdrawn
+      description: saved → preparing → applied → interviewing → offer, or rejected
+        / withdrawn
+    JobApplication:
+      type: object
+      required:
+      - id
+      - status
+      - available_transitions
+      - events
+      properties:
+        id:
+          type: integer
+        status:
+          "$ref": "#/components/schemas/ApplicationStatus"
+        available_transitions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApplicationStatus"
+          description: Statuses this application can move to next
+        events:
+          type: array
+          description: Timeline, oldest first
+          items:
+            type: object
+            required:
+            - id
+            - to_status
+            - created_at
+            properties:
+              id:
+                type: integer
+              from_status:
+                allOf:
+                - "$ref": "#/components/schemas/ApplicationStatus"
+                nullable: true
+              to_status:
+                "$ref": "#/components/schemas/ApplicationStatus"
+              note:
+                type: string
+                nullable: true
+              created_at:
+                type: string
+                format: date-time
     Requirement:
       type: object
       required:
@@ -920,6 +1030,7 @@ components:
         required:
         - description
         - requirements
+        - application
         properties:
           description:
             type: string
@@ -927,6 +1038,8 @@ components:
             type: array
             items:
               "$ref": "#/components/schemas/Requirement"
+          application:
+            "$ref": "#/components/schemas/JobApplication"
     JobPostingEnvelope:
       type: object
       required:

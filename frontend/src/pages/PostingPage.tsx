@@ -6,6 +6,8 @@ import { Alert, Button, Card, Spinner } from '../components/ui'
 import { formatDate, workModelLabels } from '../postings/labels'
 import { postingQueryKey, postingsQueryKey } from '../postings/queries'
 import { RequirementsCard } from '../postings/RequirementsCard'
+import { ApplicationCard } from '../applications/ApplicationCard'
+import { StatusBadge } from '../applications/StatusBadge'
 import { usePosting } from '../postings/usePosting'
 
 export function PostingPage() {
@@ -41,7 +43,10 @@ export function PostingPage() {
           ← All postings
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight">{posting.title}</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight">{posting.title}</h1>
+            <StatusBadge status={posting.status} />
+          </div>
           <div className="flex gap-3">
             <Link
               to={`/postings/${id}/edit`}
@@ -100,6 +105,8 @@ export function PostingPage() {
           )}
         </dl>
       </Card>
+
+      <ApplicationCard postingId={posting.id} application={posting.application} />
 
       <RequirementsCard postingId={posting.id} requirements={posting.requirements} />
 

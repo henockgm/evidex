@@ -714,6 +714,77 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/job_applications/{id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move an application to a new status
+         * @description Allowed next statuses are listed in the application's available_transitions.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        to_status: components["schemas"]["ApplicationStatus"];
+                        /** @description Optional, shown in the timeline */
+                        note?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description moved; returns the application with its timeline */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            application: components["schemas"]["JobApplication"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description not allowed from the current status */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_posting_import": {
         parameters: {
             query?: never;
@@ -1226,10 +1297,31 @@ export interface components {
             /** Format: date */
             deadline?: string | null;
             source_url?: string | null;
+            status: components["schemas"]["ApplicationStatus"];
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
             updated_at: string;
+        };
+        /**
+         * @description saved → preparing → applied → interviewing → offer, or rejected / withdrawn
+         * @enum {string}
+         */
+        ApplicationStatus: "saved" | "preparing" | "applied" | "interviewing" | "offer" | "rejected" | "withdrawn";
+        JobApplication: {
+            id: number;
+            status: components["schemas"]["ApplicationStatus"];
+            /** @description Statuses this application can move to next */
+            available_transitions: components["schemas"]["ApplicationStatus"][];
+            /** @description Timeline, oldest first */
+            events: {
+                id: number;
+                from_status?: components["schemas"]["ApplicationStatus"] | null;
+                to_status: components["schemas"]["ApplicationStatus"];
+                note?: string | null;
+                /** Format: date-time */
+                created_at: string;
+            }[];
         };
         Requirement: {
             id: number;
@@ -1242,6 +1334,7 @@ export interface components {
         JobPosting: components["schemas"]["JobPostingSummary"] & {
             description: string;
             requirements: components["schemas"]["Requirement"][];
+            application: components["schemas"]["JobApplication"];
         };
         JobPostingEnvelope: {
             job_posting: components["schemas"]["JobPosting"];

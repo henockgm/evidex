@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_140111) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_170932) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -37,6 +37,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_140111) do
     t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
     t.index ["user_id", "provider"], name: "index_identities_on_user_id_and_provider", unique: true
     t.index ["user_id"], name: "index_identities_on_user_id"
+  end
+
+  create_table "job_application_events", force: :cascade do |t|
+    t.bigint "job_application_id", null: false
+    t.string "from_status"
+    t.string "to_status", null: false
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.index ["job_application_id"], name: "index_job_application_events_on_job_application_id"
+  end
+
+  create_table "job_applications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "job_posting_id", null: false
+    t.string "status", default: "saved", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_posting_id"], name: "index_job_applications_on_job_posting_id", unique: true
+    t.index ["user_id", "status"], name: "index_job_applications_on_user_id_and_status"
+    t.index ["user_id"], name: "index_job_applications_on_user_id"
   end
 
   create_table "job_postings", force: :cascade do |t|
@@ -92,6 +112,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_140111) do
 
   add_foreign_key "audit_events", "users"
   add_foreign_key "identities", "users"
+  add_foreign_key "job_application_events", "job_applications", on_delete: :cascade
+  add_foreign_key "job_applications", "job_postings", on_delete: :cascade
+  add_foreign_key "job_applications", "users"
   add_foreign_key "job_postings", "users"
   add_foreign_key "requirements", "job_postings", on_delete: :cascade
   add_foreign_key "sessions", "users"

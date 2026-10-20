@@ -13,12 +13,14 @@ class JobPostingSerializer
       work_model: @job_posting.work_model,
       deadline: @job_posting.deadline&.iso8601,
       source_url: @job_posting.source_url,
+      status: @job_posting.job_application.status,
       created_at: @job_posting.created_at.iso8601,
       updated_at: @job_posting.updated_at.iso8601
     }
     if @include_description
       json[:description] = @job_posting.description
       json[:requirements] = @job_posting.requirements.map { |requirement| RequirementSerializer.new(requirement) }
+      json[:application] = JobApplicationSerializer.new(@job_posting.job_application)
     end
     json
   end

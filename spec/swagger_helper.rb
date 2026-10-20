@@ -81,7 +81,7 @@ RSpec.configure do |config|
           },
           JobPostingSummary: {
             type: :object,
-            required: %w[id title company created_at updated_at],
+            required: %w[id title company status created_at updated_at],
             properties: {
               id: { type: :integer },
               title: { type: :string },
@@ -90,8 +90,38 @@ RSpec.configure do |config|
               work_model: { type: :string, enum: JobPosting::WORK_MODELS, nullable: true },
               deadline: { type: :string, format: :date, nullable: true },
               source_url: { type: :string, nullable: true },
+              status: { "$ref" => "#/components/schemas/ApplicationStatus" },
               created_at: { type: :string, format: "date-time" },
               updated_at: { type: :string, format: "date-time" }
+            }
+          },
+          ApplicationStatus: {
+            type: :string, enum: JobApplication::STATUSES,
+            description: "saved → preparing → applied → interviewing → offer, or rejected / withdrawn"
+          },
+          JobApplication: {
+            type: :object,
+            required: %w[id status available_transitions events],
+            properties: {
+              id: { type: :integer },
+              status: { "$ref" => "#/components/schemas/ApplicationStatus" },
+              available_transitions: {
+                type: :array, items: { "$ref" => "#/components/schemas/ApplicationStatus" },
+                description: "Statuses this application can move to next"
+              },
+              events: {
+                type: :array, description: "Timeline, oldest first",
+                items: {
+                  type: :object, required: %w[id to_status created_at],
+                  properties: {
+                    id: { type: :integer },
+                    from_status: { allOf: [ { "$ref" => "#/components/schemas/ApplicationStatus" } ], nullable: true },
+                    to_status: { "$ref" => "#/components/schemas/ApplicationStatus" },
+                    note: { type: :string, nullable: true },
+                    created_at: { type: :string, format: "date-time" }
+                  }
+                }
+              }
             }
           },
           Requirement: {
@@ -108,10 +138,11 @@ RSpec.configure do |config|
             allOf: [
               { "$ref" => "#/components/schemas/JobPostingSummary" },
               {
-                type: :object, required: %w[description requirements],
+                type: :object, required: %w[description requirements application],
                 properties: {
                   description: { type: :string },
-                  requirements: { type: :array, items: { "$ref" => "#/components/schemas/Requirement" } }
+                  requirements: { type: :array, items: { "$ref" => "#/components/schemas/Requirement" } },
+                  application: { "$ref" => "#/components/schemas/JobApplication" }
                 }
               }
             ]

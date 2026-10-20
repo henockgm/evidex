@@ -2,7 +2,7 @@ module Api
   module V1
     class JobPostingsController < BaseController
       def index
-        postings = Current.user.job_postings.order(created_at: :desc)
+        postings = Current.user.job_postings.includes(:job_application).order(created_at: :desc)
         render json: { job_postings: postings.map { |posting| JobPostingSerializer.new(posting) } }
       end
 

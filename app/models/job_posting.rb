@@ -4,6 +4,9 @@ class JobPosting < ApplicationRecord
 
   belongs_to :user
   has_many :requirements, -> { ordered }, dependent: :delete_all, inverse_of: :job_posting
+  has_one :job_application, dependent: :destroy
+
+  after_create { create_job_application!(user:) }
 
   normalizes :title, :company, with: ->(value) { value.squish }
   normalizes :location, :work_model, with: ->(value) { value.squish.presence }

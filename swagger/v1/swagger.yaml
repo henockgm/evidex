@@ -421,6 +421,57 @@ paths:
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/job_applications/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update application details
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Send only the fields to change. `links` replaces the whole list;
+        send [] to clear it.
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - application
+                properties:
+                  application:
+                    "$ref": "#/components/schemas/JobApplication"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - job_application
+              properties:
+                job_application:
+                  "$ref": "#/components/schemas/JobApplicationInput"
   "/api/v1/job_applications/{id}/transitions":
     parameters:
     - name: id
@@ -967,12 +1018,35 @@ components:
       - id
       - status
       - available_transitions
+      - applied_on
+      - next_action
+      - next_action_on
+      - notes
+      - links
       - events
       properties:
         id:
           type: integer
         status:
           "$ref": "#/components/schemas/ApplicationStatus"
+        applied_on:
+          type: string
+          format: date
+          nullable: true
+        next_action:
+          type: string
+          nullable: true
+        next_action_on:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApplicationLink"
         available_transitions:
           type: array
           items:
@@ -1002,6 +1076,42 @@ components:
               created_at:
                 type: string
                 format: date-time
+    ApplicationLink:
+      type: object
+      required:
+      - url
+      properties:
+        label:
+          type: string
+          nullable: true
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+    JobApplicationInput:
+      type: object
+      properties:
+        applied_on:
+          type: string
+          format: date
+          nullable: true
+        next_action:
+          type: string
+          nullable: true
+          maxLength: 200
+        next_action_on:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+          maxLength: 20000
+        links:
+          type: array
+          maxItems: 20
+          items:
+            "$ref": "#/components/schemas/ApplicationLink"
     Requirement:
       type: object
       required:

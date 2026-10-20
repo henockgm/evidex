@@ -7,6 +7,7 @@ import { formatDate, workModelLabels } from '../postings/labels'
 import { postingQueryKey, postingsQueryKey } from '../postings/queries'
 import { RequirementsCard } from '../postings/RequirementsCard'
 import { ApplicationCard } from '../applications/ApplicationCard'
+import { ApplicationDetailsCard } from '../applications/ApplicationDetailsCard'
 import { StatusBadge } from '../applications/StatusBadge'
 import { usePosting } from '../postings/usePosting'
 
@@ -107,6 +108,8 @@ export function PostingPage() {
       </Card>
 
       <ApplicationCard postingId={posting.id} application={posting.application} />
+
+      <ApplicationDetailsCard postingId={posting.id} application={posting.application} />
 
       <RequirementsCard postingId={posting.id} requirements={posting.requirements} />
 

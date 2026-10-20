@@ -58,3 +58,12 @@ export const baseRoutes: Record<string, Handler> = {
   'GET /api/v1/auth/providers': () =>
     json({ providers: [{ id: 'google_oauth2', label: 'Google', path: '/auth/google_oauth2' }] }),
 }
+
+/** Application fields a fresh application has before the user fills anything in. */
+export const emptyApplicationDetails = {
+  applied_on: null,
+  next_action: null,
+  next_action_on: null,
+  notes: null,
+  links: [] as { label?: string | null; url: string }[],
+}

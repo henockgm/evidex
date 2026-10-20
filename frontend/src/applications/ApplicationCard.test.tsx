@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { JobApplication } from '../api/client'
-import { baseRoutes, json, mockApi, renderApp, user } from '../test/render'
+import { baseRoutes, emptyApplicationDetails, json, mockApi, renderApp, user } from '../test/render'
 
 const basePosting = {
   id: 7,
@@ -22,7 +22,7 @@ const savedEvent: JobApplication['events'][number] = { id: 1, from_status: null,
 
 describe('Application card', () => {
   it('moves the application to the next status with a note and shows it in the timeline', async () => {
-    let application: JobApplication = { id: 70, status: 'saved', available_transitions: ['preparing', 'applied', 'withdrawn'], events: [savedEvent] }
+    let application: JobApplication = { ...emptyApplicationDetails, id: 70, status: 'saved', available_transitions: ['preparing', 'applied', 'withdrawn'], events: [savedEvent] }
     let sent: unknown
     mockApi({
       ...baseRoutes,
@@ -53,7 +53,7 @@ describe('Application card', () => {
   })
 
   it('shows why a status change was refused', async () => {
-    const application = { id: 70, status: 'saved', available_transitions: ['applied'], events: [savedEvent] }
+    const application = { ...emptyApplicationDetails, id: 70, status: 'saved', available_transitions: ['applied'], events: [savedEvent] }
     mockApi({
       ...baseRoutes,
       'GET /api/v1/me': () => json({ user }),
@@ -77,7 +77,7 @@ describe('Application card', () => {
       ...baseRoutes,
       'GET /api/v1/me': () => json({ user }),
       'GET /api/v1/job_postings/7': () =>
-        json({ job_posting: { ...basePosting, status: 'withdrawn', application: { id: 70, status: 'withdrawn', available_transitions: [], events } } }),
+        json({ job_posting: { ...basePosting, status: 'withdrawn', application: { ...emptyApplicationDetails, id: 70, status: 'withdrawn', available_transitions: [], events } } }),
     })
 
     renderApp('/postings/7')

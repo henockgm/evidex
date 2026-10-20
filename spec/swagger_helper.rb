@@ -101,10 +101,15 @@ RSpec.configure do |config|
           },
           JobApplication: {
             type: :object,
-            required: %w[id status available_transitions events],
+            required: %w[id status available_transitions applied_on next_action next_action_on notes links events],
             properties: {
               id: { type: :integer },
               status: { "$ref" => "#/components/schemas/ApplicationStatus" },
+              applied_on: { type: :string, format: :date, nullable: true },
+              next_action: { type: :string, nullable: true },
+              next_action_on: { type: :string, format: :date, nullable: true },
+              notes: { type: :string, nullable: true },
+              links: { type: :array, items: { "$ref" => "#/components/schemas/ApplicationLink" } },
               available_transitions: {
                 type: :array, items: { "$ref" => "#/components/schemas/ApplicationStatus" },
                 description: "Statuses this application can move to next"
@@ -122,6 +127,20 @@ RSpec.configure do |config|
                   }
                 }
               }
+            }
+          },
+          ApplicationLink: {
+            type: :object, required: %w[url],
+            properties: { label: { type: :string, nullable: true, maxLength: 100 }, url: { type: :string, format: :uri } }
+          },
+          JobApplicationInput: {
+            type: :object,
+            properties: {
+              applied_on: { type: :string, format: :date, nullable: true },
+              next_action: { type: :string, nullable: true, maxLength: 200 },
+              next_action_on: { type: :string, format: :date, nullable: true },
+              notes: { type: :string, nullable: true, maxLength: JobApplication::NOTES_MAX_LENGTH },
+              links: { type: :array, maxItems: JobApplication::MAX_LINKS, items: { "$ref" => "#/components/schemas/ApplicationLink" } }
             }
           },
           Requirement: {

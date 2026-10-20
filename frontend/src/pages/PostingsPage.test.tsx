@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { baseRoutes, json, mockApi, problem, renderApp, user } from '../test/render'
+import { baseRoutes, emptyApplicationDetails, json, mockApi, problem, renderApp, user } from '../test/render'
 
 const posting = {
   id: 7,
@@ -17,6 +17,7 @@ const posting = {
 }
 
 const application = {
+  ...emptyApplicationDetails,
   id: 70,
   status: 'saved',
   available_transitions: ['preparing', 'applied', 'withdrawn'],

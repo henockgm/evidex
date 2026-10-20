@@ -714,6 +714,75 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/job_applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update application details
+         * @description Send only the fields to change. `links` replaces the whole list; send [] to clear it.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        job_application: components["schemas"]["JobApplicationInput"];
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            application: components["schemas"]["JobApplication"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/job_applications/{id}/transitions": {
         parameters: {
             query?: never;
@@ -1311,6 +1380,13 @@ export interface components {
         JobApplication: {
             id: number;
             status: components["schemas"]["ApplicationStatus"];
+            /** Format: date */
+            applied_on: string | null;
+            next_action: string | null;
+            /** Format: date */
+            next_action_on: string | null;
+            notes: string | null;
+            links: components["schemas"]["ApplicationLink"][];
             /** @description Statuses this application can move to next */
             available_transitions: components["schemas"]["ApplicationStatus"][];
             /** @description Timeline, oldest first */
@@ -1322,6 +1398,20 @@ export interface components {
                 /** Format: date-time */
                 created_at: string;
             }[];
+        };
+        ApplicationLink: {
+            label?: string | null;
+            /** Format: uri */
+            url: string;
+        };
+        JobApplicationInput: {
+            /** Format: date */
+            applied_on?: string | null;
+            next_action?: string | null;
+            /** Format: date */
+            next_action_on?: string | null;
+            notes?: string | null;
+            links?: components["schemas"]["ApplicationLink"][];
         };
         Requirement: {
             id: number;

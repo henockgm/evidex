@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_170932) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_173608) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -54,7 +54,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_170932) do
     t.string "status", default: "saved", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "applied_on"
+    t.string "next_action"
+    t.date "next_action_on"
+    t.text "notes"
+    t.jsonb "links", default: [], null: false
     t.index ["job_posting_id"], name: "index_job_applications_on_job_posting_id", unique: true
+    t.index ["user_id", "next_action_on"], name: "index_job_applications_on_user_id_and_next_action_on"
     t.index ["user_id", "status"], name: "index_job_applications_on_user_id_and_status"
     t.index ["user_id"], name: "index_job_applications_on_user_id"
   end

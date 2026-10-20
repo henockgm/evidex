@@ -38,4 +38,39 @@ RSpec.describe JobApplication do
     application.transition_to!("applied")
     expect { posting.destroy }.to change(described_class, :count).by(-1).and change(JobApplicationEvent, :count).by(-2)
   end
+
+  it "records the applied date when moving to applied, keeping one the user already set" do
+    travel_to Date.new(2026, 10, 20) do
+      application.transition_to!("applied")
+      expect(application.applied_on).to eq(Date.new(2026, 10, 20))
+    end
+
+    other = create(:job_posting).job_application
+    other.update!(applied_on: Date.new(2026, 10, 1))
+    other.transition_to!("applied")
+    expect(other.applied_on).to eq(Date.new(2026, 10, 1))
+  end
+
+  describe "links" do
+    it "keeps label/url pairs, trimmed, and drops empty rows" do
+      application.update!(links: [ { label: " Portal ", url: " https://jobs.example.com/a ", extra: "x" }, { label: "", url: "" } ])
+      expect(application.links).to eq([ { "label" => "Portal", "url" => "https://jobs.example.com/a" } ])
+    end
+
+    it "accepts only http(s) links" do
+      application.links = [ { label: "Bad", url: "javascript:alert(1)" } ]
+      expect(application).not_to be_valid
+      expect(application.errors[:links].join).to include("http or https")
+    end
+
+    it "needs a url for every label" do
+      application.links = [ { label: "Recruiter's LinkedIn", url: "" } ]
+      expect(application).not_to be_valid
+    end
+
+    it "limits the number of links" do
+      application.links = Array.new(JobApplication::MAX_LINKS + 1) { |i| { url: "https://example.com/#{i}" } }
+      expect(application).not_to be_valid
+    end
+  end
 end

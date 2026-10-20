@@ -5,7 +5,7 @@ import { api, unwrap, type JobPostingInput } from '../api/client'
 import { Alert, Card } from '../components/ui'
 import { ImportFromLink } from '../postings/ImportFromLink'
 import { PostingForm } from '../postings/PostingForm'
-import { postingsQueryKey } from '../postings/queries'
+import { postingListsQueryKey } from '../postings/queries'
 
 interface Imported {
   draft: JobPostingInput
@@ -21,7 +21,7 @@ export function NewPostingPage() {
   const create = useMutation({
     mutationFn: (job_posting: JobPostingInput) => unwrap(api.POST('/api/v1/job_postings', { body: { job_posting } })),
     onSuccess: ({ job_posting }) => {
-      void queryClient.invalidateQueries({ queryKey: postingsQueryKey })
+      void queryClient.invalidateQueries({ queryKey: postingListsQueryKey })
       navigate(`/postings/${job_posting.id}`)
     },
   })

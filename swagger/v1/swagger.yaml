@@ -719,25 +719,90 @@ paths:
                   format: uri
   "/api/v1/job_postings":
     get:
-      summary: List your job postings, newest first
+      summary: List, filter and search your job postings
       tags:
       - Job postings
       security:
       - session_cookie: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Comma-separated statuses, e.g. applied,interviewing
+        schema:
+          type: string
+      - name: q
+        in: query
+        required: false
+        description: Words to find in title, company or location
+        schema:
+          type: string
+      - name: deadline
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - upcoming
+          - overdue
+          - none
+        description: upcoming = within 7 days
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - newest
+          - oldest
+          - deadline
+          - company
+          - next_action
+          - updated
+          default: newest
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
       responses:
         '200':
-          description: postings (without the full description)
+          description: filtered
           content:
             application/json:
               schema:
                 type: object
                 required:
                 - job_postings
+                - meta
                 properties:
                   job_postings:
                     type: array
                     items:
                       "$ref": "#/components/schemas/JobPostingSummary"
+                  meta:
+                    type: object
+                    required:
+                    - page
+                    - per_page
+                    - total
+                    - total_pages
+                    properties:
+                      page:
+                        type: integer
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+                      total_pages:
+                        type: integer
     post:
       summary: Add a job posting from pasted text
       tags:

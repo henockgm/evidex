@@ -222,4 +222,52 @@ describe('Job postings', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('HTTP 403')
     expect(screen.getByRole('alert')).toHaveTextContent('paste the ad')
   })
+
+  it('filters by status, search and deadline through the URL and pages through results', async () => {
+    const requests = mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/job_postings': (request) => {
+        const page = Number(new URL(request.url).searchParams.get('page') ?? 1)
+        return json({
+          job_postings: [{ ...posting, id: page, title: `Result page ${page}` }],
+          meta: { page, per_page: 1, total: 2, total_pages: 2 },
+        })
+      },
+    })
+
+    renderApp('/postings')
+    expect(await screen.findByText('Showing 1–1 of 2')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Applied' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Interviewing' }))
+    await userEvent.selectOptions(screen.getByLabelText('Deadline'), 'Due within 7 days')
+    await userEvent.type(screen.getByLabelText('Search postings'), 'rails')
+
+    await waitFor(() => {
+      const last = new URL(requests.at(-1)!.url).searchParams
+      expect(Object.fromEntries(last)).toEqual({ status: 'applied,interviewing', deadline: 'upcoming', q: 'rails', sort: 'newest', page: '1' })
+    })
+    expect(screen.getByRole('button', { name: 'Applied' })).toHaveAttribute('aria-pressed', 'true')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(await screen.findByText('Result page 2')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    await waitFor(() => expect(screen.getByLabelText('Search postings')).toHaveValue(''))
+    expect(screen.getByRole('button', { name: 'Applied' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('tells apart "no postings yet" and "no matches"', async () => {
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/job_postings': () => json({ job_postings: [], meta: { page: 1, per_page: 20, total: 0, total_pages: 0 } }),
+    })
+
+    renderApp('/postings?status=offer')
+
+    expect(await screen.findByText('No postings match these filters.')).toBeInTheDocument()
+  })
 })

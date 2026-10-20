@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ApiError, api, unwrap, type ApplicationStatus, type JobApplication } from '../api/client'
 import { Alert, Button, Card } from '../components/ui'
-import { postingQueryKey, postingsQueryKey } from '../postings/queries'
+import { postingListsQueryKey, postingQueryKey } from '../postings/queries'
 import { StatusBadge } from './StatusBadge'
 import { statusLabels, transitionLabels } from './labels'
 
@@ -23,7 +23,7 @@ export function ApplicationCard({ postingId, application }: { postingId: number;
     onSuccess: () => {
       setNote('')
       void queryClient.invalidateQueries({ queryKey: postingQueryKey(postingId) })
-      void queryClient.invalidateQueries({ queryKey: postingsQueryKey, exact: true })
+      void queryClient.invalidateQueries({ queryKey: postingListsQueryKey })
     },
   })
   const error = move.error instanceof ApiError ? (move.error.problem?.detail ?? Object.values(move.error.problem?.errors ?? {}).flat()[0]) : null

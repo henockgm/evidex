@@ -6,14 +6,29 @@ RSpec.describe "Job postings API", type: :request do
   before { sign_in(user) }
 
   path "/api/v1/job_postings" do
-    get "List your job postings, newest first" do
+    get "List, filter and search your job postings" do
       tags "Job postings"
       produces "application/json"
       security [ { session_cookie: [] } ]
+      parameter name: :status, in: :query, type: :string, required: false,
+        description: "Comma-separated statuses, e.g. applied,interviewing"
+      parameter name: :q, in: :query, type: :string, required: false, description: "Words to find in title, company or location"
+      parameter name: :deadline, in: :query, required: false, schema: { type: :string, enum: JobPostingsQuery::DEADLINES },
+        description: "upcoming = within #{JobPostingsQuery::UPCOMING_DAYS} days"
+      parameter name: :sort, in: :query, required: false, schema: { type: :string, enum: JobPostingsQuery::SORTS.keys, default: "newest" }
+      parameter name: :page, in: :query, type: :integer, required: false
+      parameter name: :per_page, in: :query, required: false,
+        schema: { type: :integer, default: JobPostingsQuery::DEFAULT_PER_PAGE, maximum: JobPostingsQuery::MAX_PER_PAGE }
 
-      response "200", "postings (without the full description)" do
-        schema type: :object, required: %w[job_postings],
-          properties: { job_postings: { type: :array, items: { "$ref" => "#/components/schemas/JobPostingSummary" } } }
+      response "200", "postings (without the full description) and paging info" do
+        schema type: :object, required: %w[job_postings meta],
+          properties: {
+            job_postings: { type: :array, items: { "$ref" => "#/components/schemas/JobPostingSummary" } },
+            meta: {
+              type: :object, required: %w[page per_page total total_pages],
+              properties: { page: { type: :integer }, per_page: { type: :integer }, total: { type: :integer }, total_pages: { type: :integer } }
+            }
+          }
 
         before do
           create(:job_posting, user:, title: "Older", created_at: 2.days.ago)
@@ -24,6 +39,23 @@ RSpec.describe "Job postings API", type: :request do
         run_test! do
           expect(json["job_postings"].pluck("title")).to eq(%w[Newer Older])
           expect(json["job_postings"].first).not_to have_key("description")
+          expect(json["meta"]).to eq("page" => 1, "per_page" => 20, "total" => 2, "total_pages" => 1)
+        end
+      end
+
+      response "200", "filtered" do
+        let(:q) { "lead" }
+        let(:per_page) { 1 }
+
+        before do
+          create(:job_posting, user:, title: "Lead Rails Developer")
+          create(:job_posting, user:, title: "Lead Engineer")
+          create(:job_posting, user:, title: "Junior Developer")
+        end
+
+        run_test! do
+          expect(json["job_postings"].size).to eq(1)
+          expect(json["meta"]).to include("total" => 2, "total_pages" => 2)
         end
       end
     end

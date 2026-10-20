@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { api, unwrap } from '../api/client'
 import { Alert, Button, Card, Spinner } from '../components/ui'
 import { formatDate, workModelLabels } from '../postings/labels'
-import { postingQueryKey, postingsQueryKey } from '../postings/queries'
+import { postingListsQueryKey, postingQueryKey } from '../postings/queries'
 import { RequirementsCard } from '../postings/RequirementsCard'
 import { ApplicationCard } from '../applications/ApplicationCard'
 import { ApplicationDetailsCard } from '../applications/ApplicationDetailsCard'
@@ -23,7 +23,7 @@ export function PostingPage() {
     mutationFn: () => unwrap(api.DELETE('/api/v1/job_postings/{id}', { params: { path: { id } } })),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: postingQueryKey(id) })
-      void queryClient.invalidateQueries({ queryKey: postingsQueryKey, exact: true })
+      void queryClient.invalidateQueries({ queryKey: postingListsQueryKey })
       navigate('/postings')
     },
   })

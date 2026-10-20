@@ -2,8 +2,16 @@ module Api
   module V1
     class JobPostingsController < BaseController
       def index
-        postings = Current.user.job_postings.includes(:job_application).order(created_at: :desc)
-        render json: { job_postings: postings.map { |posting| JobPostingSerializer.new(posting) } }
+        result = JobPostingsQuery.new(Current.user.job_postings, params.permit(:status, :q, :deadline, :sort, :page, :per_page)).call
+        render json: {
+          job_postings: result.records.map { |posting| JobPostingSerializer.new(posting) },
+          meta: {
+            page: result.page,
+            per_page: result.per_page,
+            total: result.total,
+            total_pages: (result.total.to_f / result.per_page).ceil
+          }
+        }
       end
 
       def show

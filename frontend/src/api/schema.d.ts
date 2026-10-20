@@ -1085,17 +1085,27 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List your job postings, newest first */
+        /** List, filter and search your job postings */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Comma-separated statuses, e.g. applied,interviewing */
+                    status?: string;
+                    /** @description Words to find in title, company or location */
+                    q?: string;
+                    /** @description upcoming = within 7 days */
+                    deadline?: "upcoming" | "overdue" | "none";
+                    sort?: "newest" | "oldest" | "deadline" | "company" | "next_action" | "updated";
+                    page?: number;
+                    per_page?: number;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description postings (without the full description) */
+                /** @description filtered */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1103,6 +1113,12 @@ export interface paths {
                     content: {
                         "application/json": {
                             job_postings: components["schemas"]["JobPostingSummary"][];
+                            meta: {
+                                page: number;
+                                per_page: number;
+                                total: number;
+                                total_pages: number;
+                            };
                         };
                     };
                 };

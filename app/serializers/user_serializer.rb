@@ -10,6 +10,7 @@ class UserSerializer
       name: @user.name,
       email_verified: @user.verified?,
       has_password: @user.password?,
+      ai_configured: Ai::Client.configured?,
       identities: @user.identities.map { |identity| IdentitySerializer.new(identity).as_json },
       created_at: @user.created_at.iso8601
     }

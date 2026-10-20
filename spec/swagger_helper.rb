@@ -64,13 +64,14 @@ RSpec.configure do |config|
           },
           User: {
             type: :object,
-            required: %w[id email_address email_verified has_password identities created_at],
+            required: %w[id email_address email_verified has_password ai_configured identities created_at],
             properties: {
               id: { type: :integer },
               email_address: { type: :string, format: :email },
               name: { type: :string, nullable: true },
               email_verified: { type: :boolean },
               has_password: { type: :boolean },
+              ai_configured: { type: :boolean, description: "The server has an AI provider configured" },
               identities: { type: :array, items: { "$ref" => "#/components/schemas/Identity" } },
               created_at: { type: :string, format: "date-time" }
             }
@@ -169,9 +170,21 @@ RSpec.configure do |config|
             allOf: [
               { "$ref" => "#/components/schemas/JobPostingSummary" },
               {
-                type: :object, required: %w[description requirements application],
+                type: :object, required: %w[description requirements application employment_type seniority salary keywords extraction],
                 properties: {
                   description: { type: :string },
+                  employment_type: { type: :string, nullable: true },
+                  seniority: { type: :string, nullable: true },
+                  salary: { type: :string, nullable: true, description: "As stated in the ad" },
+                  keywords: { type: :array, items: { type: :string } },
+                  extraction: {
+                    type: :object, required: %w[status error extracted_at],
+                    properties: {
+                      status: { type: :string, enum: JobPosting::EXTRACTION_STATUSES },
+                      error: { type: :string, nullable: true },
+                      extracted_at: { type: :string, format: "date-time", nullable: true }
+                    }
+                  },
                   requirements: { type: :array, items: { "$ref" => "#/components/schemas/Requirement" } },
                   application: { "$ref" => "#/components/schemas/JobApplication" }
                 }
@@ -190,6 +203,9 @@ RSpec.configure do |config|
               company: { type: :string, maxLength: 200 },
               location: { type: :string, maxLength: 200, nullable: true },
               work_model: { type: :string, enum: JobPosting::WORK_MODELS, nullable: true },
+              employment_type: { type: :string, maxLength: 200, nullable: true },
+              seniority: { type: :string, maxLength: 200, nullable: true },
+              salary: { type: :string, maxLength: 200, nullable: true },
               deadline: { type: :string, format: :date, nullable: true },
               source_url: { type: :string, format: :uri, nullable: true },
               description: { type: :string, maxLength: JobPosting::DESCRIPTION_MAX_LENGTH, description: "The posting text" }

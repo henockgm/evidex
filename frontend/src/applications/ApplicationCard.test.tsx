@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { JobApplication } from '../api/client'
-import { baseRoutes, emptyApplicationDetails, json, mockApi, renderApp, user } from '../test/render'
+import { baseRoutes, emptyApplicationDetails, json, mockApi, postingDetailDefaults, renderApp, user } from '../test/render'
 
 const basePosting = {
   id: 7,
@@ -14,7 +14,7 @@ const basePosting = {
   source_url: null,
   created_at: '2026-10-20T10:00:00Z',
   updated_at: '2026-10-20T10:00:00Z',
-  description: 'Build APIs.',
+  ...postingDetailDefaults, description: 'Build APIs.',
   requirements: [],
 }
 

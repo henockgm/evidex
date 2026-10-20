@@ -74,3 +74,5 @@ group :test do
 end
 
 gem "nokogiri", "~> 1.19"
+
+gem "anthropic", "~> 1.80"

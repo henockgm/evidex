@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { baseRoutes, emptyApplicationDetails, json, mockApi, problem, renderApp, user } from '../test/render'
+import { baseRoutes, emptyApplicationDetails, json, mockApi, postingDetailDefaults, problem, renderApp, user } from '../test/render'
 
 const posting = {
   id: 7,
@@ -45,9 +45,9 @@ describe('Job postings', () => {
       'GET /api/v1/me': () => json({ user }),
       'POST /api/v1/job_postings': async (request) => {
         saved = await request.json()
-        return json({ job_posting: { ...posting, description: 'Build APIs.', requirements: [], application } }, 201)
+        return json({ job_posting: { ...posting, ...postingDetailDefaults, description: 'Build APIs.', requirements: [], application } }, 201)
       },
-      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.', requirements: [], application } }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, ...postingDetailDefaults, description: 'Build APIs.', requirements: [], application } }),
     })
 
     renderApp('/postings/new')
@@ -65,6 +65,9 @@ describe('Job postings', () => {
         company: 'Acme Oy',
         location: null,
         work_model: 'hybrid',
+        employment_type: null,
+        seniority: null,
+        salary: null,
         deadline: null,
         source_url: null,
         description: 'Build APIs.',
@@ -89,7 +92,7 @@ describe('Job postings', () => {
   })
 
   it('edits a posting, sending the changed form', async () => {
-    let current = { ...posting, description: 'Build APIs.', requirements: [], application }
+    let current = { ...posting, ...postingDetailDefaults, description: 'Build APIs.', requirements: [], application }
     let sent: { job_posting: Record<string, unknown> } | undefined
     mockApi({
       ...baseRoutes,
@@ -120,7 +123,7 @@ describe('Job postings', () => {
     mockApi({
       ...baseRoutes,
       'GET /api/v1/me': () => json({ user }),
-      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.', requirements: [], application } }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, ...postingDetailDefaults, description: 'Build APIs.', requirements: [], application } }),
       'GET /api/v1/job_postings': () => json({ job_postings: [] }),
       'DELETE /api/v1/job_postings/7': () => {
         deleted = true
@@ -144,7 +147,7 @@ describe('Job postings', () => {
     mockApi({
       ...baseRoutes,
       'GET /api/v1/me': () => json({ user }),
-      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.', requirements, application } }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, ...postingDetailDefaults, description: 'Build APIs.', requirements, application } }),
       'POST /api/v1/job_postings/7/requirements': async (request) => {
         added = await request.json()
         const requirement = { id: 2, kind: 'preferred', text: 'pgvector', position: 1 }

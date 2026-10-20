@@ -46,7 +46,7 @@ module Api
         end
 
         def job_posting_params
-          params.expect(job_posting: %i[title company location work_model deadline source_url description])
+          params.expect(job_posting: %i[title company location work_model employment_type seniority salary deadline source_url description])
         end
     end
   end

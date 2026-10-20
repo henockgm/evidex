@@ -1092,6 +1092,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/job_postings/{job_posting_id}/extraction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read the posting with AI to fill in fields and requirements
+         * @description Runs in the background. Poll GET /api/v1/job_postings/{id} until extraction.status is "done" or "failed".
+         *     Fills empty fields only and adds requirements that aren't listed yet. Needs a confirmed email;
+         *     limited to 20 runs per user per day.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description started */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description email not confirmed */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description already running */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description daily limit reached */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description AI not configured on the server */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_posting_import": {
         parameters: {
             query?: never;
@@ -1603,6 +1684,8 @@ export interface components {
             name?: string | null;
             email_verified: boolean;
             has_password: boolean;
+            /** @description The server has an AI provider configured */
+            ai_configured: boolean;
             identities: components["schemas"]["Identity"][];
             /** Format: date-time */
             created_at: string;
@@ -1686,6 +1769,18 @@ export interface components {
         };
         JobPosting: components["schemas"]["JobPostingSummary"] & {
             description: string;
+            employment_type: string | null;
+            seniority: string | null;
+            /** @description As stated in the ad */
+            salary: string | null;
+            keywords: string[];
+            extraction: {
+                /** @enum {string} */
+                status: "none" | "pending" | "done" | "failed";
+                error: string | null;
+                /** Format: date-time */
+                extracted_at: string | null;
+            };
             requirements: components["schemas"]["Requirement"][];
             application: components["schemas"]["JobApplication"];
         };
@@ -1699,6 +1794,9 @@ export interface components {
             location?: string | null;
             /** @enum {string|null} */
             work_model?: "onsite" | "hybrid" | "remote" | null;
+            employment_type?: string | null;
+            seniority?: string | null;
+            salary?: string | null;
             /** Format: date */
             deadline?: string | null;
             /** Format: uri */

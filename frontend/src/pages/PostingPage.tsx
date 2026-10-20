@@ -6,6 +6,7 @@ import { Alert, Button, Card, Spinner } from '../components/ui'
 import { formatDate, workModelLabels } from '../postings/labels'
 import { postingListsQueryKey, postingQueryKey } from '../postings/queries'
 import { RequirementsCard } from '../postings/RequirementsCard'
+import { AiExtractionCard } from '../postings/AiExtractionCard'
 import { ApplicationCard } from '../applications/ApplicationCard'
 import { ApplicationDetailsCard } from '../applications/ApplicationDetailsCard'
 import { ContactsCard } from '../applications/ContactsCard'
@@ -35,6 +36,9 @@ export function PostingPage() {
     ['Company', posting.company],
     ['Location', posting.location],
     ['Work model', posting.work_model && workModelLabels[posting.work_model]],
+    ['Employment type', posting.employment_type],
+    ['Seniority', posting.seniority],
+    ['Salary', posting.salary],
     ['Deadline', posting.deadline && formatDate(posting.deadline)],
   ].filter((pair): pair is [string, string] => Boolean(pair[1]))
 
@@ -106,6 +110,18 @@ export function PostingPage() {
             </div>
           )}
         </dl>
+        {posting.keywords.length > 0 && (
+          <ul aria-label="Keywords" className="mt-4 flex flex-wrap gap-2">
+            {posting.keywords.map((keyword) => (
+              <li
+                key={keyword}
+                className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                {keyword}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <ApplicationCard postingId={posting.id} application={posting.application} />
@@ -113,6 +129,8 @@ export function PostingPage() {
       <ApplicationDetailsCard postingId={posting.id} application={posting.application} />
 
       <ContactsCard postingId={posting.id} applicationId={posting.application.id} contacts={posting.application.contacts} />
+
+      <AiExtractionCard posting={posting} />
 
       <RequirementsCard postingId={posting.id} requirements={posting.requirements} />
 

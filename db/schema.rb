@@ -10,10 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_173826) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_174728) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
+
+  create_table "ai_usages", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "feature", null: false
+    t.string "model", null: false
+    t.integer "input_tokens", default: 0, null: false
+    t.integer "output_tokens", default: 0, null: false
+    t.integer "latency_ms"
+    t.boolean "succeeded", default: true, null: false
+    t.datetime "created_at", null: false
+    t.index ["user_id", "feature", "created_at"], name: "index_ai_usages_on_user_id_and_feature_and_created_at"
+    t.index ["user_id"], name: "index_ai_usages_on_user_id"
+  end
 
   create_table "application_contacts", force: :cascade do |t|
     t.bigint "job_application_id", null: false
@@ -88,6 +101,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_173826) do
     t.text "description", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "employment_type"
+    t.string "seniority"
+    t.string "salary"
+    t.jsonb "keywords", default: [], null: false
+    t.string "extraction_status", default: "none", null: false
+    t.string "extraction_error"
+    t.datetime "extracted_at"
     t.index ["user_id", "created_at"], name: "index_job_postings_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_job_postings_on_user_id"
   end
@@ -128,6 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_173826) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "ai_usages", "users", on_delete: :cascade
   add_foreign_key "application_contacts", "job_applications", on_delete: :cascade
   add_foreign_key "audit_events", "users"
   add_foreign_key "identities", "users"

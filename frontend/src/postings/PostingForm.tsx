@@ -33,6 +33,9 @@ export function PostingForm({ initial, submitLabel, pending, error, onSubmit, on
       company: text(form, 'company'),
       location: text(form, 'location') || null,
       work_model: (text(form, 'work_model') || null) as JobPostingInput['work_model'],
+      employment_type: text(form, 'employment_type') || null,
+      seniority: text(form, 'seniority') || null,
+      salary: text(form, 'salary') || null,
       deadline: text(form, 'deadline') || null,
       source_url: text(form, 'source_url') || null,
       description: text(form, 'description'),
@@ -58,6 +61,30 @@ export function PostingForm({ initial, submitLabel, pending, error, onSubmit, on
           options={workModelOptions}
           defaultValue={initial?.work_model ?? ''}
           errors={errorsFor('work_model')}
+        />
+        <Field
+          label="Employment type"
+          name="employment_type"
+          maxLength={200}
+          placeholder="e.g. Full-time"
+          defaultValue={initial?.employment_type ?? ''}
+          errors={errorsFor('employment_type')}
+        />
+        <Field
+          label="Seniority"
+          name="seniority"
+          maxLength={200}
+          placeholder="e.g. Senior"
+          defaultValue={initial?.seniority ?? ''}
+          errors={errorsFor('seniority')}
+        />
+        <Field
+          label="Salary"
+          name="salary"
+          maxLength={200}
+          placeholder="As stated in the ad"
+          defaultValue={initial?.salary ?? ''}
+          errors={errorsFor('salary')}
         />
         <Field
           label="Application deadline"

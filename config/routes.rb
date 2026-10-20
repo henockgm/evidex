@@ -28,6 +28,7 @@ Rails.application.routes.draw do
       end
       resources :job_postings, only: %i[index show create update destroy] do
         resources :requirements, only: %i[create update destroy], shallow: true
+        resource :extraction, only: :create, controller: "job_posting_extractions"
       end
 
       resource :me, only: %i[show destroy], controller: "me" do

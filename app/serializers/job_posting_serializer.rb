@@ -19,6 +19,17 @@ class JobPostingSerializer
     }
     if @include_description
       json[:description] = @job_posting.description
+      json.merge!(
+        employment_type: @job_posting.employment_type,
+        seniority: @job_posting.seniority,
+        salary: @job_posting.salary,
+        keywords: @job_posting.keywords,
+        extraction: {
+          status: @job_posting.extraction_status,
+          error: @job_posting.extraction_error,
+          extracted_at: @job_posting.extracted_at&.iso8601
+        }
+      )
       json[:requirements] = @job_posting.requirements.map { |requirement| RequirementSerializer.new(requirement) }
       json[:application] = JobApplicationSerializer.new(@job_posting.job_application)
     end

@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { ApplicationContact } from '../api/client'
-import { baseRoutes, emptyApplicationDetails, json, mockApi, problem, renderApp, user } from '../test/render'
+import { baseRoutes, emptyApplicationDetails, json, mockApi, postingDetailDefaults, problem, renderApp, user } from '../test/render'
 
 const posting = {
   id: 7,
@@ -15,7 +15,7 @@ const posting = {
   status: 'saved',
   created_at: '2026-10-20T10:00:00Z',
   updated_at: '2026-10-20T10:00:00Z',
-  description: 'Build APIs.',
+  ...postingDetailDefaults, description: 'Build APIs.',
   requirements: [],
 }
 

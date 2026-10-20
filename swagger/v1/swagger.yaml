@@ -793,6 +793,55 @@ paths:
                   type: string
                   maxLength: 2000
                   description: Optional, shown in the timeline
+  "/api/v1/job_postings/{job_posting_id}/extraction":
+    parameters:
+    - name: job_posting_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Read the posting with AI to fill in fields and requirements
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: |
+        Runs in the background. Poll GET /api/v1/job_postings/{id} until extraction.status is "done" or "failed".
+        Fills empty fields only and adds requirements that aren't listed yet. Needs a confirmed email;
+        limited to 20 runs per user per day.
+      responses:
+        '202':
+          description: started
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '403':
+          description: email not confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '409':
+          description: already running
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '429':
+          description: daily limit reached
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '503':
+          description: AI not configured on the server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/job_posting_import":
     post:
       summary: Fetch a job ad from a link and return a draft posting
@@ -1262,6 +1311,7 @@ components:
       - email_address
       - email_verified
       - has_password
+      - ai_configured
       - identities
       - created_at
       properties:
@@ -1277,6 +1327,9 @@ components:
           type: boolean
         has_password:
           type: boolean
+        ai_configured:
+          type: boolean
+          description: The server has an AI provider configured
         identities:
           type: array
           items:
@@ -1504,9 +1557,49 @@ components:
         - description
         - requirements
         - application
+        - employment_type
+        - seniority
+        - salary
+        - keywords
+        - extraction
         properties:
           description:
             type: string
+          employment_type:
+            type: string
+            nullable: true
+          seniority:
+            type: string
+            nullable: true
+          salary:
+            type: string
+            nullable: true
+            description: As stated in the ad
+          keywords:
+            type: array
+            items:
+              type: string
+          extraction:
+            type: object
+            required:
+            - status
+            - error
+            - extracted_at
+            properties:
+              status:
+                type: string
+                enum:
+                - none
+                - pending
+                - done
+                - failed
+              error:
+                type: string
+                nullable: true
+              extracted_at:
+                type: string
+                format: date-time
+                nullable: true
           requirements:
             type: array
             items:
@@ -1540,6 +1633,18 @@ components:
           - onsite
           - hybrid
           - remote
+          nullable: true
+        employment_type:
+          type: string
+          maxLength: 200
+          nullable: true
+        seniority:
+          type: string
+          maxLength: 200
+          nullable: true
+        salary:
+          type: string
+          maxLength: 200
           nullable: true
         deadline:
           type: string

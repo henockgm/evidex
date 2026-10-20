@@ -30,13 +30,15 @@ describe('RegisterPage', () => {
       ...baseRoutes,
       ...signedOut,
       'POST /api/v1/registration': () =>
-        problem(422, 'Validation failed', { password: ['has appeared in a known data breach; choose a different one'] }),
+        problem(422, 'Validation failed', {
+          password: ['Password has appeared in a known data breach; choose a different one'],
+        }),
     })
 
     renderApp('/register')
     await fillIn('password1234')
 
-    expect(await screen.findByText(/Password has appeared in a known data breach/)).toBeInTheDocument()
+    expect(await screen.findByText('Password has appeared in a known data breach; choose a different one')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true')
   })
 })

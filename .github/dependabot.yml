@@ -10,3 +10,12 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+- package-ecosystem: npm
+  directory: "/frontend"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10
+  groups:
+    # One PR for routine minor/patch updates instead of one per package
+    frontend-minor-and-patch:
+      update-types: [minor, patch]

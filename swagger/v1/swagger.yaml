@@ -1,0 +1,46 @@
+---
+openapi: 3.0.1
+info:
+  title: Evidex API
+  version: v1
+  description: 'Evidence-based job applications: postings, career library, match reports
+    and application tracking.'
+paths:
+  "/api/v1/status":
+    get:
+      summary: Returns API and database status
+      tags:
+      - Status
+      responses:
+        '200':
+          description: API is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - name
+                - api_version
+                - environment
+                - database
+                - time
+                properties:
+                  name:
+                    type: string
+                    example: Evidex
+                  api_version:
+                    type: string
+                    example: v1
+                  environment:
+                    type: string
+                  database:
+                    type: string
+                    enum:
+                    - ok
+                    - error
+                  time:
+                    type: string
+                    format: date-time
+servers:
+- url: http://localhost:3000
+  description: Local development

@@ -1,0 +1,41 @@
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: #1f2328;
+  background-color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #e6edf3;
+    background-color: #0d1117;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+.container {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+}
+
+.tagline {
+  opacity: 0.75;
+}
+
+.status dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.status dt {
+  font-weight: 600;
+}
+
+.status dd {
+  margin: 0;
+}

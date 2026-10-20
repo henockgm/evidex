@@ -40,5 +40,22 @@ module Evidex
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # The SPA and API share one origin and authenticate with cookies, so the
+    # API-only stack needs cookie and session middleware back. The Rails session
+    # only carries the CSRF token and OmniAuth state; sign-in sessions live in
+    # the database (see Session).
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore,
+      key: "_evidex_state", same_site: :lax, secure: Rails.env.production?, httponly: true
+
+    # Public URL of the SPA, used in email links and OAuth redirects.
+    config.x.app_url = ENV.fetch("APP_URL", "http://localhost:5173")
+
+    # Reject passwords found in known breaches (Have I Been Pwned range API).
+    config.x.pwned_passwords_check = ENV.fetch("PWNED_PASSWORDS_CHECK", "true") == "true"
+
+    # Store used by controller rate limits (Rails.cache unless overridden).
+    config.x.rate_limit_store = nil
   end
 end

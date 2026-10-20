@@ -113,6 +113,11 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      - name: Check API types match the OpenAPI spec
+        run: |
+          npm run gen:api
+          git diff --exit-code src/api/schema.d.ts
+
       - name: Test
         run: npm test
 

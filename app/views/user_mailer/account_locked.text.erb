@@ -1,0 +1,5 @@
+Hi,
+
+After several failed sign-in attempts, your Evidex account is locked until <%= @user.locked_until.utc.strftime("%Y-%m-%d %H:%M UTC") %>.
+
+If this wasn't you, someone may be trying to guess your password. Consider resetting it: <%= @reset_url %>

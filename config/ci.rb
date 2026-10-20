@@ -5,6 +5,7 @@ CI.run do
 
   step "Style: Ruby", "bin/rubocop"
   step "Style: TypeScript", "npm run lint --prefix frontend"
+  step "Docs: OpenAPI spec and API types", "bin/rails rswag:specs:swaggerize > /dev/null && npm run gen:api --prefix frontend"
   step "Types: TypeScript", "npm run typecheck --prefix frontend"
 
   step "Security: Gem audit", "bin/bundler-audit"

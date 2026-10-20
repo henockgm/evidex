@@ -39,6 +39,12 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 
+  # Real rate limiting in tests (Rails.cache is a null store here); cleared before each example.
+  config.x.rate_limit_store = ActiveSupport::Cache::MemoryStore.new
+
+  # The breached-password API is stubbed explicitly in the specs that need it.
+  config.x.pwned_passwords_check = false
+
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 

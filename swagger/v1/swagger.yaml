@@ -6,6 +6,421 @@ info:
   description: 'Evidence-based job applications: postings, career library, match reports
     and application tracking.'
 paths:
+  "/api/v1/me":
+    get:
+      summary: Current user
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: signed-in user
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserEnvelope"
+        '401':
+          description: not signed in
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+    delete:
+      summary: Delete the account and all its data
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '204':
+          description: deleted
+        '422':
+          description: confirmation failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: Required when the account has a password
+                confirm_email:
+                  type: string
+                  description: Required instead of password for Google/Microsoft-only
+                    accounts
+  "/api/v1/me/password":
+    patch:
+      summary: Change password (or add one to a Google/Microsoft-only account)
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Signs out all other sessions. Accounts without a password must
+        have signed in within the last 10 minutes.
+      parameters: []
+      responses:
+        '200':
+          description: changed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserEnvelope"
+        '422':
+          description: wrong current password or invalid new password
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - password
+              properties:
+                current_password:
+                  type: string
+                password:
+                  type: string
+                  minLength: 12
+  "/api/v1/me/sessions":
+    get:
+      summary: List signed-in devices
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - sessions
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Session"
+  "/api/v1/me/sessions/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    delete:
+      summary: Sign out one device
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: revoked
+        '404':
+          description: not one of your sessions
+  "/api/v1/me/sessions/others":
+    delete:
+      summary: Sign out all other devices
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: revoked
+  "/api/v1/me/identities":
+    get:
+      summary: List connected Google/Microsoft accounts
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: identities
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - identities
+                properties:
+                  identities:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Identity"
+  "/api/v1/me/identities/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    delete:
+      summary: Disconnect a Google/Microsoft account
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Refused when it is the account's only sign-in method.
+      responses:
+        '204':
+          description: disconnected
+  "/api/v1/csrf_token":
+    get:
+      summary: Get a CSRF token for state-changing requests
+      tags:
+      - Authentication
+      responses:
+        '200':
+          description: token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - csrf_token
+                properties:
+                  csrf_token:
+                    type: string
+  "/api/v1/auth/providers":
+    get:
+      summary: List enabled Google/Microsoft sign-in providers
+      tags:
+      - Authentication
+      description: Start a provider sign-in with a browser form POST to `path` that
+        includes `authenticity_token`.
+      responses:
+        '200':
+          description: providers
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - providers
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - label
+                      - path
+                      properties:
+                        id:
+                          type: string
+                        label:
+                          type: string
+                        path:
+                          type: string
+  "/api/v1/registration":
+    post:
+      summary: Register with email and password
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      description: Always 202 for a well-formed request, whether or not the email
+        is already registered.
+      parameters: []
+      responses:
+        '202':
+          description: confirmation email sent
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Message"
+        '422':
+          description: invalid password
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email_address
+              - password
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 12
+                  description: 12+ characters, max 72 bytes, not in a known breach
+                name:
+                  type: string
+                  maxLength: 100
+  "/api/v1/session":
+    post:
+      summary: Sign in with email and password
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: signed in; sets the session cookie
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserEnvelope"
+        '401':
+          description: invalid credentials or locked account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email_address
+              - password
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                password:
+                  type: string
+    delete:
+      summary: Sign out
+      tags:
+      - Authentication
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: signed out
+  "/api/v1/email_verification":
+    post:
+      summary: Confirm an email address with the emailed token
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Message"
+        '422':
+          description: invalid or expired token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              properties:
+                token:
+                  type: string
+  "/api/v1/email_verification/resend":
+    post:
+      summary: Resend the confirmation email
+      tags:
+      - Authentication
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '202':
+          description: sent
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Message"
+  "/api/v1/password_reset":
+    post:
+      summary: Request a password reset email
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      description: Always 202, whether or not the account exists.
+      parameters: []
+      responses:
+        '202':
+          description: email sent if the account exists
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Message"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email_address
+              properties:
+                email_address:
+                  type: string
+    patch:
+      summary: Set a new password with the emailed token
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: password reset; all sessions signed out
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Message"
+        '422':
+          description: invalid token or password
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              - password
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 12
   "/api/v1/status":
     get:
       summary: Returns API and database status
@@ -41,6 +456,133 @@ paths:
                   time:
                     type: string
                     format: date-time
+components:
+  securitySchemes:
+    session_cookie:
+      type: apiKey
+      in: cookie
+      name: evidex_session
+      description: Set by POST /api/v1/session or Google/Microsoft sign-in. HttpOnly.
+    csrf_token:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Required on POST/PATCH/DELETE. Get it from GET /api/v1/csrf_token.
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details
+      required:
+      - type
+      - title
+      - status
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    Message:
+      type: object
+      required:
+      - message
+      properties:
+        message:
+          type: string
+    Identity:
+      type: object
+      required:
+      - id
+      - provider
+      - label
+      - created_at
+      properties:
+        id:
+          type: integer
+        provider:
+          type: string
+          enum:
+          - google_oauth2
+          - entra_id
+        label:
+          type: string
+          example: Google
+        email:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    User:
+      type: object
+      required:
+      - id
+      - email_address
+      - email_verified
+      - has_password
+      - identities
+      - created_at
+      properties:
+        id:
+          type: integer
+        email_address:
+          type: string
+          format: email
+        name:
+          type: string
+          nullable: true
+        email_verified:
+          type: boolean
+        has_password:
+          type: boolean
+        identities:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Identity"
+        created_at:
+          type: string
+          format: date-time
+    UserEnvelope:
+      type: object
+      required:
+      - user
+      properties:
+        user:
+          "$ref": "#/components/schemas/User"
+    Session:
+      type: object
+      required:
+      - id
+      - current
+      - created_at
+      - last_active_at
+      properties:
+        id:
+          type: integer
+        current:
+          type: boolean
+        ip_address:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        last_active_at:
+          type: string
+          format: date-time
 servers:
 - url: http://localhost:3000
   description: Local development

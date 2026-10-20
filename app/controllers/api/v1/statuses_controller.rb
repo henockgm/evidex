@@ -1,6 +1,8 @@
 module Api
   module V1
     class StatusesController < BaseController
+      allow_unauthenticated_access
+
       def show
         render json: {
           name: "Evidex",

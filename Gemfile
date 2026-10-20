@@ -8,7 +8,7 @@ gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.22"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -47,15 +47,31 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 end
 
-gem "rspec-rails", "~> 8.0", groups: [ :development, :test ]
-gem "factory_bot_rails", "~> 6.5", groups: [ :development, :test ]
-gem "faker", "~> 3.8", groups: [ :development, :test ]
-
-gem "shoulda-matchers", "~> 8.0", group: :test
-gem "simplecov", "~> 1.3", group: :test
-gem "webmock", "~> 3.34", group: :test
-
+# API documentation (OpenAPI generated from request specs, Swagger UI at /api-docs)
 gem "rswag-api", "~> 2.17"
 gem "rswag-ui", "~> 2.17"
 
-gem "rswag-specs", "~> 2.17", groups: [ :development, :test ]
+# Google and Microsoft sign-in
+gem "omniauth", "~> 2.1"
+gem "omniauth-google-oauth2", "~> 1.2"
+gem "omniauth-entra-id", "~> 3.1"
+gem "omniauth-rails_csrf_protection", "~> 2.0"
+
+group :development, :test do
+  gem "rspec-rails", "~> 8.0"
+  gem "rswag-specs", "~> 2.17"
+  gem "factory_bot_rails", "~> 6.5"
+  gem "faker", "~> 3.8"
+  gem "dotenv-rails", "~> 3.2"
+end
+
+group :development do
+  # Preview sent emails at /letter_opener
+  gem "letter_opener_web", "~> 3.0"
+end
+
+group :test do
+  gem "shoulda-matchers", "~> 8.0"
+  gem "simplecov", "~> 1.3", require: false
+  gem "webmock", "~> 3.34"
+end

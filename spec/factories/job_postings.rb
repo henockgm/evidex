@@ -10,3 +10,11 @@ FactoryBot.define do
     description { "We are looking for a Rails developer with PostgreSQL and RSpec experience." }
   end
 end
+
+FactoryBot.define do
+  factory :requirement do
+    job_posting
+    kind { "required" }
+    sequence(:text) { |n| "Requirement #{n}" }
+  end
+end

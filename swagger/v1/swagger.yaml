@@ -549,6 +549,128 @@ paths:
           description: deleted
         '404':
           description: not one of your postings
+  "/api/v1/job_postings/{job_posting_id}/requirements":
+    parameters:
+    - name: job_posting_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Add a requirement to a posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: added at the end of its kind
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - requirement
+                properties:
+                  requirement:
+                    "$ref": "#/components/schemas/Requirement"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: not one of your postings
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - requirement
+              properties:
+                requirement:
+                  type: object
+                  required:
+                  - kind
+                  - text
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - required
+                      - preferred
+                      - responsibility
+                    text:
+                      type: string
+                      maxLength: 1000
+  "/api/v1/requirements/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Change a requirement's text
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - requirement
+                properties:
+                  requirement:
+                    "$ref": "#/components/schemas/Requirement"
+        '404':
+          description: someone else's requirement
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - requirement
+              properties:
+                requirement:
+                  type: object
+                  required:
+                  - text
+                  properties:
+                    text:
+                      type: string
+    delete:
+      summary: Remove a requirement
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: removed
+        '404':
+          description: someone else's requirement
   "/api/v1/status":
     get:
       summary: Returns API and database status
@@ -725,15 +847,41 @@ components:
         updated_at:
           type: string
           format: date-time
+    Requirement:
+      type: object
+      required:
+      - id
+      - kind
+      - text
+      - position
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+          enum:
+          - required
+          - preferred
+          - responsibility
+        text:
+          type: string
+        position:
+          type: integer
+          description: Order within its kind, starting at 1
     JobPosting:
       allOf:
       - "$ref": "#/components/schemas/JobPostingSummary"
       - type: object
         required:
         - description
+        - requirements
         properties:
           description:
             type: string
+          requirements:
+            type: array
+            items:
+              "$ref": "#/components/schemas/Requirement"
     JobPostingEnvelope:
       type: object
       required:

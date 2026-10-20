@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_135413) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_140111) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -54,6 +54,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_135413) do
     t.index ["user_id"], name: "index_job_postings_on_user_id"
   end
 
+  create_table "requirements", force: :cascade do |t|
+    t.bigint "job_posting_id", null: false
+    t.string "kind", null: false
+    t.text "text", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_posting_id", "kind", "position"], name: "index_requirements_on_job_posting_id_and_kind_and_position"
+    t.index ["job_posting_id"], name: "index_requirements_on_job_posting_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "token_digest", null: false
@@ -82,5 +93,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_135413) do
   add_foreign_key "audit_events", "users"
   add_foreign_key "identities", "users"
   add_foreign_key "job_postings", "users"
+  add_foreign_key "requirements", "job_postings", on_delete: :cascade
   add_foreign_key "sessions", "users"
 end

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { baseRoutes, json, mockApi, problem, renderApp, user } from '../test/render'
@@ -36,9 +36,9 @@ describe('Job postings', () => {
       'GET /api/v1/me': () => json({ user }),
       'POST /api/v1/job_postings': async (request) => {
         saved = await request.json()
-        return json({ job_posting: { ...posting, description: 'Build APIs.' } }, 201)
+        return json({ job_posting: { ...posting, description: 'Build APIs.', requirements: [] } }, 201)
       },
-      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.' } }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.', requirements: [] } }),
     })
 
     renderApp('/postings/new')
@@ -80,7 +80,7 @@ describe('Job postings', () => {
   })
 
   it('edits a posting, sending the changed form', async () => {
-    let current = { ...posting, description: 'Build APIs.' }
+    let current = { ...posting, description: 'Build APIs.', requirements: [] }
     let sent: { job_posting: Record<string, unknown> } | undefined
     mockApi({
       ...baseRoutes,
@@ -111,7 +111,7 @@ describe('Job postings', () => {
     mockApi({
       ...baseRoutes,
       'GET /api/v1/me': () => json({ user }),
-      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.' } }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.', requirements: [] } }),
       'GET /api/v1/job_postings': () => json({ job_postings: [] }),
       'DELETE /api/v1/job_postings/7': () => {
         deleted = true
@@ -126,5 +126,38 @@ describe('Job postings', () => {
 
     expect(await screen.findByText(/No postings yet/)).toBeInTheDocument()
     expect(deleted).toBe(true)
+  })
+
+  it('adds and removes requirements', async () => {
+    type Req = { id: number; kind: string; text: string; position: number }
+    let requirements: Req[] = [{ id: 1, kind: 'required', text: 'Ruby on Rails', position: 1 }]
+    let added: unknown
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: { ...posting, description: 'Build APIs.', requirements } }),
+      'POST /api/v1/job_postings/7/requirements': async (request) => {
+        added = await request.json()
+        const requirement = { id: 2, kind: 'preferred', text: 'pgvector', position: 1 }
+        requirements = [...requirements, requirement]
+        return json({ requirement }, 201)
+      },
+      'DELETE /api/v1/requirements/1': () => {
+        requirements = requirements.filter((r) => r.id !== 1)
+        return new Response(null, { status: 204 })
+      },
+    })
+
+    renderApp('/postings/7')
+    const required = await screen.findByRole('region', { name: 'Required qualifications' })
+    expect(within(required).getByText('Ruby on Rails')).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText('Add to nice to have'), 'pgvector{Enter}')
+    const preferred = screen.getByRole('region', { name: 'Nice to have' })
+    expect(await within(preferred).findByText('pgvector')).toBeInTheDocument()
+    expect(added).toEqual({ requirement: { kind: 'preferred', text: 'pgvector' } })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove "Ruby on Rails"' }))
+    await waitFor(() => expect(screen.queryByText('Ruby on Rails')).not.toBeInTheDocument())
   })
 })

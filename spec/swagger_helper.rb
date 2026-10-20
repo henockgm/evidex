@@ -94,10 +94,26 @@ RSpec.configure do |config|
               updated_at: { type: :string, format: "date-time" }
             }
           },
+          Requirement: {
+            type: :object,
+            required: %w[id kind text position],
+            properties: {
+              id: { type: :integer },
+              kind: { type: :string, enum: Requirement::KINDS },
+              text: { type: :string },
+              position: { type: :integer, description: "Order within its kind, starting at 1" }
+            }
+          },
           JobPosting: {
             allOf: [
               { "$ref" => "#/components/schemas/JobPostingSummary" },
-              { type: :object, required: %w[description], properties: { description: { type: :string } } }
+              {
+                type: :object, required: %w[description requirements],
+                properties: {
+                  description: { type: :string },
+                  requirements: { type: :array, items: { "$ref" => "#/components/schemas/Requirement" } }
+                }
+              }
             ]
           },
           JobPostingEnvelope: {

@@ -912,6 +912,162 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/job_postings/{job_posting_id}/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a requirement to a posting */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        requirement: {
+                            /** @enum {string} */
+                            kind: "required" | "preferred" | "responsibility";
+                            text: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description added at the end of its kind */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            requirement: components["schemas"]["Requirement"];
+                        };
+                    };
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/requirements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a requirement */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description removed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description someone else's requirement */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Change a requirement's text */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        requirement: {
+                            text: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            requirement: components["schemas"]["Requirement"];
+                        };
+                    };
+                };
+                /** @description someone else's requirement */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/status": {
         parameters: {
             query?: never;
@@ -1015,8 +1171,17 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        Requirement: {
+            id: number;
+            /** @enum {string} */
+            kind: "required" | "preferred" | "responsibility";
+            text: string;
+            /** @description Order within its kind, starting at 1 */
+            position: number;
+        };
         JobPosting: components["schemas"]["JobPostingSummary"] & {
             description: string;
+            requirements: components["schemas"]["Requirement"][];
         };
         JobPostingEnvelope: {
             job_posting: components["schemas"]["JobPosting"];

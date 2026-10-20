@@ -8,6 +8,7 @@ export type Problem = components['schemas']['Problem']
 export type JobPostingSummary = components['schemas']['JobPostingSummary']
 export type JobPosting = components['schemas']['JobPosting']
 export type JobPostingInput = components['schemas']['JobPostingInput']
+export type Requirement = components['schemas']['Requirement']
 
 export class ApiError extends Error {
   readonly status: number

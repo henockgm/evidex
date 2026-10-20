@@ -16,7 +16,10 @@ class JobPostingSerializer
       created_at: @job_posting.created_at.iso8601,
       updated_at: @job_posting.updated_at.iso8601
     }
-    json[:description] = @job_posting.description if @include_description
+    if @include_description
+      json[:description] = @job_posting.description
+      json[:requirements] = @job_posting.requirements.map { |requirement| RequirementSerializer.new(requirement) }
+    end
     json
   end
 end

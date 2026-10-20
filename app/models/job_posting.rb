@@ -3,6 +3,7 @@ class JobPosting < ApplicationRecord
   DESCRIPTION_MAX_LENGTH = 100_000
 
   belongs_to :user
+  has_many :requirements, -> { ordered }, dependent: :delete_all, inverse_of: :job_posting
 
   normalizes :title, :company, with: ->(value) { value.squish }
   normalizes :location, :work_model, with: ->(value) { value.squish.presence }

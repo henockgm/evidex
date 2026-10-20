@@ -5,6 +5,7 @@ import { api, unwrap } from '../api/client'
 import { Alert, Button, Card, Spinner } from '../components/ui'
 import { formatDate, workModelLabels } from '../postings/labels'
 import { postingQueryKey, postingsQueryKey } from '../postings/queries'
+import { RequirementsCard } from '../postings/RequirementsCard'
 import { usePosting } from '../postings/usePosting'
 
 export function PostingPage() {
@@ -99,6 +100,8 @@ export function PostingPage() {
           )}
         </dl>
       </Card>
+
+      <RequirementsCard postingId={posting.id} requirements={posting.requirements} />
 
       <Card title="Job ad text">
         <div className="whitespace-pre-wrap text-sm leading-6">{posting.description}</div>

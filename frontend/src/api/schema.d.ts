@@ -334,6 +334,170 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/job_applications/{job_application_id}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_application_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a contact to an application */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_application_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        contact: {
+                            name: string;
+                            role?: string | null;
+                            /** Format: email */
+                            email?: string | null;
+                            phone?: string | null;
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description added */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            contact: components["schemas"]["ApplicationContact"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contacts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a contact */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description removed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description someone else's contact */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a contact */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        contact: {
+                            name?: string;
+                            role?: string | null;
+                            /** Format: email */
+                            email?: string | null;
+                            phone?: string | null;
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            contact: components["schemas"]["ApplicationContact"];
+                        };
+                    };
+                };
+                /** @description someone else's contact */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/csrf_token": {
         parameters: {
             query?: never;
@@ -1387,6 +1551,7 @@ export interface components {
             next_action_on: string | null;
             notes: string | null;
             links: components["schemas"]["ApplicationLink"][];
+            contacts: components["schemas"]["ApplicationContact"][];
             /** @description Statuses this application can move to next */
             available_transitions: components["schemas"]["ApplicationStatus"][];
             /** @description Timeline, oldest first */
@@ -1398,6 +1563,14 @@ export interface components {
                 /** Format: date-time */
                 created_at: string;
             }[];
+        };
+        ApplicationContact: {
+            id: number;
+            name: string;
+            role: string | null;
+            email: string | null;
+            phone: string | null;
+            notes: string | null;
         };
         ApplicationLink: {
             label?: string | null;

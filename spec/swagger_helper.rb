@@ -101,7 +101,7 @@ RSpec.configure do |config|
           },
           JobApplication: {
             type: :object,
-            required: %w[id status available_transitions applied_on next_action next_action_on notes links events],
+            required: %w[id status available_transitions applied_on next_action next_action_on notes links contacts events],
             properties: {
               id: { type: :integer },
               status: { "$ref" => "#/components/schemas/ApplicationStatus" },
@@ -110,6 +110,7 @@ RSpec.configure do |config|
               next_action_on: { type: :string, format: :date, nullable: true },
               notes: { type: :string, nullable: true },
               links: { type: :array, items: { "$ref" => "#/components/schemas/ApplicationLink" } },
+              contacts: { type: :array, items: { "$ref" => "#/components/schemas/ApplicationContact" } },
               available_transitions: {
                 type: :array, items: { "$ref" => "#/components/schemas/ApplicationStatus" },
                 description: "Statuses this application can move to next"
@@ -127,6 +128,17 @@ RSpec.configure do |config|
                   }
                 }
               }
+            }
+          },
+          ApplicationContact: {
+            type: :object, required: %w[id name role email phone notes],
+            properties: {
+              id: { type: :integer },
+              name: { type: :string },
+              role: { type: :string, nullable: true },
+              email: { type: :string, nullable: true },
+              phone: { type: :string, nullable: true },
+              notes: { type: :string, nullable: true }
             }
           },
           ApplicationLink: {

@@ -18,3 +18,12 @@ FactoryBot.define do
     sequence(:text) { |n| "Requirement #{n}" }
   end
 end
+
+FactoryBot.define do
+  factory :application_contact do
+    job_application { create(:job_posting).job_application } # created with the posting
+    name { "Ana Virtanen" }
+    role { "Recruiter" }
+    email { "ana@example.com" }
+  end
+end

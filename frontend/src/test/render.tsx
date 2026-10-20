@@ -66,4 +66,5 @@ export const emptyApplicationDetails = {
   next_action_on: null,
   notes: null,
   links: [] as { label?: string | null; url: string }[],
+  contacts: [],
 }

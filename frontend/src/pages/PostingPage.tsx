@@ -8,6 +8,7 @@ import { postingQueryKey, postingsQueryKey } from '../postings/queries'
 import { RequirementsCard } from '../postings/RequirementsCard'
 import { ApplicationCard } from '../applications/ApplicationCard'
 import { ApplicationDetailsCard } from '../applications/ApplicationDetailsCard'
+import { ContactsCard } from '../applications/ContactsCard'
 import { StatusBadge } from '../applications/StatusBadge'
 import { usePosting } from '../postings/usePosting'
 
@@ -110,6 +111,8 @@ export function PostingPage() {
       <ApplicationCard postingId={posting.id} application={posting.application} />
 
       <ApplicationDetailsCard postingId={posting.id} application={posting.application} />
+
+      <ContactsCard postingId={posting.id} applicationId={posting.application.id} contacts={posting.application.contacts} />
 
       <RequirementsCard postingId={posting.id} requirements={posting.requirements} />
 

@@ -23,6 +23,7 @@ Rails.application.routes.draw do
       resource :job_posting_import, only: :create
       resources :job_applications, only: :update do
         post :transitions, on: :member, action: :transition
+        resources :contacts, only: %i[create update destroy], shallow: true, controller: "application_contacts"
       end
       resources :job_postings, only: %i[index show create update destroy] do
         resources :requirements, only: %i[create update destroy], shallow: true

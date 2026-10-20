@@ -22,6 +22,8 @@ class JobApplication < ApplicationRecord
   belongs_to :job_posting
   has_many :events, -> { order(:created_at, :id) }, class_name: "JobApplicationEvent", dependent: :delete_all,
     inverse_of: :job_application
+  has_many :contacts, -> { order(:created_at, :id) }, class_name: "ApplicationContact", dependent: :delete_all,
+    inverse_of: :job_application
 
   normalizes :next_action, with: ->(value) { value.squish.presence }
   normalizes :notes, with: ->(value) { value.strip.presence }

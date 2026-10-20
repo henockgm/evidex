@@ -13,6 +13,7 @@ export type JobApplication = components['schemas']['JobApplication']
 export type ApplicationStatus = components['schemas']['ApplicationStatus']
 export type JobApplicationInput = components['schemas']['JobApplicationInput']
 export type ApplicationLink = components['schemas']['ApplicationLink']
+export type ApplicationContact = components['schemas']['ApplicationContact']
 
 export class ApiError extends Error {
   readonly status: number

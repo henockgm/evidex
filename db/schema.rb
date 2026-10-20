@@ -10,10 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_173608) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_173826) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
+
+  create_table "application_contacts", force: :cascade do |t|
+    t.bigint "job_application_id", null: false
+    t.string "name", null: false
+    t.string "role"
+    t.string "email"
+    t.string "phone"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_application_id"], name: "index_application_contacts_on_job_application_id"
+  end
 
   create_table "audit_events", force: :cascade do |t|
     t.bigint "user_id"
@@ -116,6 +128,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_173608) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "application_contacts", "job_applications", on_delete: :cascade
   add_foreign_key "audit_events", "users"
   add_foreign_key "identities", "users"
   add_foreign_key "job_application_events", "job_applications", on_delete: :cascade

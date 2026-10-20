@@ -13,6 +13,7 @@ class JobApplicationSerializer
       next_action_on: @application.next_action_on&.iso8601,
       notes: @application.notes,
       links: @application.links,
+      contacts: @application.contacts.map { |contact| ApplicationContactSerializer.new(contact) },
       events: @application.events.map do |event|
         {
           id: event.id,

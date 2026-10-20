@@ -179,6 +179,152 @@ paths:
       responses:
         '204':
           description: disconnected
+  "/api/v1/job_applications/{job_application_id}/contacts":
+    parameters:
+    - name: job_application_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Add a contact to an application
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: added
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - contact
+                properties:
+                  contact:
+                    "$ref": "#/components/schemas/ApplicationContact"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - contact
+              properties:
+                contact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    role:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    email:
+                      type: string
+                      format: email
+                      nullable: true
+                    phone:
+                      type: string
+                      nullable: true
+                      maxLength: 40
+                    notes:
+                      type: string
+                      nullable: true
+                      maxLength: 2000
+                  required:
+                  - name
+  "/api/v1/contacts/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update a contact
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - contact
+                properties:
+                  contact:
+                    "$ref": "#/components/schemas/ApplicationContact"
+        '404':
+          description: someone else's contact
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - contact
+              properties:
+                contact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    role:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    email:
+                      type: string
+                      format: email
+                      nullable: true
+                    phone:
+                      type: string
+                      nullable: true
+                      maxLength: 40
+                    notes:
+                      type: string
+                      nullable: true
+                      maxLength: 2000
+    delete:
+      summary: Remove a contact
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: removed
+        '404':
+          description: someone else's contact
   "/api/v1/csrf_token":
     get:
       summary: Get a CSRF token for state-changing requests
@@ -1023,6 +1169,7 @@ components:
       - next_action_on
       - notes
       - links
+      - contacts
       - events
       properties:
         id:
@@ -1047,6 +1194,10 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/ApplicationLink"
+        contacts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApplicationContact"
         available_transitions:
           type: array
           items:
@@ -1076,6 +1227,32 @@ components:
               created_at:
                 type: string
                 format: date-time
+    ApplicationContact:
+      type: object
+      required:
+      - id
+      - name
+      - role
+      - email
+      - phone
+      - notes
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
     ApplicationLink:
       type: object
       required:

@@ -943,6 +943,16 @@ export interface paths {
                                 next_action_on: string;
                                 overdue: boolean;
                             }[];
+                            /** @description In applied with no status change for EVIDEX_NO_REPLY_DAYS days (default 21), longest wait first */
+                            no_reply: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                job_application_id: number;
+                                /** Format: date */
+                                applied_on: string;
+                                days_waiting: number;
+                            }[];
                             recent_activity: {
                                 job_posting_id: number;
                                 title: string;

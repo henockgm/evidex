@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { api, unwrap, type ApplicationStatus } from '../api/client'
@@ -7,6 +7,7 @@ import { statusLabels } from '../applications/labels'
 import { useMe } from '../auth/useAuth'
 import { Alert, Button, Card, Spinner } from '../components/ui'
 import { formatDate } from '../postings/labels'
+import { postingListsQueryKey } from '../postings/queries'
 
 const statuses = Object.keys(statusLabels) as ApplicationStatus[]
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -72,7 +73,7 @@ export function DashboardPage() {
                 All postings ({dashboard.total}) →
               </Link>
             </div>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
               {statuses.map((status) => (
                 <li key={status}>
                   <Link
@@ -133,6 +134,15 @@ export function DashboardPage() {
             </Card>
           </div>
 
+          {dashboard.no_reply.length > 0 && (
+            <Card
+              title="No reply yet"
+              description="Applied a while ago with no news. Follow up, or close them as no response to keep your pipeline honest."
+            >
+              <NoReplyList items={dashboard.no_reply} />
+            </Card>
+          )}
+
           <Card title="Recent activity">
             <BriefList
               empty="No activity yet."
@@ -153,6 +163,65 @@ export function DashboardPage() {
         </>
       )}
     </div>
+  )
+}
+
+interface NoReplyItem {
+  job_posting_id: number
+  job_application_id: number
+  title: string
+  company: string
+  applied_on: string
+  days_waiting: number
+}
+
+function NoReplyList({ items }: { items: NoReplyItem[] }) {
+  const queryClient = useQueryClient()
+  const close = useMutation({
+    mutationFn: (applicationId: number) =>
+      unwrap(
+        api.POST('/api/v1/job_applications/{id}/transitions', {
+          params: { path: { id: applicationId } },
+          body: { to_status: 'no_response', note: 'No reply from the employer' },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      void queryClient.invalidateQueries({ queryKey: postingListsQueryKey })
+    },
+  })
+
+  return (
+    <>
+      {close.isError && (
+        <div className="mb-3">
+          <Alert tone="error">{close.error.message}</Alert>
+        </div>
+      )}
+      <ul className="-mx-2 divide-y divide-slate-100 dark:divide-slate-800">
+        {items.map((item) => (
+          <li key={item.job_application_id} className="flex flex-wrap items-center justify-between gap-3 px-2 py-2 text-sm">
+            <Link to={`/postings/${item.job_posting_id}`} className="hover:underline">
+              <span className="font-medium">{item.title}</span>
+              <span className="text-slate-500"> · {item.company}</span>
+            </Link>
+            <span className="flex items-center gap-3">
+              <span className="text-slate-600 dark:text-slate-400">
+                Applied {formatDate(item.applied_on)} · {item.days_waiting} days
+              </span>
+              <Button
+                variant="secondary"
+                disabled={close.isPending}
+                onClick={() => close.mutate(item.job_application_id)}
+                aria-label={`Mark ${item.title} as no response`}
+              >
+                Mark as no response
+              </Button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 

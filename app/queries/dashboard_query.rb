@@ -4,6 +4,11 @@ class DashboardQuery
   DEADLINE_WINDOW = 14.days
   NEXT_ACTION_WINDOW = 7.days
   INTERVIEW_WINDOW = 14.days
+
+  # Days in "applied" without any status change before an application is listed as "No reply yet".
+  def self.no_reply_days
+    Integer(ENV.fetch("EVIDEX_NO_REPLY_DAYS", 21))
+  end
   LIST_LIMIT = 5
 
   def initialize(user, today: Date.current)
@@ -18,6 +23,7 @@ class DashboardQuery
       upcoming_interviews: upcoming_interviews,
       upcoming_deadlines: upcoming_deadlines,
       next_actions: next_actions,
+      no_reply: no_reply,
       recent_activity: recent_activity
     }
   end
@@ -52,6 +58,25 @@ class DashboardQuery
           posting_brief(interview.job_application.job_posting).merge(
             interview_id: interview.id, round: interview.round, format: interview.format,
             scheduled_at: interview.scheduled_at.iso8601
+          )
+        end
+    end
+
+    # Waiting in "applied" since the last status change, longest first.
+    def no_reply
+      cutoff = (@today - self.class.no_reply_days).end_of_day
+      applications.where(status: "applied").joins(:events)
+        .select("job_applications.*, MAX(job_application_events.created_at) AS waiting_since")
+        .group("job_applications.id")
+        .having("MAX(job_application_events.created_at) <= ?", cutoff)
+        .order("waiting_since ASC, job_applications.id ASC").limit(LIST_LIMIT)
+        .includes(:job_posting)
+        .map do |application|
+          waiting_since = application.waiting_since.to_date
+          posting_brief(application.job_posting).merge(
+            job_application_id: application.id,
+            applied_on: (application.applied_on || waiting_since).iso8601,
+            days_waiting: (@today - waiting_since).to_i
           )
         end
     end

@@ -587,6 +587,7 @@ paths:
                 - upcoming_interviews
                 - upcoming_deadlines
                 - next_actions
+                - no_reply
                 - recent_activity
                 properties:
                   status_counts:
@@ -700,6 +701,33 @@ paths:
                           format: date
                         overdue:
                           type: boolean
+                  no_reply:
+                    type: array
+                    description: In applied with no status change for EVIDEX_NO_REPLY_DAYS
+                      days (default 21), longest wait first
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - job_application_id
+                      - applied_on
+                      - days_waiting
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        job_application_id:
+                          type: integer
+                        applied_on:
+                          type: string
+                          format: date
+                        days_waiting:
+                          type: integer
                   recent_activity:
                     type: array
                     items:

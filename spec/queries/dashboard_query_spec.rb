@@ -69,4 +69,31 @@ RSpec.describe DashboardQuery do
 
     expect(dashboard[:upcoming_interviews].map { |i| [ i[:title], i[:round] ] }).to eq([ %w[Sooner Technical], [ "Later", "1st round" ] ])
   end
+
+  # Saved and applied `days_ago`, with nothing since.
+  def apply(posting, days_ago:)
+    posting.job_application.transition_to!("applied")
+    posting.job_application.events.update_all(created_at: (today - days_ago).in_time_zone.change(hour: 12))
+  end
+
+  it "lists applications waiting in applied for 21+ days, longest first" do
+    long_wait = posting(title: "Long wait")
+    apply(long_wait, days_ago: 40)
+    apply(posting(title: "Short wait"), days_ago: 25)
+    apply(posting(title: "Recent"), days_ago: 5)
+    moved_on = posting(title: "Moved on")
+    apply(moved_on, days_ago: 30)
+    moved_on.job_application.transition_to!("interviewing")
+
+    expect(dashboard[:no_reply].map { |a| [ a[:title], a[:days_waiting] ] }).to eq([ [ "Long wait", 40 ], [ "Short wait", 25 ] ])
+    expect(dashboard[:no_reply].first).to include(job_application_id: long_wait.job_application.id, applied_on: today.iso8601)
+  end
+
+  it "uses EVIDEX_NO_REPLY_DAYS" do
+    apply(posting(title: "Ten days"), days_ago: 10)
+
+    with_env("EVIDEX_NO_REPLY_DAYS" => "7") do
+      expect(described_class.new(user, today:).call[:no_reply].pluck(:title)).to eq([ "Ten days" ])
+    end
+  end
 end

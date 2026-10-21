@@ -15,7 +15,7 @@ RSpec.describe "Dashboard API", type: :request do
 
       response "200", "dashboard" do
         schema type: :object,
-          required: %w[status_counts total upcoming_interviews upcoming_deadlines next_actions recent_activity],
+          required: %w[status_counts total upcoming_interviews upcoming_deadlines next_actions no_reply recent_activity],
           properties: {
             status_counts: {
               type: :object, required: JobApplication::STATUSES,
@@ -38,6 +38,13 @@ RSpec.describe "Dashboard API", type: :request do
               items: { type: :object, required: %w[job_posting_id title company next_action next_action_on overdue],
                        properties: brief.merge(next_action: { type: :string, nullable: true },
                          next_action_on: { type: :string, format: :date }, overdue: { type: :boolean }) }
+            },
+            no_reply: {
+              type: :array,
+              description: "In applied with no status change for EVIDEX_NO_REPLY_DAYS days (default 21), longest wait first",
+              items: { type: :object, required: %w[job_posting_id title company job_application_id applied_on days_waiting],
+                       properties: brief.merge(job_application_id: { type: :integer }, applied_on: { type: :string, format: :date },
+                         days_waiting: { type: :integer }) }
             },
             recent_activity: {
               type: :array,

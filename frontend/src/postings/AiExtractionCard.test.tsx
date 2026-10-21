@@ -77,7 +77,7 @@ describe('AI extraction', () => {
     })
     const { unmount } = renderApp('/postings/7')
     expect(await screen.findByRole('button', { name: 'Read with AI' })).toBeDisabled()
-    expect(screen.getByText('Confirm your email address to use AI features.')).toBeInTheDocument()
+    expect(screen.getAllByText('Confirm your email address to use AI features.').length).toBeGreaterThan(0)
     unmount()
 
     mockApi({

@@ -10,10 +10,38 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_094210) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_112532) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "ai_usages", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -49,6 +77,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_094210) do
     t.datetime "created_at", null: false
     t.index ["user_id", "created_at"], name: "index_audit_events_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_audit_events_on_user_id"
+  end
+
+  create_table "document_chunks", force: :cascade do |t|
+    t.bigint "document_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "position", null: false
+    t.integer "page"
+    t.string "section"
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.vector "embedding", limit: 384
+    t.string "embedding_model"
+    t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(section, ''::character varying))::text || ' '::text) || content))", stored: true
+    t.index ["document_id", "position"], name: "index_document_chunks_on_document_id_and_position", unique: true
+    t.index ["document_id"], name: "index_document_chunks_on_document_id"
+    t.index ["embedding"], name: "index_document_chunks_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["search_vector"], name: "index_document_chunks_on_search_vector", using: :gin
+    t.index ["user_id"], name: "index_document_chunks_on_user_id"
+  end
+
+  create_table "documents", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "title", null: false
+    t.string "kind", default: "cv", null: false
+    t.boolean "primary", default: false, null: false
+    t.string "status", default: "pending", null: false
+    t.string "error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "text_pages", default: [], null: false
+    t.integer "character_count", default: 0, null: false
+    t.datetime "processed_at"
+    t.index ["user_id", "created_at"], name: "index_documents_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_documents_on_user_id"
+    t.index ["user_id"], name: "index_documents_one_primary_per_user", unique: true, where: "\"primary\""
   end
 
   create_table "identities", force: :cascade do |t|
@@ -163,9 +226,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_094210) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_usages", "users", on_delete: :cascade
   add_foreign_key "application_contacts", "job_applications", on_delete: :cascade
   add_foreign_key "audit_events", "users"
+  add_foreign_key "document_chunks", "documents", on_delete: :cascade
+  add_foreign_key "document_chunks", "users", on_delete: :cascade
+  add_foreign_key "documents", "users", on_delete: :cascade
   add_foreign_key "identities", "users"
   add_foreign_key "interviews", "job_applications", on_delete: :cascade
   add_foreign_key "job_application_events", "job_applications", on_delete: :cascade

@@ -54,17 +54,14 @@ module Ai
     end
 
     def call
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      data, response = Client.structured(
-        system: format(SYSTEM, today: @today.iso8601),
-        prompt: "<job_ad>\n#{@posting.description}\n</job_ad>",
-        schema: SCHEMA
-      )
-      record_usage(response, started)
+      data, _response = AiUsage.track(user: @posting.user, feature: "posting_extraction") do
+        Client.structured(
+          system: format(SYSTEM, today: @today.iso8601),
+          prompt: "<job_ad>\n#{@posting.description}\n</job_ad>",
+          schema: SCHEMA
+        )
+      end
       to_result(data)
-    rescue Client::Error
-      record_usage(nil, started, succeeded: false)
-      raise
     end
 
     private
@@ -90,18 +87,6 @@ module Ai
         Date.iso8601(value) if value.present?
       rescue Date::Error
         nil
-      end
-
-      def record_usage(response, started, succeeded: true)
-        AiUsage.create!(
-          user: @posting.user,
-          feature: "posting_extraction",
-          model: response&.model.to_s.presence || Client.model,
-          input_tokens: response&.usage&.input_tokens.to_i,
-          output_tokens: response&.usage&.output_tokens.to_i,
-          latency_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round,
-          succeeded:
-        )
       end
   end
 end

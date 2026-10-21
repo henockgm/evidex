@@ -21,6 +21,7 @@ Rails.application.routes.draw do
       resource :password_reset, only: %i[create update]
 
       resource :dashboard, only: :show
+      resources :match_reports, only: :show
       get "library/search", to: "library_searches#show", as: :library_search
       resources :documents, only: %i[index show create update destroy] do
         get :file, on: :member, action: :download
@@ -37,6 +38,8 @@ Rails.application.routes.draw do
       resources :job_postings, only: %i[index show create update destroy] do
         resources :requirements, only: %i[create update destroy], shallow: true
         resource :extraction, only: :create, controller: "job_posting_extractions"
+        resources :match_reports, only: :create
+        get :match_report, on: :member, to: "match_reports#latest"
       end
 
       resource :me, only: %i[show destroy], controller: "me" do

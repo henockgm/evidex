@@ -1654,6 +1654,110 @@ paths:
                             enum:
                             - semantic
                             - keyword
+  "/api/v1/job_postings/{job_posting_id}/match_reports":
+    parameters:
+    - name: job_posting_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Start a match report for a posting
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: |
+        Runs in the background; poll GET /api/v1/job_postings/{id}/match_report until status is "done" or "failed".
+        Each run is a new version. Needs a confirmed email, requirements on the posting, at least one processed
+        document, and counts toward the daily AI limit.
+      responses:
+        '202':
+          description: started
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '422':
+          description: no requirements or empty library
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '409':
+          description: a report is already being prepared
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+  "/api/v1/job_postings/{id}/match_report":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: The latest match report for a posting
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: latest report
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '404':
+          description: no report yet
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+  "/api/v1/match_reports/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: A specific match report version
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: report
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '404':
+          description: someone else's report
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/job_postings/{job_posting_id}/requirements":
     parameters:
     - name: job_posting_id
@@ -2048,6 +2152,136 @@ components:
               created_at:
                 type: string
                 format: date-time
+    MatchReport:
+      type: object
+      required:
+      - id
+      - job_posting_id
+      - version
+      - status
+      - error
+      - model
+      - counts
+      - strengths
+      - gaps
+      - created_at
+      - completed_at
+      - matches
+      properties:
+        id:
+          type: integer
+        job_posting_id:
+          type: integer
+        version:
+          type: integer
+        status:
+          type: string
+          enum:
+          - pending
+          - running
+          - done
+          - failed
+        error:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        counts:
+          type: object
+          required:
+          - evidenced
+          - transferable
+          - gap
+          properties:
+            evidenced:
+              type: integer
+            transferable:
+              type: integer
+            gap:
+              type: integer
+        strengths:
+          type: array
+          items:
+            type: string
+        gaps:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        matches:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RequirementMatch"
+    RequirementMatch:
+      type: object
+      required:
+      - id
+      - requirement_id
+      - requirement_kind
+      - requirement_text
+      - verdict
+      - reasoning
+      - citations
+      properties:
+        id:
+          type: integer
+        requirement_id:
+          type: integer
+          nullable: true
+          description: null once the requirement is deleted
+        requirement_kind:
+          type: string
+          enum:
+          - required
+          - preferred
+          - responsibility
+        requirement_text:
+          type: string
+          description: As it was when the report ran
+        verdict:
+          type: string
+          enum:
+          - evidenced
+          - transferable
+          - gap
+        reasoning:
+          type: string
+          nullable: true
+        citations:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - document_id
+            - document_title
+            - page
+            - section
+            - excerpt
+            properties:
+              id:
+                type: integer
+              document_id:
+                type: integer
+                nullable: true
+              document_title:
+                type: string
+              page:
+                type: integer
+                nullable: true
+              section:
+                type: string
+                nullable: true
+              excerpt:
+                type: string
+                description: The cited passage, saved when the report ran
     Document:
       type: object
       required:

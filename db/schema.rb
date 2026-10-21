@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_112532) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_125515) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -190,6 +190,51 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_112532) do
     t.index ["user_id"], name: "index_job_postings_on_user_id"
   end
 
+  create_table "match_citations", force: :cascade do |t|
+    t.bigint "requirement_match_id", null: false
+    t.bigint "document_chunk_id"
+    t.bigint "document_id"
+    t.string "document_title", null: false
+    t.integer "page"
+    t.string "section"
+    t.text "excerpt", null: false
+    t.datetime "created_at", null: false
+    t.index ["document_chunk_id"], name: "index_match_citations_on_document_chunk_id"
+    t.index ["document_id"], name: "index_match_citations_on_document_id"
+    t.index ["requirement_match_id"], name: "index_match_citations_on_requirement_match_id"
+  end
+
+  create_table "match_reports", force: :cascade do |t|
+    t.bigint "job_posting_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "version", null: false
+    t.string "status", default: "pending", null: false
+    t.string "error"
+    t.string "model"
+    t.jsonb "strengths", default: [], null: false
+    t.jsonb "gaps", default: [], null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_posting_id", "version"], name: "index_match_reports_on_job_posting_id_and_version", unique: true
+    t.index ["job_posting_id"], name: "index_match_reports_on_job_posting_id"
+    t.index ["user_id"], name: "index_match_reports_on_user_id"
+  end
+
+  create_table "requirement_matches", force: :cascade do |t|
+    t.bigint "match_report_id", null: false
+    t.bigint "requirement_id"
+    t.string "requirement_kind", null: false
+    t.text "requirement_text", null: false
+    t.string "verdict", null: false
+    t.text "reasoning"
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["match_report_id"], name: "index_requirement_matches_on_match_report_id"
+    t.index ["requirement_id"], name: "index_requirement_matches_on_requirement_id"
+  end
+
   create_table "requirements", force: :cascade do |t|
     t.bigint "job_posting_id", null: false
     t.string "kind", null: false
@@ -240,6 +285,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_112532) do
   add_foreign_key "job_applications", "job_postings", on_delete: :cascade
   add_foreign_key "job_applications", "users"
   add_foreign_key "job_postings", "users"
+  add_foreign_key "match_citations", "document_chunks", on_delete: :nullify
+  add_foreign_key "match_citations", "documents", on_delete: :nullify
+  add_foreign_key "match_citations", "requirement_matches", on_delete: :cascade
+  add_foreign_key "match_reports", "job_postings", on_delete: :cascade
+  add_foreign_key "match_reports", "users", on_delete: :cascade
+  add_foreign_key "requirement_matches", "match_reports", on_delete: :cascade
+  add_foreign_key "requirement_matches", "requirements", on_delete: :nullify
   add_foreign_key "requirements", "job_postings", on_delete: :cascade
   add_foreign_key "sessions", "users"
 end

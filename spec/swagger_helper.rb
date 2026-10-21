@@ -132,6 +132,48 @@ RSpec.configure do |config|
               }
             }
           },
+          MatchReport: {
+            type: :object,
+            required: %w[id job_posting_id version status error model counts strengths gaps created_at completed_at matches],
+            properties: {
+              id: { type: :integer },
+              job_posting_id: { type: :integer },
+              version: { type: :integer },
+              status: { type: :string, enum: MatchReport::STATUSES },
+              error: { type: :string, nullable: true },
+              model: { type: :string, nullable: true },
+              counts: { type: :object, required: RequirementMatch::VERDICTS,
+                        properties: RequirementMatch::VERDICTS.index_with { { type: :integer } } },
+              strengths: { type: :array, items: { type: :string } },
+              gaps: { type: :array, items: { type: :string } },
+              created_at: { type: :string, format: "date-time" },
+              completed_at: { type: :string, format: "date-time", nullable: true },
+              matches: { type: :array, items: { "$ref" => "#/components/schemas/RequirementMatch" } }
+            }
+          },
+          RequirementMatch: {
+            type: :object,
+            required: %w[id requirement_id requirement_kind requirement_text verdict reasoning citations],
+            properties: {
+              id: { type: :integer },
+              requirement_id: { type: :integer, nullable: true, description: "null once the requirement is deleted" },
+              requirement_kind: { type: :string, enum: Requirement::KINDS },
+              requirement_text: { type: :string, description: "As it was when the report ran" },
+              verdict: { type: :string, enum: RequirementMatch::VERDICTS },
+              reasoning: { type: :string, nullable: true },
+              citations: { type: :array, items: {
+                type: :object, required: %w[id document_id document_title page section excerpt],
+                properties: {
+                  id: { type: :integer },
+                  document_id: { type: :integer, nullable: true },
+                  document_title: { type: :string },
+                  page: { type: :integer, nullable: true },
+                  section: { type: :string, nullable: true },
+                  excerpt: { type: :string, description: "The cited passage, saved when the report ran" }
+                }
+              } }
+            }
+          },
           Document: {
             type: :object,
             required: %w[id title kind primary status error filename content_type byte_size page_count character_count chunk_count processed_at created_at updated_at],

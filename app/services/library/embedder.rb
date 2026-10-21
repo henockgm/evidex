@@ -21,6 +21,12 @@ module Library
     end
 
     def model_name = backend.model_name
+
+    # Cosine distance above which a passage counts as unrelated to a query.
+    def max_distance
+      ENV["EVIDEX_SEARCH_MAX_DISTANCE"].presence&.to_f || backend.default_max_distance
+    end
+
     def embed_passages(texts) = backend.embed_passages(texts)
     def embed_query(text) = backend.embed_query(text)
 
@@ -35,6 +41,10 @@ module Library
       end
 
       def model_name = MODEL
+
+      # Measured on sample CVs: related passages scored 0.13-0.19,
+      # unrelated queries 0.20 and above.
+      def default_max_distance = 0.2
 
       # e5 models expect "passage: " / "query: " prefixes.
       def embed_passages(texts)
@@ -59,6 +69,7 @@ module Library
     # Good enough to test ranking without downloading a model.
     class Fake
       def model_name = "fake"
+      def default_max_distance = 0.9
 
       def embed_passages(texts) = texts.map { |text| vector(text) }
       def embed_query(text) = vector(text)

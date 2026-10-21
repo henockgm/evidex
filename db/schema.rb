@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_112338) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_112532) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -89,9 +89,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_112338) do
     t.datetime "created_at", null: false
     t.vector "embedding", limit: 384
     t.string "embedding_model"
+    t.virtual "search_vector", type: :tsvector, as: "to_tsvector('simple'::regconfig, (((COALESCE(section, ''::character varying))::text || ' '::text) || content))", stored: true
     t.index ["document_id", "position"], name: "index_document_chunks_on_document_id_and_position", unique: true
     t.index ["document_id"], name: "index_document_chunks_on_document_id"
     t.index ["embedding"], name: "index_document_chunks_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["search_vector"], name: "index_document_chunks_on_search_vector", using: :gin
     t.index ["user_id"], name: "index_document_chunks_on_user_id"
   end
 

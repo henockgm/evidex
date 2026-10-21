@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { api, unwrap, type Document } from '../api/client'
 import { Alert, Button, Card, Spinner } from '../components/ui'
+import { LibrarySearch } from '../library/LibrarySearch'
 import { UploadForm } from '../library/UploadForm'
 import { documentStatusLabels, formatBytes, kindLabels, libraryQueryKey } from '../library/labels'
 
@@ -31,6 +32,12 @@ export function LibraryPage() {
       <Card title="Upload a document">
         <UploadForm />
       </Card>
+
+      {documents?.some((document) => document.status === 'ready') && (
+        <Card title="Search your library" description="Finds passages by meaning as well as exact words, in English or Finnish.">
+          <LibrarySearch />
+        </Card>
+      )}
 
       {isPending && <Spinner />}
       {error && <Alert tone="error">{error.message}</Alert>}

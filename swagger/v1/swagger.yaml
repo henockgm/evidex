@@ -1591,6 +1591,69 @@ paths:
           description: deleted
         '404':
           description: not one of your postings
+  "/api/v1/library/search":
+    get:
+      summary: Search your library by meaning and by words
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+      description: 'Hybrid search: vector similarity and full-text matches merged
+        with Reciprocal Rank Fusion. Only your own, fully processed documents are
+        searched.'
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: matching passages, best first
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - results
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - chunk_id
+                      - document_id
+                      - document_title
+                      - page
+                      - section
+                      - content
+                      - score
+                      - matched_by
+                      properties:
+                        chunk_id:
+                          type: integer
+                        document_id:
+                          type: integer
+                        document_title:
+                          type: string
+                        page:
+                          type: integer
+                          nullable: true
+                        section:
+                          type: string
+                          nullable: true
+                        content:
+                          type: string
+                        score:
+                          type: number
+                        matched_by:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                            - semantic
+                            - keyword
   "/api/v1/job_postings/{job_posting_id}/requirements":
     parameters:
     - name: job_posting_id

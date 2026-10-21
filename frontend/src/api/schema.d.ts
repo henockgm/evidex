@@ -2017,6 +2017,58 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/library/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search your library by meaning and by words
+         * @description Hybrid search: vector similarity and full-text matches merged with Reciprocal Rank Fusion. Only your own, fully processed documents are searched.
+         */
+        get: {
+            parameters: {
+                query: {
+                    q: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description matching passages, best first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            results: {
+                                chunk_id: number;
+                                document_id: number;
+                                document_title: string;
+                                page: number | null;
+                                section: string | null;
+                                content: string;
+                                score: number;
+                                matched_by: ("semantic" | "keyword")[];
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_postings/{job_posting_id}/requirements": {
         parameters: {
             query?: never;

@@ -135,4 +135,33 @@ describe('Career library', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     await waitFor(() => expect(retried).toBe(true))
   })
+
+  it('searches the library and highlights the words', async () => {
+    let searched: string | null = null
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/documents': () => json({ documents: [{ ...cv, status: 'ready' }] }),
+      'GET /api/v1/library/search': (request) => {
+        searched = new URL(request.url).searchParams.get('q')
+        return json({
+          results: [
+            {
+              chunk_id: 9, document_id: 1, document_title: 'CV 2026', page: 2, section: 'Skills',
+              content: 'Skills\n\nRuby, Rails, PostgreSQL, RSpec', score: 0.0328, matched_by: ['semantic', 'keyword'],
+            },
+          ],
+        })
+      },
+    })
+
+    renderApp('/library')
+    await userEvent.type(await screen.findByLabelText('Search your library'), 'postgresql skills{Enter}')
+
+    const results = await screen.findByRole('list', { name: 'Search results' })
+    expect(searched).toBe('postgresql skills')
+    expect(results).toHaveTextContent('CV 2026· page 2· Skills· words and meaning')
+    expect(results.querySelector('mark')).toHaveTextContent('Skills')
+    expect(results).toHaveTextContent('Skills · Ruby, Rails, PostgreSQL, RSpec')
+  })
 })

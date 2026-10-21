@@ -102,7 +102,7 @@ RSpec.configure do |config|
           },
           JobApplication: {
             type: :object,
-            required: %w[id status available_transitions applied_on next_action next_action_on notes links contacts events],
+            required: %w[id status available_transitions applied_on next_action next_action_on notes links contacts interviews events],
             properties: {
               id: { type: :integer },
               status: { "$ref" => "#/components/schemas/ApplicationStatus" },
@@ -112,6 +112,7 @@ RSpec.configure do |config|
               notes: { type: :string, nullable: true },
               links: { type: :array, items: { "$ref" => "#/components/schemas/ApplicationLink" } },
               contacts: { type: :array, items: { "$ref" => "#/components/schemas/ApplicationContact" } },
+              interviews: { type: :array, description: "Oldest first", items: { "$ref" => "#/components/schemas/Interview" } },
               available_transitions: {
                 type: :array, items: { "$ref" => "#/components/schemas/ApplicationStatus" },
                 description: "Statuses this application can move to next"
@@ -129,6 +130,18 @@ RSpec.configure do |config|
                   }
                 }
               }
+            }
+          },
+          Interview: {
+            type: :object, required: %w[id round scheduled_at format location status notes],
+            properties: {
+              id: { type: :integer },
+              round: { type: :string, nullable: true },
+              scheduled_at: { type: :string, format: "date-time" },
+              format: { type: :string, enum: Interview::FORMATS, nullable: true },
+              location: { type: :string, nullable: true },
+              status: { type: :string, enum: Interview::STATUSES },
+              notes: { type: :string, nullable: true }
             }
           },
           ApplicationContact: {

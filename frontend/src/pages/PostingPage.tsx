@@ -10,6 +10,7 @@ import { AiExtractionCard } from '../postings/AiExtractionCard'
 import { ApplicationCard } from '../applications/ApplicationCard'
 import { ApplicationDetailsCard } from '../applications/ApplicationDetailsCard'
 import { ContactsCard } from '../applications/ContactsCard'
+import { InterviewsCard } from '../applications/InterviewsCard'
 import { StatusBadge } from '../applications/StatusBadge'
 import { usePosting } from '../postings/usePosting'
 
@@ -125,6 +126,8 @@ export function PostingPage() {
       </Card>
 
       <ApplicationCard postingId={posting.id} application={posting.application} />
+
+      <InterviewsCard postingId={posting.id} applicationId={posting.application.id} interviews={posting.application.interviews} />
 
       <ApplicationDetailsCard postingId={posting.id} application={posting.application} />
 

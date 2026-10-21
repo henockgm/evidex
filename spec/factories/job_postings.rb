@@ -27,3 +27,12 @@ FactoryBot.define do
     email { "ana@example.com" }
   end
 end
+
+FactoryBot.define do
+  factory :interview do
+    job_application { create(:job_posting).job_application }
+    round { "1st round" }
+    scheduled_at { 3.days.from_now.change(hour: 14) }
+    format { "video" }
+  end
+end

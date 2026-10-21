@@ -15,13 +15,19 @@ RSpec.describe "Dashboard API", type: :request do
 
       response "200", "dashboard" do
         schema type: :object,
-          required: %w[status_counts total upcoming_deadlines next_actions recent_activity],
+          required: %w[status_counts total upcoming_interviews upcoming_deadlines next_actions recent_activity],
           properties: {
             status_counts: {
               type: :object, required: JobApplication::STATUSES,
               properties: JobApplication::STATUSES.index_with { { type: :integer } }
             },
             total: { type: :integer },
+            upcoming_interviews: {
+              type: :array, description: "Scheduled within #{DashboardQuery::INTERVIEW_WINDOW.in_days.to_i} days",
+              items: { type: :object, required: %w[job_posting_id title company interview_id round format scheduled_at],
+                       properties: brief.merge(interview_id: { type: :integer }, round: { type: :string, nullable: true },
+                         format: { type: :string, nullable: true }, scheduled_at: { type: :string, format: "date-time" }) }
+            },
             upcoming_deadlines: {
               type: :array, description: "Not applied yet, deadline within #{DashboardQuery::DEADLINE_WINDOW.in_days.to_i} days",
               items: { type: :object, required: %w[job_posting_id title company deadline],

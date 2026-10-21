@@ -58,4 +58,15 @@ RSpec.describe DashboardQuery do
       [ %w[First applied], %w[Second saved], %w[First saved] ]
     )
   end
+
+  it "lists scheduled interviews in the next 14 days, soonest first" do
+    later = posting(title: "Later").job_application
+    sooner = posting(title: "Sooner").job_application
+    create(:interview, job_application: later, scheduled_at: (today + 5).to_time.change(hour: 10))
+    create(:interview, job_application: sooner, scheduled_at: (today + 1).to_time.change(hour: 10), round: "Technical")
+    create(:interview, job_application: sooner, scheduled_at: (today + 30).to_time)
+    create(:interview, job_application: later, scheduled_at: (today + 2).to_time, status: "cancelled")
+
+    expect(dashboard[:upcoming_interviews].map { |i| [ i[:title], i[:round] ] }).to eq([ %w[Sooner Technical], [ "Later", "1st round" ] ])
+  end
 end

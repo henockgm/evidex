@@ -10,6 +10,7 @@ import { formatDate } from '../postings/labels'
 
 const statuses = Object.keys(statusLabels) as ApplicationStatus[]
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+const interviewTime = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 export function DashboardPage() {
   const { data: user } = useMe()
@@ -86,6 +87,19 @@ export function DashboardPage() {
               ))}
             </ul>
           </section>
+
+          <Card title="Upcoming interviews" description="Scheduled in the next 14 days.">
+            <BriefList
+              empty="No interviews in the next two weeks."
+              items={dashboard.upcoming_interviews.map((item) => ({
+                key: item.interview_id,
+                postingId: item.job_posting_id,
+                title: item.title,
+                company: [item.company, item.round].filter(Boolean).join(' · '),
+                aside: interviewTime.format(new Date(item.scheduled_at)),
+              }))}
+            />
+          </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <Card title="Upcoming deadlines" description="Postings you haven't applied to yet, due in the next 14 days.">

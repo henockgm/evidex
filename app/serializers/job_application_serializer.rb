@@ -14,6 +14,7 @@ class JobApplicationSerializer
       notes: @application.notes,
       links: @application.links,
       contacts: @application.contacts.map { |contact| ApplicationContactSerializer.new(contact) },
+      interviews: @application.interviews.map { |interview| InterviewSerializer.new(interview) },
       events: @application.events.map do |event|
         {
           id: event.id,

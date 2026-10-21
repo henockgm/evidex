@@ -914,6 +914,17 @@ export interface paths {
                                 withdrawn: number;
                             };
                             total: number;
+                            /** @description Scheduled within 14 days */
+                            upcoming_interviews: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                interview_id: number;
+                                round: string | null;
+                                format: string | null;
+                                /** Format: date-time */
+                                scheduled_at: string;
+                            }[];
                             /** @description Not applied yet, deadline within 14 days */
                             upcoming_deadlines: {
                                 job_posting_id: number;
@@ -952,6 +963,180 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_applications/{job_application_id}/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_application_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an interview
+         * @description Also moves the application to interviewing when that is an allowed next status.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_application_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        interview: {
+                            round?: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 with a time zone offset
+                             */
+                            scheduled_at: string;
+                            /** @enum {string|null} */
+                            format?: "video" | "phone" | "onsite" | "other" | null;
+                            /** @description Address or meeting link */
+                            location?: string | null;
+                            /** @enum {string} */
+                            status?: "scheduled" | "completed" | "cancelled";
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description added */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            interview: components["schemas"]["Interview"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove an interview */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description removed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update an interview (e.g. mark it completed) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        interview: {
+                            round?: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 with a time zone offset
+                             */
+                            scheduled_at?: string;
+                            /** @enum {string|null} */
+                            format?: "video" | "phone" | "onsite" | "other" | null;
+                            /** @description Address or meeting link */
+                            location?: string | null;
+                            /** @enum {string} */
+                            status?: "scheduled" | "completed" | "cancelled";
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            interview: components["schemas"]["Interview"];
+                        };
+                    };
+                };
+                /** @description someone else's interview */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/api/v1/job_applications/{id}": {
@@ -1727,6 +1912,8 @@ export interface components {
             notes: string | null;
             links: components["schemas"]["ApplicationLink"][];
             contacts: components["schemas"]["ApplicationContact"][];
+            /** @description Oldest first */
+            interviews: components["schemas"]["Interview"][];
             /** @description Statuses this application can move to next */
             available_transitions: components["schemas"]["ApplicationStatus"][];
             /** @description Timeline, oldest first */
@@ -1738,6 +1925,18 @@ export interface components {
                 /** Format: date-time */
                 created_at: string;
             }[];
+        };
+        Interview: {
+            id: number;
+            round: string | null;
+            /** Format: date-time */
+            scheduled_at: string;
+            /** @enum {string|null} */
+            format: "video" | "phone" | "onsite" | "other" | null;
+            location: string | null;
+            /** @enum {string} */
+            status: "scheduled" | "completed" | "cancelled";
+            notes: string | null;
         };
         ApplicationContact: {
             id: number;

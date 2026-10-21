@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_174728) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_094210) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -62,6 +62,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_174728) do
     t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
     t.index ["user_id", "provider"], name: "index_identities_on_user_id_and_provider", unique: true
     t.index ["user_id"], name: "index_identities_on_user_id"
+  end
+
+  create_table "interviews", force: :cascade do |t|
+    t.bigint "job_application_id", null: false
+    t.string "round"
+    t.datetime "scheduled_at", null: false
+    t.string "format"
+    t.string "location"
+    t.string "status", default: "scheduled", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_application_id", "scheduled_at"], name: "index_interviews_on_job_application_id_and_scheduled_at"
+    t.index ["job_application_id"], name: "index_interviews_on_job_application_id"
+    t.index ["status", "scheduled_at"], name: "index_interviews_on_status_and_scheduled_at"
   end
 
   create_table "job_application_events", force: :cascade do |t|
@@ -152,6 +167,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_174728) do
   add_foreign_key "application_contacts", "job_applications", on_delete: :cascade
   add_foreign_key "audit_events", "users"
   add_foreign_key "identities", "users"
+  add_foreign_key "interviews", "job_applications", on_delete: :cascade
   add_foreign_key "job_application_events", "job_applications", on_delete: :cascade
   add_foreign_key "job_applications", "job_postings", on_delete: :cascade
   add_foreign_key "job_applications", "users"

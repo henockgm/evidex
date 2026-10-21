@@ -13,6 +13,9 @@ describe('Dashboard', () => {
         json({
           status_counts: statusCounts,
           total: 8,
+          upcoming_interviews: [
+            { job_posting_id: 4, title: 'Platform Engineer', company: 'Beta', interview_id: 9, round: 'Technical', format: 'video', scheduled_at: '2026-10-23T11:00:00Z' },
+          ],
           upcoming_deadlines: [{ job_posting_id: 1, title: 'Rails Developer', company: 'Acme', deadline: '2026-10-25' }],
           next_actions: [
             { job_posting_id: 2, title: 'Platform Engineer', company: 'Beta', next_action: 'Send portfolio', next_action_on: '2026-10-18', overdue: true },
@@ -35,6 +38,7 @@ describe('Dashboard', () => {
     expect(screen.getByText('Send portfolio')).toBeInTheDocument()
     expect(screen.getByText(/Overdue · Oct 18, 2026/)).toBeInTheDocument()
     expect(screen.getByText('Backend Developer')).toBeInTheDocument()
+    expect(screen.getByText(/Beta · Technical/)).toBeInTheDocument()
   })
 
   it('invites the user to add a first posting', async () => {
@@ -45,6 +49,7 @@ describe('Dashboard', () => {
         json({
           status_counts: { saved: 0, preparing: 0, applied: 0, interviewing: 0, offer: 0, accepted: 0, rejected: 0, no_response: 0, withdrawn: 0 },
           total: 0,
+          upcoming_interviews: [],
           upcoming_deadlines: [],
           next_actions: [],
           recent_activity: [],

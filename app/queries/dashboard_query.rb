@@ -3,6 +3,7 @@ class DashboardQuery
   OPEN_STATUSES = %w[saved preparing].freeze # not applied yet, so the deadline still matters
   DEADLINE_WINDOW = 14.days
   NEXT_ACTION_WINDOW = 7.days
+  INTERVIEW_WINDOW = 14.days
   LIST_LIMIT = 5
 
   def initialize(user, today: Date.current)
@@ -14,6 +15,7 @@ class DashboardQuery
     {
       status_counts: status_counts,
       total: postings.count,
+      upcoming_interviews: upcoming_interviews,
       upcoming_deadlines: upcoming_deadlines,
       next_actions: next_actions,
       recent_activity: recent_activity
@@ -39,6 +41,19 @@ class DashboardQuery
         .where(job_applications: { status: OPEN_STATUSES }, deadline: @today..(@today + DEADLINE_WINDOW))
         .order(:deadline, :id).limit(LIST_LIMIT)
         .map { |posting| posting_brief(posting).merge(deadline: posting.deadline.iso8601) }
+    end
+
+    def upcoming_interviews
+      Interview.upcoming.joins(:job_application).where(job_applications: { user_id: @user.id })
+        .where(scheduled_at: ..(@today + INTERVIEW_WINDOW).end_of_day)
+        .includes(job_application: :job_posting)
+        .order(:scheduled_at, :id).limit(LIST_LIMIT)
+        .map do |interview|
+          posting_brief(interview.job_application.job_posting).merge(
+            interview_id: interview.id, round: interview.round, format: interview.format,
+            scheduled_at: interview.scheduled_at.iso8601
+          )
+        end
     end
 
     # Overdue ones included, so nothing slips.

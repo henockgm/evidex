@@ -14,6 +14,7 @@ export type ApplicationStatus = components['schemas']['ApplicationStatus']
 export type JobApplicationInput = components['schemas']['JobApplicationInput']
 export type ApplicationLink = components['schemas']['ApplicationLink']
 export type ApplicationContact = components['schemas']['ApplicationContact']
+export type Interview = components['schemas']['Interview']
 
 export class ApiError extends Error {
   readonly status: number

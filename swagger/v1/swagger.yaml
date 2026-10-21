@@ -584,6 +584,7 @@ paths:
                 required:
                 - status_counts
                 - total
+                - upcoming_interviews
                 - upcoming_deadlines
                 - next_actions
                 - recent_activity
@@ -621,6 +622,37 @@ paths:
                         type: integer
                   total:
                     type: integer
+                  upcoming_interviews:
+                    type: array
+                    description: Scheduled within 14 days
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - interview_id
+                      - round
+                      - format
+                      - scheduled_at
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        interview_id:
+                          type: integer
+                        round:
+                          type: string
+                          nullable: true
+                        format:
+                          type: string
+                          nullable: true
+                        scheduled_at:
+                          type: string
+                          format: date-time
                   upcoming_deadlines:
                     type: array
                     description: Not applied yet, deadline within 14 days
@@ -694,6 +726,174 @@ paths:
                         created_at:
                           type: string
                           format: date-time
+  "/api/v1/job_applications/{job_application_id}/interviews":
+    parameters:
+    - name: job_application_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Add an interview
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Also moves the application to interviewing when that is an allowed
+        next status.
+      parameters: []
+      responses:
+        '201':
+          description: added
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - interview
+                properties:
+                  interview:
+                    "$ref": "#/components/schemas/Interview"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - interview
+              properties:
+                interview:
+                  type: object
+                  properties:
+                    round:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    scheduled_at:
+                      type: string
+                      format: date-time
+                      description: ISO 8601 with a time zone offset
+                    format:
+                      type: string
+                      enum:
+                      - video
+                      - phone
+                      - onsite
+                      - other
+                      nullable: true
+                    location:
+                      type: string
+                      nullable: true
+                      maxLength: 500
+                      description: Address or meeting link
+                    status:
+                      type: string
+                      enum:
+                      - scheduled
+                      - completed
+                      - cancelled
+                    notes:
+                      type: string
+                      nullable: true
+                  required:
+                  - scheduled_at
+  "/api/v1/interviews/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update an interview (e.g. mark it completed)
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - interview
+                properties:
+                  interview:
+                    "$ref": "#/components/schemas/Interview"
+        '404':
+          description: someone else's interview
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - interview
+              properties:
+                interview:
+                  type: object
+                  properties:
+                    round:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    scheduled_at:
+                      type: string
+                      format: date-time
+                      description: ISO 8601 with a time zone offset
+                    format:
+                      type: string
+                      enum:
+                      - video
+                      - phone
+                      - onsite
+                      - other
+                      nullable: true
+                    location:
+                      type: string
+                      nullable: true
+                      maxLength: 500
+                      description: Address or meeting link
+                    status:
+                      type: string
+                      enum:
+                      - scheduled
+                      - completed
+                      - cancelled
+                    notes:
+                      type: string
+                      nullable: true
+    delete:
+      summary: Remove an interview
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: removed
   "/api/v1/job_applications/{id}":
     parameters:
     - name: id
@@ -1417,6 +1617,7 @@ components:
       - notes
       - links
       - contacts
+      - interviews
       - events
       properties:
         id:
@@ -1445,6 +1646,11 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/ApplicationContact"
+        interviews:
+          type: array
+          description: Oldest first
+          items:
+            "$ref": "#/components/schemas/Interview"
         available_transitions:
           type: array
           items:
@@ -1474,6 +1680,45 @@ components:
               created_at:
                 type: string
                 format: date-time
+    Interview:
+      type: object
+      required:
+      - id
+      - round
+      - scheduled_at
+      - format
+      - location
+      - status
+      - notes
+      properties:
+        id:
+          type: integer
+        round:
+          type: string
+          nullable: true
+        scheduled_at:
+          type: string
+          format: date-time
+        format:
+          type: string
+          enum:
+          - video
+          - phone
+          - onsite
+          - other
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - scheduled
+          - completed
+          - cancelled
+        notes:
+          type: string
+          nullable: true
     ApplicationContact:
       type: object
       required:

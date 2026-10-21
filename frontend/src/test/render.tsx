@@ -77,4 +77,5 @@ export const emptyApplicationDetails = {
   notes: null,
   links: [] as { label?: string | null; url: string }[],
   contacts: [],
+  interviews: [],
 }

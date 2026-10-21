@@ -30,6 +30,7 @@ class JobApplication < ApplicationRecord
     inverse_of: :job_application
   has_many :contacts, -> { order(:created_at, :id) }, class_name: "ApplicationContact", dependent: :delete_all,
     inverse_of: :job_application
+  has_many :interviews, -> { order(:scheduled_at, :id) }, dependent: :delete_all, inverse_of: :job_application
 
   normalizes :next_action, with: ->(value) { value.squish.presence }
   normalizes :notes, with: ->(value) { value.strip.presence }

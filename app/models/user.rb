@@ -12,6 +12,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :delete_all
   has_many :identities, dependent: :delete_all
   has_many :audit_events, dependent: :delete_all
+  has_many :job_postings, dependent: :destroy
 
   normalizes :email_address, with: ->(email) { email.strip.downcase }
 

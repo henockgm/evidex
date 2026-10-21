@@ -5,6 +5,16 @@ export type User = components['schemas']['User']
 export type Identity = components['schemas']['Identity']
 export type Session = components['schemas']['Session']
 export type Problem = components['schemas']['Problem']
+export type JobPostingSummary = components['schemas']['JobPostingSummary']
+export type JobPosting = components['schemas']['JobPosting']
+export type JobPostingInput = components['schemas']['JobPostingInput']
+export type Requirement = components['schemas']['Requirement']
+export type JobApplication = components['schemas']['JobApplication']
+export type ApplicationStatus = components['schemas']['ApplicationStatus']
+export type JobApplicationInput = components['schemas']['JobApplicationInput']
+export type ApplicationLink = components['schemas']['ApplicationLink']
+export type ApplicationContact = components['schemas']['ApplicationContact']
+export type Interview = components['schemas']['Interview']
 
 export class ApiError extends Error {
   readonly status: number

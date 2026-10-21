@@ -10,10 +10,35 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_102723) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_094210) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
+
+  create_table "ai_usages", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "feature", null: false
+    t.string "model", null: false
+    t.integer "input_tokens", default: 0, null: false
+    t.integer "output_tokens", default: 0, null: false
+    t.integer "latency_ms"
+    t.boolean "succeeded", default: true, null: false
+    t.datetime "created_at", null: false
+    t.index ["user_id", "feature", "created_at"], name: "index_ai_usages_on_user_id_and_feature_and_created_at"
+    t.index ["user_id"], name: "index_ai_usages_on_user_id"
+  end
+
+  create_table "application_contacts", force: :cascade do |t|
+    t.bigint "job_application_id", null: false
+    t.string "name", null: false
+    t.string "role"
+    t.string "email"
+    t.string "phone"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_application_id"], name: "index_application_contacts_on_job_application_id"
+  end
 
   create_table "audit_events", force: :cascade do |t|
     t.bigint "user_id"
@@ -37,6 +62,80 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_102723) do
     t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
     t.index ["user_id", "provider"], name: "index_identities_on_user_id_and_provider", unique: true
     t.index ["user_id"], name: "index_identities_on_user_id"
+  end
+
+  create_table "interviews", force: :cascade do |t|
+    t.bigint "job_application_id", null: false
+    t.string "round"
+    t.datetime "scheduled_at", null: false
+    t.string "format"
+    t.string "location"
+    t.string "status", default: "scheduled", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_application_id", "scheduled_at"], name: "index_interviews_on_job_application_id_and_scheduled_at"
+    t.index ["job_application_id"], name: "index_interviews_on_job_application_id"
+    t.index ["status", "scheduled_at"], name: "index_interviews_on_status_and_scheduled_at"
+  end
+
+  create_table "job_application_events", force: :cascade do |t|
+    t.bigint "job_application_id", null: false
+    t.string "from_status"
+    t.string "to_status", null: false
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.index ["job_application_id"], name: "index_job_application_events_on_job_application_id"
+  end
+
+  create_table "job_applications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "job_posting_id", null: false
+    t.string "status", default: "saved", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.date "applied_on"
+    t.string "next_action"
+    t.date "next_action_on"
+    t.text "notes"
+    t.jsonb "links", default: [], null: false
+    t.index ["job_posting_id"], name: "index_job_applications_on_job_posting_id", unique: true
+    t.index ["user_id", "next_action_on"], name: "index_job_applications_on_user_id_and_next_action_on"
+    t.index ["user_id", "status"], name: "index_job_applications_on_user_id_and_status"
+    t.index ["user_id"], name: "index_job_applications_on_user_id"
+  end
+
+  create_table "job_postings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "title", null: false
+    t.string "company", null: false
+    t.string "location"
+    t.string "work_model"
+    t.date "deadline"
+    t.string "source_url"
+    t.text "description", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "employment_type"
+    t.string "seniority"
+    t.string "salary"
+    t.jsonb "keywords", default: [], null: false
+    t.string "extraction_status", default: "none", null: false
+    t.string "extraction_error"
+    t.datetime "extracted_at"
+    t.index ["user_id", "created_at"], name: "index_job_postings_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_job_postings_on_user_id"
+  end
+
+  create_table "requirements", force: :cascade do |t|
+    t.bigint "job_posting_id", null: false
+    t.string "kind", null: false
+    t.text "text", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_posting_id", "kind", "position"], name: "index_requirements_on_job_posting_id_and_kind_and_position"
+    t.index ["job_posting_id"], name: "index_requirements_on_job_posting_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -64,7 +163,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_102723) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "ai_usages", "users", on_delete: :cascade
+  add_foreign_key "application_contacts", "job_applications", on_delete: :cascade
   add_foreign_key "audit_events", "users"
   add_foreign_key "identities", "users"
+  add_foreign_key "interviews", "job_applications", on_delete: :cascade
+  add_foreign_key "job_application_events", "job_applications", on_delete: :cascade
+  add_foreign_key "job_applications", "job_postings", on_delete: :cascade
+  add_foreign_key "job_applications", "users"
+  add_foreign_key "job_postings", "users"
+  add_foreign_key "requirements", "job_postings", on_delete: :cascade
   add_foreign_key "sessions", "users"
 end

@@ -34,6 +34,7 @@ export const user = {
   name: 'Ada',
   email_verified: true,
   has_password: true,
+  ai_configured: true,
   identities: [],
   created_at: '2026-10-20T10:00:00Z',
 }
@@ -57,4 +58,24 @@ export const baseRoutes: Record<string, Handler> = {
   'GET /api/v1/csrf_token': () => json({ csrf_token: 'csrf-123' }),
   'GET /api/v1/auth/providers': () =>
     json({ providers: [{ id: 'google_oauth2', label: 'Google', path: '/auth/google_oauth2' }] }),
+}
+
+/** Fields a posting's detail response has before AI extraction runs. */
+export const postingDetailDefaults = {
+  employment_type: null,
+  seniority: null,
+  salary: null,
+  keywords: [] as string[],
+  extraction: { status: 'none' as const, error: null, extracted_at: null },
+}
+
+/** Application fields a fresh application has before the user fills anything in. */
+export const emptyApplicationDetails = {
+  applied_on: null,
+  next_action: null,
+  next_action_on: null,
+  notes: null,
+  links: [] as { label?: string | null; url: string }[],
+  contacts: [],
+  interviews: [],
 }

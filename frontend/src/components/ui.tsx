@@ -1,4 +1,10 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react'
 import { useId } from 'react'
 
 const variants = {
@@ -21,12 +27,22 @@ export function Button({
   )
 }
 
-export function Field({
+const controlClass =
+  'block w-full rounded-md border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 aria-invalid:ring-red-500 dark:bg-slate-900 dark:ring-slate-700'
+
+interface FieldProps {
+  label: string
+  errors?: string[]
+  hint?: string
+}
+
+/** Label, hint and error list around one form control; renders the control via `children(props)`. */
+function FieldShell({
   label,
   errors = [],
   hint,
-  ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; errors?: string[]; hint?: string }) {
+  children,
+}: FieldProps & { children: (props: { id: string; 'aria-invalid'?: true; 'aria-describedby'?: string }) => ReactNode }) {
   const id = useId()
   const describedBy = errors.length ? `${id}-errors` : hint ? `${id}-hint` : undefined
 
@@ -35,13 +51,7 @@ export function Field({
       <label htmlFor={id} className="block text-sm font-medium">
         {label}
       </label>
-      <input
-        id={id}
-        aria-invalid={errors.length > 0 || undefined}
-        aria-describedby={describedBy}
-        className="block w-full rounded-md border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 aria-invalid:ring-red-500 dark:bg-slate-900 dark:ring-slate-700"
-        {...props}
-      />
+      {children({ id, 'aria-invalid': errors.length > 0 || undefined, 'aria-describedby': describedBy })}
       {hint && !errors.length && (
         <p id={`${id}-hint`} className="text-xs text-slate-500 dark:text-slate-400">
           {hint}
@@ -50,13 +60,49 @@ export function Field({
       {errors.length > 0 && (
         <ul id={`${id}-errors`} className="text-xs text-red-600 dark:text-red-400">
           {errors.map((error) => (
-            <li key={error}>
-              {error}
-            </li>
+            <li key={error}>{error}</li>
           ))}
         </ul>
       )}
     </div>
+  )
+}
+
+export function Field({ label, errors, hint, ...props }: InputHTMLAttributes<HTMLInputElement> & FieldProps) {
+  return (
+    <FieldShell label={label} errors={errors} hint={hint}>
+      {(control) => <input className={controlClass} {...control} {...props} />}
+    </FieldShell>
+  )
+}
+
+export function TextArea({ label, errors, hint, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & FieldProps) {
+  return (
+    <FieldShell label={label} errors={errors} hint={hint}>
+      {(control) => <textarea className={controlClass} {...control} {...props} />}
+    </FieldShell>
+  )
+}
+
+export function Select({
+  label,
+  errors,
+  hint,
+  options,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & FieldProps & { options: { value: string; label: string }[] }) {
+  return (
+    <FieldShell label={label} errors={errors} hint={hint}>
+      {(control) => (
+        <select className={controlClass} {...control} {...props}>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </FieldShell>
   )
 }
 

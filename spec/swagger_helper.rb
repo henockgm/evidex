@@ -64,13 +64,14 @@ RSpec.configure do |config|
           },
           User: {
             type: :object,
-            required: %w[id email_address email_verified has_password identities created_at],
+            required: %w[id email_address email_verified has_password ai_configured identities created_at],
             properties: {
               id: { type: :integer },
               email_address: { type: :string, format: :email },
               name: { type: :string, nullable: true },
               email_verified: { type: :boolean },
               has_password: { type: :boolean },
+              ai_configured: { type: :boolean, description: "The server has an AI provider configured" },
               identities: { type: :array, items: { "$ref" => "#/components/schemas/Identity" } },
               created_at: { type: :string, format: "date-time" }
             }
@@ -78,6 +79,150 @@ RSpec.configure do |config|
           UserEnvelope: {
             type: :object, required: %w[user],
             properties: { user: { "$ref" => "#/components/schemas/User" } }
+          },
+          JobPostingSummary: {
+            type: :object,
+            required: %w[id title company status created_at updated_at],
+            properties: {
+              id: { type: :integer },
+              title: { type: :string },
+              company: { type: :string },
+              location: { type: :string, nullable: true },
+              work_model: { type: :string, enum: JobPosting::WORK_MODELS, nullable: true },
+              deadline: { type: :string, format: :date, nullable: true },
+              source_url: { type: :string, nullable: true },
+              status: { "$ref" => "#/components/schemas/ApplicationStatus" },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" }
+            }
+          },
+          ApplicationStatus: {
+            type: :string, enum: JobApplication::STATUSES,
+            description: "saved → preparing → applied → interviewing → offer, or rejected / withdrawn"
+          },
+          JobApplication: {
+            type: :object,
+            required: %w[id status available_transitions applied_on next_action next_action_on notes links contacts interviews events],
+            properties: {
+              id: { type: :integer },
+              status: { "$ref" => "#/components/schemas/ApplicationStatus" },
+              applied_on: { type: :string, format: :date, nullable: true },
+              next_action: { type: :string, nullable: true },
+              next_action_on: { type: :string, format: :date, nullable: true },
+              notes: { type: :string, nullable: true },
+              links: { type: :array, items: { "$ref" => "#/components/schemas/ApplicationLink" } },
+              contacts: { type: :array, items: { "$ref" => "#/components/schemas/ApplicationContact" } },
+              interviews: { type: :array, description: "Oldest first", items: { "$ref" => "#/components/schemas/Interview" } },
+              available_transitions: {
+                type: :array, items: { "$ref" => "#/components/schemas/ApplicationStatus" },
+                description: "Statuses this application can move to next"
+              },
+              events: {
+                type: :array, description: "Timeline, oldest first",
+                items: {
+                  type: :object, required: %w[id to_status created_at],
+                  properties: {
+                    id: { type: :integer },
+                    from_status: { allOf: [ { "$ref" => "#/components/schemas/ApplicationStatus" } ], nullable: true },
+                    to_status: { "$ref" => "#/components/schemas/ApplicationStatus" },
+                    note: { type: :string, nullable: true },
+                    created_at: { type: :string, format: "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          Interview: {
+            type: :object, required: %w[id round scheduled_at format location status notes],
+            properties: {
+              id: { type: :integer },
+              round: { type: :string, nullable: true },
+              scheduled_at: { type: :string, format: "date-time" },
+              format: { type: :string, enum: Interview::FORMATS, nullable: true },
+              location: { type: :string, nullable: true },
+              status: { type: :string, enum: Interview::STATUSES },
+              notes: { type: :string, nullable: true }
+            }
+          },
+          ApplicationContact: {
+            type: :object, required: %w[id name role email phone notes],
+            properties: {
+              id: { type: :integer },
+              name: { type: :string },
+              role: { type: :string, nullable: true },
+              email: { type: :string, nullable: true },
+              phone: { type: :string, nullable: true },
+              notes: { type: :string, nullable: true }
+            }
+          },
+          ApplicationLink: {
+            type: :object, required: %w[url],
+            properties: { label: { type: :string, nullable: true, maxLength: 100 }, url: { type: :string, format: :uri } }
+          },
+          JobApplicationInput: {
+            type: :object,
+            properties: {
+              applied_on: { type: :string, format: :date, nullable: true },
+              next_action: { type: :string, nullable: true, maxLength: 200 },
+              next_action_on: { type: :string, format: :date, nullable: true },
+              notes: { type: :string, nullable: true, maxLength: JobApplication::NOTES_MAX_LENGTH },
+              links: { type: :array, maxItems: JobApplication::MAX_LINKS, items: { "$ref" => "#/components/schemas/ApplicationLink" } }
+            }
+          },
+          Requirement: {
+            type: :object,
+            required: %w[id kind text position],
+            properties: {
+              id: { type: :integer },
+              kind: { type: :string, enum: Requirement::KINDS },
+              text: { type: :string },
+              position: { type: :integer, description: "Order within its kind, starting at 1" }
+            }
+          },
+          JobPosting: {
+            allOf: [
+              { "$ref" => "#/components/schemas/JobPostingSummary" },
+              {
+                type: :object, required: %w[description requirements application employment_type seniority salary keywords extraction],
+                properties: {
+                  description: { type: :string },
+                  employment_type: { type: :string, nullable: true },
+                  seniority: { type: :string, nullable: true },
+                  salary: { type: :string, nullable: true, description: "As stated in the ad" },
+                  keywords: { type: :array, items: { type: :string } },
+                  extraction: {
+                    type: :object, required: %w[status error extracted_at],
+                    properties: {
+                      status: { type: :string, enum: JobPosting::EXTRACTION_STATUSES },
+                      error: { type: :string, nullable: true },
+                      extracted_at: { type: :string, format: "date-time", nullable: true }
+                    }
+                  },
+                  requirements: { type: :array, items: { "$ref" => "#/components/schemas/Requirement" } },
+                  application: { "$ref" => "#/components/schemas/JobApplication" }
+                }
+              }
+            ]
+          },
+          JobPostingEnvelope: {
+            type: :object, required: %w[job_posting],
+            properties: { job_posting: { "$ref" => "#/components/schemas/JobPosting" } }
+          },
+          JobPostingInput: {
+            type: :object,
+            description: "title, company and description are required when creating.",
+            properties: {
+              title: { type: :string, maxLength: 200 },
+              company: { type: :string, maxLength: 200 },
+              location: { type: :string, maxLength: 200, nullable: true },
+              work_model: { type: :string, enum: JobPosting::WORK_MODELS, nullable: true },
+              employment_type: { type: :string, maxLength: 200, nullable: true },
+              seniority: { type: :string, maxLength: 200, nullable: true },
+              salary: { type: :string, maxLength: 200, nullable: true },
+              deadline: { type: :string, format: :date, nullable: true },
+              source_url: { type: :string, format: :uri, nullable: true },
+              description: { type: :string, maxLength: JobPosting::DESCRIPTION_MAX_LENGTH, description: "The posting text" }
+            }
           },
           Session: {
             type: :object,

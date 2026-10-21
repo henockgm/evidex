@@ -179,6 +179,152 @@ paths:
       responses:
         '204':
           description: disconnected
+  "/api/v1/job_applications/{job_application_id}/contacts":
+    parameters:
+    - name: job_application_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Add a contact to an application
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: added
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - contact
+                properties:
+                  contact:
+                    "$ref": "#/components/schemas/ApplicationContact"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - contact
+              properties:
+                contact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    role:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    email:
+                      type: string
+                      format: email
+                      nullable: true
+                    phone:
+                      type: string
+                      nullable: true
+                      maxLength: 40
+                    notes:
+                      type: string
+                      nullable: true
+                      maxLength: 2000
+                  required:
+                  - name
+  "/api/v1/contacts/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update a contact
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - contact
+                properties:
+                  contact:
+                    "$ref": "#/components/schemas/ApplicationContact"
+        '404':
+          description: someone else's contact
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - contact
+              properties:
+                contact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    role:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    email:
+                      type: string
+                      format: email
+                      nullable: true
+                    phone:
+                      type: string
+                      nullable: true
+                      maxLength: 40
+                    notes:
+                      type: string
+                      nullable: true
+                      maxLength: 2000
+    delete:
+      summary: Remove a contact
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: removed
+        '404':
+          description: someone else's contact
   "/api/v1/csrf_token":
     get:
       summary: Get a CSRF token for state-changing requests
@@ -421,6 +567,875 @@ paths:
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/dashboard":
+    get:
+      summary: Counts per status, upcoming deadlines, next actions and recent activity
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status_counts
+                - total
+                - upcoming_interviews
+                - upcoming_deadlines
+                - next_actions
+                - no_reply
+                - recent_activity
+                properties:
+                  status_counts:
+                    type: object
+                    required:
+                    - saved
+                    - preparing
+                    - applied
+                    - interviewing
+                    - offer
+                    - accepted
+                    - rejected
+                    - no_response
+                    - withdrawn
+                    properties:
+                      saved:
+                        type: integer
+                      preparing:
+                        type: integer
+                      applied:
+                        type: integer
+                      interviewing:
+                        type: integer
+                      offer:
+                        type: integer
+                      accepted:
+                        type: integer
+                      rejected:
+                        type: integer
+                      no_response:
+                        type: integer
+                      withdrawn:
+                        type: integer
+                  total:
+                    type: integer
+                  upcoming_interviews:
+                    type: array
+                    description: Scheduled within 14 days
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - interview_id
+                      - round
+                      - format
+                      - scheduled_at
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        interview_id:
+                          type: integer
+                        round:
+                          type: string
+                          nullable: true
+                        format:
+                          type: string
+                          nullable: true
+                        scheduled_at:
+                          type: string
+                          format: date-time
+                  upcoming_deadlines:
+                    type: array
+                    description: Not applied yet, deadline within 14 days
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - deadline
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        deadline:
+                          type: string
+                          format: date
+                  next_actions:
+                    type: array
+                    description: Due within 7 days, overdue included
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - next_action
+                      - next_action_on
+                      - overdue
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        next_action:
+                          type: string
+                          nullable: true
+                        next_action_on:
+                          type: string
+                          format: date
+                        overdue:
+                          type: boolean
+                  no_reply:
+                    type: array
+                    description: In applied with no status change for EVIDEX_NO_REPLY_DAYS
+                      days (default 21), longest wait first
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - job_application_id
+                      - applied_on
+                      - days_waiting
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        job_application_id:
+                          type: integer
+                        applied_on:
+                          type: string
+                          format: date
+                        days_waiting:
+                          type: integer
+                  recent_activity:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - job_posting_id
+                      - title
+                      - company
+                      - to_status
+                      - created_at
+                      properties:
+                        job_posting_id:
+                          type: integer
+                        title:
+                          type: string
+                        company:
+                          type: string
+                        from_status:
+                          allOf:
+                          - "$ref": "#/components/schemas/ApplicationStatus"
+                          nullable: true
+                        to_status:
+                          "$ref": "#/components/schemas/ApplicationStatus"
+                        created_at:
+                          type: string
+                          format: date-time
+  "/api/v1/job_applications/{job_application_id}/interviews":
+    parameters:
+    - name: job_application_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Add an interview
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Also moves the application to interviewing when that is an allowed
+        next status.
+      parameters: []
+      responses:
+        '201':
+          description: added
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - interview
+                properties:
+                  interview:
+                    "$ref": "#/components/schemas/Interview"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - interview
+              properties:
+                interview:
+                  type: object
+                  properties:
+                    round:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    scheduled_at:
+                      type: string
+                      format: date-time
+                      description: ISO 8601 with a time zone offset
+                    format:
+                      type: string
+                      enum:
+                      - video
+                      - phone
+                      - onsite
+                      - other
+                      nullable: true
+                    location:
+                      type: string
+                      nullable: true
+                      maxLength: 500
+                      description: Address or meeting link
+                    status:
+                      type: string
+                      enum:
+                      - scheduled
+                      - completed
+                      - cancelled
+                    notes:
+                      type: string
+                      nullable: true
+                  required:
+                  - scheduled_at
+  "/api/v1/interviews/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update an interview (e.g. mark it completed)
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - interview
+                properties:
+                  interview:
+                    "$ref": "#/components/schemas/Interview"
+        '404':
+          description: someone else's interview
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - interview
+              properties:
+                interview:
+                  type: object
+                  properties:
+                    round:
+                      type: string
+                      nullable: true
+                      maxLength: 100
+                    scheduled_at:
+                      type: string
+                      format: date-time
+                      description: ISO 8601 with a time zone offset
+                    format:
+                      type: string
+                      enum:
+                      - video
+                      - phone
+                      - onsite
+                      - other
+                      nullable: true
+                    location:
+                      type: string
+                      nullable: true
+                      maxLength: 500
+                      description: Address or meeting link
+                    status:
+                      type: string
+                      enum:
+                      - scheduled
+                      - completed
+                      - cancelled
+                    notes:
+                      type: string
+                      nullable: true
+    delete:
+      summary: Remove an interview
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: removed
+  "/api/v1/job_applications/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Update application details
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Send only the fields to change. `links` replaces the whole list;
+        send [] to clear it.
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - application
+                properties:
+                  application:
+                    "$ref": "#/components/schemas/JobApplication"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - job_application
+              properties:
+                job_application:
+                  "$ref": "#/components/schemas/JobApplicationInput"
+  "/api/v1/job_applications/{id}/transitions":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Move an application to a new status
+      tags:
+      - Applications
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Allowed next statuses are listed in the application's available_transitions.
+      parameters: []
+      responses:
+        '200':
+          description: moved; returns the application with its timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - application
+                properties:
+                  application:
+                    "$ref": "#/components/schemas/JobApplication"
+        '422':
+          description: not allowed from the current status
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's application
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - to_status
+              properties:
+                to_status:
+                  "$ref": "#/components/schemas/ApplicationStatus"
+                note:
+                  type: string
+                  maxLength: 2000
+                  description: Optional, shown in the timeline
+  "/api/v1/job_postings/{job_posting_id}/extraction":
+    parameters:
+    - name: job_posting_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Read the posting with AI to fill in fields and requirements
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: |
+        Runs in the background. Poll GET /api/v1/job_postings/{id} until extraction.status is "done" or "failed".
+        Fills empty fields only and adds requirements that aren't listed yet. Needs a confirmed email;
+        limited to 20 runs per user per day.
+      responses:
+        '202':
+          description: started
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '403':
+          description: email not confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '409':
+          description: already running
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '429':
+          description: daily limit reached
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '503':
+          description: AI not configured on the server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+  "/api/v1/job_posting_import":
+    post:
+      summary: Fetch a job ad from a link and return a draft posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: |
+        Nothing is saved. Review the draft, then create it with POST /api/v1/job_postings.
+        Only public http(s) pages are fetched; internal addresses, other ports and non-HTML files are refused.
+      parameters: []
+      responses:
+        '200':
+          description: draft
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - draft
+                - structured_data
+                properties:
+                  draft:
+                    "$ref": "#/components/schemas/JobPostingInput"
+                  structured_data:
+                    type: boolean
+                    description: The page had schema.org JobPosting data
+        '422':
+          description: couldn't fetch or refused
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+  "/api/v1/job_postings":
+    get:
+      summary: List, filter and search your job postings
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Comma-separated statuses, e.g. applied,interviewing
+        schema:
+          type: string
+      - name: q
+        in: query
+        required: false
+        description: Words to find in title, company or location
+        schema:
+          type: string
+      - name: deadline
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - upcoming
+          - overdue
+          - none
+        description: upcoming = within 7 days
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - newest
+          - oldest
+          - deadline
+          - company
+          - next_action
+          - updated
+          default: newest
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+      responses:
+        '200':
+          description: filtered
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - job_postings
+                - meta
+                properties:
+                  job_postings:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/JobPostingSummary"
+                  meta:
+                    type: object
+                    required:
+                    - page
+                    - per_page
+                    - total
+                    - total_pages
+                    properties:
+                      page:
+                        type: integer
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+                      total_pages:
+                        type: integer
+    post:
+      summary: Add a job posting from pasted text
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - job_posting
+              properties:
+                job_posting:
+                  "$ref": "#/components/schemas/JobPostingInput"
+  "/api/v1/job_postings/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Show a job posting with its full text
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: posting
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '404':
+          description: not one of your postings
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+    patch:
+      summary: Update a job posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Send only the fields to change.
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: not one of your postings
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - job_posting
+              properties:
+                job_posting:
+                  "$ref": "#/components/schemas/JobPostingInput"
+    delete:
+      summary: Delete a job posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: deleted
+        '404':
+          description: not one of your postings
+  "/api/v1/job_postings/{job_posting_id}/requirements":
+    parameters:
+    - name: job_posting_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Add a requirement to a posting
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: added at the end of its kind
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - requirement
+                properties:
+                  requirement:
+                    "$ref": "#/components/schemas/Requirement"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: not one of your postings
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - requirement
+              properties:
+                requirement:
+                  type: object
+                  required:
+                  - kind
+                  - text
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - required
+                      - preferred
+                      - responsibility
+                    text:
+                      type: string
+                      maxLength: 1000
+  "/api/v1/requirements/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Change a requirement's text
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - requirement
+                properties:
+                  requirement:
+                    "$ref": "#/components/schemas/Requirement"
+        '404':
+          description: someone else's requirement
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - requirement
+              properties:
+                requirement:
+                  type: object
+                  required:
+                  - text
+                  properties:
+                    text:
+                      type: string
+    delete:
+      summary: Remove a requirement
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: removed
+        '404':
+          description: someone else's requirement
   "/api/v1/status":
     get:
       summary: Returns API and database status
@@ -530,6 +1545,7 @@ components:
       - email_address
       - email_verified
       - has_password
+      - ai_configured
       - identities
       - created_at
       properties:
@@ -545,6 +1561,9 @@ components:
           type: boolean
         has_password:
           type: boolean
+        ai_configured:
+          type: boolean
+          description: The server has an AI provider configured
         identities:
           type: array
           items:
@@ -559,6 +1578,367 @@ components:
       properties:
         user:
           "$ref": "#/components/schemas/User"
+    JobPostingSummary:
+      type: object
+      required:
+      - id
+      - title
+      - company
+      - status
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+        location:
+          type: string
+          nullable: true
+        work_model:
+          type: string
+          enum:
+          - onsite
+          - hybrid
+          - remote
+          nullable: true
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        status:
+          "$ref": "#/components/schemas/ApplicationStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ApplicationStatus:
+      type: string
+      enum:
+      - saved
+      - preparing
+      - applied
+      - interviewing
+      - offer
+      - accepted
+      - rejected
+      - no_response
+      - withdrawn
+      description: saved → preparing → applied → interviewing → offer, or rejected
+        / withdrawn
+    JobApplication:
+      type: object
+      required:
+      - id
+      - status
+      - available_transitions
+      - applied_on
+      - next_action
+      - next_action_on
+      - notes
+      - links
+      - contacts
+      - interviews
+      - events
+      properties:
+        id:
+          type: integer
+        status:
+          "$ref": "#/components/schemas/ApplicationStatus"
+        applied_on:
+          type: string
+          format: date
+          nullable: true
+        next_action:
+          type: string
+          nullable: true
+        next_action_on:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApplicationLink"
+        contacts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApplicationContact"
+        interviews:
+          type: array
+          description: Oldest first
+          items:
+            "$ref": "#/components/schemas/Interview"
+        available_transitions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApplicationStatus"
+          description: Statuses this application can move to next
+        events:
+          type: array
+          description: Timeline, oldest first
+          items:
+            type: object
+            required:
+            - id
+            - to_status
+            - created_at
+            properties:
+              id:
+                type: integer
+              from_status:
+                allOf:
+                - "$ref": "#/components/schemas/ApplicationStatus"
+                nullable: true
+              to_status:
+                "$ref": "#/components/schemas/ApplicationStatus"
+              note:
+                type: string
+                nullable: true
+              created_at:
+                type: string
+                format: date-time
+    Interview:
+      type: object
+      required:
+      - id
+      - round
+      - scheduled_at
+      - format
+      - location
+      - status
+      - notes
+      properties:
+        id:
+          type: integer
+        round:
+          type: string
+          nullable: true
+        scheduled_at:
+          type: string
+          format: date-time
+        format:
+          type: string
+          enum:
+          - video
+          - phone
+          - onsite
+          - other
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - scheduled
+          - completed
+          - cancelled
+        notes:
+          type: string
+          nullable: true
+    ApplicationContact:
+      type: object
+      required:
+      - id
+      - name
+      - role
+      - email
+      - phone
+      - notes
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+    ApplicationLink:
+      type: object
+      required:
+      - url
+      properties:
+        label:
+          type: string
+          nullable: true
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+    JobApplicationInput:
+      type: object
+      properties:
+        applied_on:
+          type: string
+          format: date
+          nullable: true
+        next_action:
+          type: string
+          nullable: true
+          maxLength: 200
+        next_action_on:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+          maxLength: 20000
+        links:
+          type: array
+          maxItems: 20
+          items:
+            "$ref": "#/components/schemas/ApplicationLink"
+    Requirement:
+      type: object
+      required:
+      - id
+      - kind
+      - text
+      - position
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+          enum:
+          - required
+          - preferred
+          - responsibility
+        text:
+          type: string
+        position:
+          type: integer
+          description: Order within its kind, starting at 1
+    JobPosting:
+      allOf:
+      - "$ref": "#/components/schemas/JobPostingSummary"
+      - type: object
+        required:
+        - description
+        - requirements
+        - application
+        - employment_type
+        - seniority
+        - salary
+        - keywords
+        - extraction
+        properties:
+          description:
+            type: string
+          employment_type:
+            type: string
+            nullable: true
+          seniority:
+            type: string
+            nullable: true
+          salary:
+            type: string
+            nullable: true
+            description: As stated in the ad
+          keywords:
+            type: array
+            items:
+              type: string
+          extraction:
+            type: object
+            required:
+            - status
+            - error
+            - extracted_at
+            properties:
+              status:
+                type: string
+                enum:
+                - none
+                - pending
+                - done
+                - failed
+              error:
+                type: string
+                nullable: true
+              extracted_at:
+                type: string
+                format: date-time
+                nullable: true
+          requirements:
+            type: array
+            items:
+              "$ref": "#/components/schemas/Requirement"
+          application:
+            "$ref": "#/components/schemas/JobApplication"
+    JobPostingEnvelope:
+      type: object
+      required:
+      - job_posting
+      properties:
+        job_posting:
+          "$ref": "#/components/schemas/JobPosting"
+    JobPostingInput:
+      type: object
+      description: title, company and description are required when creating.
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        company:
+          type: string
+          maxLength: 200
+        location:
+          type: string
+          maxLength: 200
+          nullable: true
+        work_model:
+          type: string
+          enum:
+          - onsite
+          - hybrid
+          - remote
+          nullable: true
+        employment_type:
+          type: string
+          maxLength: 200
+          nullable: true
+        seniority:
+          type: string
+          maxLength: 200
+          nullable: true
+        salary:
+          type: string
+          maxLength: 200
+          nullable: true
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        source_url:
+          type: string
+          format: uri
+          nullable: true
+        description:
+          type: string
+          maxLength: 100000
+          description: The posting text
     Session:
       type: object
       required:

@@ -20,6 +20,18 @@ Rails.application.routes.draw do
       end
       resource :password_reset, only: %i[create update]
 
+      resource :dashboard, only: :show
+      resource :job_posting_import, only: :create
+      resources :job_applications, only: :update do
+        post :transitions, on: :member, action: :transition
+        resources :contacts, only: %i[create update destroy], shallow: true, controller: "application_contacts"
+        resources :interviews, only: %i[create update destroy], shallow: true
+      end
+      resources :job_postings, only: %i[index show create update destroy] do
+        resources :requirements, only: %i[create update destroy], shallow: true
+        resource :extraction, only: :create, controller: "job_posting_extractions"
+      end
+
       resource :me, only: %i[show destroy], controller: "me" do
         scope module: :me do
           resources :sessions, only: %i[index destroy] do

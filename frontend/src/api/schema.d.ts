@@ -334,6 +334,170 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/job_applications/{job_application_id}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_application_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a contact to an application */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_application_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        contact: {
+                            name: string;
+                            role?: string | null;
+                            /** Format: email */
+                            email?: string | null;
+                            phone?: string | null;
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description added */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            contact: components["schemas"]["ApplicationContact"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contacts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a contact */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description removed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description someone else's contact */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a contact */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        contact: {
+                            name?: string;
+                            role?: string | null;
+                            /** Format: email */
+                            email?: string | null;
+                            phone?: string | null;
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            contact: components["schemas"]["ApplicationContact"];
+                        };
+                    };
+                };
+                /** @description someone else's contact */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/csrf_token": {
         parameters: {
             query?: never;
@@ -714,6 +878,928 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Counts per status, upcoming deadlines, next actions and recent activity */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description dashboard */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status_counts: {
+                                saved: number;
+                                preparing: number;
+                                applied: number;
+                                interviewing: number;
+                                offer: number;
+                                accepted: number;
+                                rejected: number;
+                                no_response: number;
+                                withdrawn: number;
+                            };
+                            total: number;
+                            /** @description Scheduled within 14 days */
+                            upcoming_interviews: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                interview_id: number;
+                                round: string | null;
+                                format: string | null;
+                                /** Format: date-time */
+                                scheduled_at: string;
+                            }[];
+                            /** @description Not applied yet, deadline within 14 days */
+                            upcoming_deadlines: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                /** Format: date */
+                                deadline: string;
+                            }[];
+                            /** @description Due within 7 days, overdue included */
+                            next_actions: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                next_action: string | null;
+                                /** Format: date */
+                                next_action_on: string;
+                                overdue: boolean;
+                            }[];
+                            /** @description In applied with no status change for EVIDEX_NO_REPLY_DAYS days (default 21), longest wait first */
+                            no_reply: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                job_application_id: number;
+                                /** Format: date */
+                                applied_on: string;
+                                days_waiting: number;
+                            }[];
+                            recent_activity: {
+                                job_posting_id: number;
+                                title: string;
+                                company: string;
+                                from_status?: components["schemas"]["ApplicationStatus"] | null;
+                                to_status: components["schemas"]["ApplicationStatus"];
+                                /** Format: date-time */
+                                created_at: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_applications/{job_application_id}/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_application_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an interview
+         * @description Also moves the application to interviewing when that is an allowed next status.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_application_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        interview: {
+                            round?: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 with a time zone offset
+                             */
+                            scheduled_at: string;
+                            /** @enum {string|null} */
+                            format?: "video" | "phone" | "onsite" | "other" | null;
+                            /** @description Address or meeting link */
+                            location?: string | null;
+                            /** @enum {string} */
+                            status?: "scheduled" | "completed" | "cancelled";
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description added */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            interview: components["schemas"]["Interview"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove an interview */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description removed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update an interview (e.g. mark it completed) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        interview: {
+                            round?: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 with a time zone offset
+                             */
+                            scheduled_at?: string;
+                            /** @enum {string|null} */
+                            format?: "video" | "phone" | "onsite" | "other" | null;
+                            /** @description Address or meeting link */
+                            location?: string | null;
+                            /** @enum {string} */
+                            status?: "scheduled" | "completed" | "cancelled";
+                            notes?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            interview: components["schemas"]["Interview"];
+                        };
+                    };
+                };
+                /** @description someone else's interview */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/job_applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update application details
+         * @description Send only the fields to change. `links` replaces the whole list; send [] to clear it.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        job_application: components["schemas"]["JobApplicationInput"];
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            application: components["schemas"]["JobApplication"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/job_applications/{id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move an application to a new status
+         * @description Allowed next statuses are listed in the application's available_transitions.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        to_status: components["schemas"]["ApplicationStatus"];
+                        /** @description Optional, shown in the timeline */
+                        note?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description moved; returns the application with its timeline */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            application: components["schemas"]["JobApplication"];
+                        };
+                    };
+                };
+                /** @description someone else's application */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description not allowed from the current status */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_postings/{job_posting_id}/extraction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read the posting with AI to fill in fields and requirements
+         * @description Runs in the background. Poll GET /api/v1/job_postings/{id} until extraction.status is "done" or "failed".
+         *     Fills empty fields only and adds requirements that aren't listed yet. Needs a confirmed email;
+         *     limited to 20 runs per user per day.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description started */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description email not confirmed */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description already running */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description daily limit reached */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description AI not configured on the server */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_posting_import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fetch a job ad from a link and return a draft posting
+         * @description Nothing is saved. Review the draft, then create it with POST /api/v1/job_postings.
+         *     Only public http(s) pages are fetched; internal addresses, other ports and non-HTML files are refused.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uri */
+                        url: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description draft */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            draft: components["schemas"]["JobPostingInput"];
+                            /** @description The page had schema.org JobPosting data */
+                            structured_data: boolean;
+                        };
+                    };
+                };
+                /** @description couldn't fetch or refused */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_postings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List, filter and search your job postings */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Comma-separated statuses, e.g. applied,interviewing */
+                    status?: string;
+                    /** @description Words to find in title, company or location */
+                    q?: string;
+                    /** @description upcoming = within 7 days */
+                    deadline?: "upcoming" | "overdue" | "none";
+                    sort?: "newest" | "oldest" | "deadline" | "company" | "next_action" | "updated";
+                    page?: number;
+                    per_page?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description filtered */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            job_postings: components["schemas"]["JobPostingSummary"][];
+                            meta: {
+                                page: number;
+                                per_page: number;
+                                total: number;
+                                total_pages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Add a job posting from pasted text */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        job_posting: components["schemas"]["JobPostingInput"];
+                    };
+                };
+            };
+            responses: {
+                /** @description created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_postings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** Show a job posting with its full text */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description posting */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a job posting */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Update a job posting
+         * @description Send only the fields to change.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        job_posting: components["schemas"]["JobPostingInput"];
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/job_postings/{job_posting_id}/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a requirement to a posting */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        requirement: {
+                            /** @enum {string} */
+                            kind: "required" | "preferred" | "responsibility";
+                            text: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description added at the end of its kind */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            requirement: components["schemas"]["Requirement"];
+                        };
+                    };
+                };
+                /** @description not one of your postings */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/requirements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a requirement */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description removed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description someone else's requirement */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Change a requirement's text */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        requirement: {
+                            text: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            requirement: components["schemas"]["Requirement"];
+                        };
+                    };
+                };
+                /** @description someone else's requirement */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/status": {
         parameters: {
             query?: never;
@@ -795,12 +1881,139 @@ export interface components {
             name?: string | null;
             email_verified: boolean;
             has_password: boolean;
+            /** @description The server has an AI provider configured */
+            ai_configured: boolean;
             identities: components["schemas"]["Identity"][];
             /** Format: date-time */
             created_at: string;
         };
         UserEnvelope: {
             user: components["schemas"]["User"];
+        };
+        JobPostingSummary: {
+            id: number;
+            title: string;
+            company: string;
+            location?: string | null;
+            /** @enum {string|null} */
+            work_model?: "onsite" | "hybrid" | "remote" | null;
+            /** Format: date */
+            deadline?: string | null;
+            source_url?: string | null;
+            status: components["schemas"]["ApplicationStatus"];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * @description saved → preparing → applied → interviewing → offer, or rejected / withdrawn
+         * @enum {string}
+         */
+        ApplicationStatus: "saved" | "preparing" | "applied" | "interviewing" | "offer" | "accepted" | "rejected" | "no_response" | "withdrawn";
+        JobApplication: {
+            id: number;
+            status: components["schemas"]["ApplicationStatus"];
+            /** Format: date */
+            applied_on: string | null;
+            next_action: string | null;
+            /** Format: date */
+            next_action_on: string | null;
+            notes: string | null;
+            links: components["schemas"]["ApplicationLink"][];
+            contacts: components["schemas"]["ApplicationContact"][];
+            /** @description Oldest first */
+            interviews: components["schemas"]["Interview"][];
+            /** @description Statuses this application can move to next */
+            available_transitions: components["schemas"]["ApplicationStatus"][];
+            /** @description Timeline, oldest first */
+            events: {
+                id: number;
+                from_status?: components["schemas"]["ApplicationStatus"] | null;
+                to_status: components["schemas"]["ApplicationStatus"];
+                note?: string | null;
+                /** Format: date-time */
+                created_at: string;
+            }[];
+        };
+        Interview: {
+            id: number;
+            round: string | null;
+            /** Format: date-time */
+            scheduled_at: string;
+            /** @enum {string|null} */
+            format: "video" | "phone" | "onsite" | "other" | null;
+            location: string | null;
+            /** @enum {string} */
+            status: "scheduled" | "completed" | "cancelled";
+            notes: string | null;
+        };
+        ApplicationContact: {
+            id: number;
+            name: string;
+            role: string | null;
+            email: string | null;
+            phone: string | null;
+            notes: string | null;
+        };
+        ApplicationLink: {
+            label?: string | null;
+            /** Format: uri */
+            url: string;
+        };
+        JobApplicationInput: {
+            /** Format: date */
+            applied_on?: string | null;
+            next_action?: string | null;
+            /** Format: date */
+            next_action_on?: string | null;
+            notes?: string | null;
+            links?: components["schemas"]["ApplicationLink"][];
+        };
+        Requirement: {
+            id: number;
+            /** @enum {string} */
+            kind: "required" | "preferred" | "responsibility";
+            text: string;
+            /** @description Order within its kind, starting at 1 */
+            position: number;
+        };
+        JobPosting: components["schemas"]["JobPostingSummary"] & {
+            description: string;
+            employment_type: string | null;
+            seniority: string | null;
+            /** @description As stated in the ad */
+            salary: string | null;
+            keywords: string[];
+            extraction: {
+                /** @enum {string} */
+                status: "none" | "pending" | "done" | "failed";
+                error: string | null;
+                /** Format: date-time */
+                extracted_at: string | null;
+            };
+            requirements: components["schemas"]["Requirement"][];
+            application: components["schemas"]["JobApplication"];
+        };
+        JobPostingEnvelope: {
+            job_posting: components["schemas"]["JobPosting"];
+        };
+        /** @description title, company and description are required when creating. */
+        JobPostingInput: {
+            title?: string;
+            company?: string;
+            location?: string | null;
+            /** @enum {string|null} */
+            work_model?: "onsite" | "hybrid" | "remote" | null;
+            employment_type?: string | null;
+            seniority?: string | null;
+            salary?: string | null;
+            /** Format: date */
+            deadline?: string | null;
+            /** Format: uri */
+            source_url?: string | null;
+            /** @description The posting text */
+            description?: string;
         };
         Session: {
             id: number;

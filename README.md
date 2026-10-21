@@ -4,23 +4,29 @@
 requirement against your own career documents, and drafts applications that only
 claim what you can back up with a citation.
 
-> Status: early development. Authentication (milestone M1) is done; job postings, the career library and AI matching are next.
+> Status: early development. Authentication (M1) is done; job postings and application tracking (M2) are in review; the career library and AI matching come next.
 
 ## Features
 
 - **Strong authentication** (done): email + password, Google and Microsoft sign-in,
   email verification, password reset, device/session management, rate limiting
   and account lockout. Two-factor auth is planned.
+- **Job postings** (done): add by pasting text or importing a link (SSRF-safe
+  fetching that reads schema.org `JobPosting` data); edit everything, keep a
+  requirements list per posting
+- **AI extraction** (done): Claude reads the ad in a background job and fills in
+  empty fields, requirements and keywords, using structured outputs; never
+  overwrites what the user entered; per-user daily limit and token usage tracking
+- **Application tracking** (done): status pipeline with a timeline, applied date,
+  next action, notes, links and contacts; filters, search, sorting, pagination;
+  a dashboard with counts per status, upcoming deadlines and next actions
 
 Planned:
 
-- **Job postings**: import from a URL (SSRF-safe fetching) or pasted text;
-  AI extracts requirements, deadline, location and keywords
 - **Career library**: upload CVs and project notes (PDF, DOCX, Markdown);
   chunked and embedded into PostgreSQL with pgvector
 - **Match report (RAG)**: every requirement classified as *Evidenced*,
   *Transferable* or *Gap*, with citations to your own documents
-- **Application tracking**: status pipeline, timeline, deadlines, dashboard
 
 ## Tech stack
 
@@ -31,6 +37,7 @@ Planned:
 | Jobs / cache / websockets | Solid Queue, Solid Cache, Solid Cable |
 | API docs | OpenAPI 3 generated from request specs (rswag) |
 | Auth | `has_secure_password` (bcrypt), OmniAuth (Google, Microsoft Entra ID), Rails rate limiting |
+| AI | Anthropic Ruby SDK, Claude with structured outputs, run in Active Job background jobs |
 | Frontend | React 19 + TypeScript + Vite, React Router, TanStack Query, Tailwind CSS, in [`frontend/`](frontend) |
 | API client | Typed with `openapi-typescript` + `openapi-fetch`, generated from the OpenAPI spec |
 | Tests | RSpec, FactoryBot, WebMock, SimpleCov; Vitest + Testing Library |
@@ -119,6 +126,9 @@ sign-in, which appear only once their credentials are set:
   with "Accounts in any organizational directory and personal Microsoft accounts".
   Add a Web redirect URI `http://localhost:5173/auth/entra_id/callback` and a client
   secret. Set `MICROSOFT_CLIENT_ID` and `MICROSOFT_CLIENT_SECRET`.
+- **AI features**: set `ANTHROPIC_API_KEY` (from console.anthropic.com). Optional:
+  `EVIDEX_AI_MODEL` (default `claude-opus-5-5`) and `EVIDEX_AI_DAILY_LIMIT` (default 20).
+  Without a key the app works normally and hides the AI buttons.
 
 ### Tests and checks
 

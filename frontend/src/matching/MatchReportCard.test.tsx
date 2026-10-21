@@ -131,4 +131,31 @@ describe('Match report', () => {
     expect(screen.getByRole('list', { name: 'Summary' })).toHaveTextContent('Evidenced1Transferable1Gap0')
     expect(sent).toEqual({ requirement_match: { user_verdict: 'transferable', user_note: 'Ran k3s at home.' } })
   })
+
+  it('shows older versions read-only', async () => {
+    const older = { ...doneReport, id: 2, version: 1, counts: { evidenced: 0, transferable: 0, gap: 2 },
+      matches: doneReport.matches.map((m) => ({ ...m, verdict: 'gap' as const, ai_verdict: 'gap' as const, citations: [] })) }
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: posting }),
+      'GET /api/v1/job_postings/7/match_report': () => json({ match_report: doneReport }),
+      'GET /api/v1/job_postings/7/match_reports': () =>
+        json({
+          match_reports: [doneReport, older].map(({ id, version, status, model, counts, created_at, completed_at }) => ({
+            id, version, status, model, counts, created_at, completed_at,
+          })),
+        }),
+      'GET /api/v1/match_reports/2': () => json({ match_report: older }),
+    })
+
+    renderApp('/postings/7')
+    const picker = await screen.findByLabelText('Version')
+    expect(picker).toHaveTextContent('v2 (latest) · 1 evidenced, 0 transferable, 1 gaps')
+
+    await userEvent.selectOptions(picker, '2')
+    expect(await screen.findByText(/You're looking at version 1/)).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Summary' })).toHaveTextContent('Evidenced0Transferable0Gap2')
+    expect(screen.queryByRole('button', { name: /Change verdict/ })).not.toBeInTheDocument()
+  })
 })

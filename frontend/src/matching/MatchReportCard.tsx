@@ -29,10 +29,29 @@ export function MatchReportCard({ postingId }: { postingId: number }) {
     refetchInterval: (query) => (query.state.data && !['done', 'failed'].includes(query.state.data.status) ? 2000 : false),
   })
 
+  const versionsKey = [...matchReportQueryKey(postingId), 'versions'] as const
+  const { data: versions = [] } = useQuery({
+    queryKey: [...versionsKey, report?.id, report?.status],
+    queryFn: async () =>
+      (await unwrap(api.GET('/api/v1/job_postings/{job_posting_id}/match_reports', { params: { path: { job_posting_id: postingId } } })))
+        .match_reports,
+    enabled: Boolean(report),
+  })
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const viewingOld = selectedId !== null && selectedId !== report?.id
+  const { data: oldReport } = useQuery({
+    queryKey: ['match-reports', selectedId],
+    queryFn: async () => (await unwrap(api.GET('/api/v1/match_reports/{id}', { params: { path: { id: selectedId! } } }))).match_report,
+    enabled: viewingOld,
+  })
+
   const run = useMutation({
     mutationFn: () =>
       unwrap(api.POST('/api/v1/job_postings/{job_posting_id}/match_reports', { params: { path: { job_posting_id: postingId } } })),
-    onSuccess: ({ match_report }) => queryClient.setQueryData(matchReportQueryKey(postingId), match_report),
+    onSuccess: ({ match_report }) => {
+      setSelectedId(null)
+      queryClient.setQueryData(matchReportQueryKey(postingId), match_report)
+    },
   })
 
   if (!user?.ai_configured) return null
@@ -59,10 +78,32 @@ export function MatchReportCard({ postingId }: { postingId: number }) {
               Reading your documents against each requirement. This takes up to a minute.
             </span>
           )}
-          {report?.status === 'done' && report.completed_at && (
-            <span className="text-sm text-slate-500">
-              Version {report.version} · {dateTime.format(new Date(report.completed_at))}
-            </span>
+          {versions.length > 1 ? (
+            <label className="flex items-center gap-2 text-sm text-slate-500">
+              <span>Version</span>
+              <select
+                value={viewingOld ? String(selectedId) : String(report?.id ?? '')}
+                onChange={(event) => setSelectedId(Number(event.target.value))}
+                className="rounded-md border-0 bg-white py-1 pl-2 pr-8 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:ring-slate-700"
+              >
+                {versions.map((version, index) => (
+                  <option key={version.id} value={version.id}>
+                    {`v${version.version}${index === 0 ? ' (latest)' : ''} · ${
+                      version.status === 'done'
+                        ? `${version.counts.evidenced} evidenced, ${version.counts.transferable} transferable, ${version.counts.gap} gaps`
+                        : version.status
+                    } · ${dateTime.format(new Date(version.completed_at ?? version.created_at))}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            report?.status === 'done' &&
+            report.completed_at && (
+              <span className="text-sm text-slate-500">
+                Version {report.version} · {dateTime.format(new Date(report.completed_at))}
+              </span>
+            )
           )}
         </div>
 
@@ -72,13 +113,24 @@ export function MatchReportCard({ postingId }: { postingId: number }) {
           </p>
         )}
 
-        {report?.status === 'done' && <ReportBody report={report} postingId={postingId} />}
+        {viewingOld ? (
+          oldReport && (
+            <>
+              <Alert tone="info">
+                You're looking at version {oldReport.version}. Older versions are read-only; change verdicts on the latest one.
+              </Alert>
+              {oldReport.status === 'done' && <ReportBody report={oldReport} postingId={postingId} readOnly />}
+            </>
+          )
+        ) : (
+          report?.status === 'done' && <ReportBody report={report} postingId={postingId} />
+        )}
       </div>
     </Card>
   )
 }
 
-function ReportBody({ report, postingId }: { report: MatchReport; postingId: number }) {
+function ReportBody({ report, postingId, readOnly = false }: { report: MatchReport; postingId: number; readOnly?: boolean }) {
   return (
     <div className="space-y-5">
       <ul aria-label="Summary" className="grid grid-cols-3 gap-3">
@@ -99,7 +151,7 @@ function ReportBody({ report, postingId }: { report: MatchReport; postingId: num
 
       <ol aria-label="Requirements" className="divide-y divide-slate-200 dark:divide-slate-800">
         {report.matches.map((match) => (
-          <MatchRow key={match.id} match={match} postingId={postingId} />
+          <MatchRow key={match.id} match={match} postingId={postingId} readOnly={readOnly} />
         ))}
       </ol>
     </div>
@@ -131,7 +183,7 @@ function VerdictBadge({ verdict }: { verdict: Verdict }) {
   )
 }
 
-function MatchRow({ match, postingId }: { match: RequirementMatch; postingId: number }) {
+function MatchRow({ match, postingId, readOnly }: { match: RequirementMatch; postingId: number; readOnly: boolean }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const queryClient = useQueryClient()
@@ -171,7 +223,7 @@ function MatchRow({ match, postingId }: { match: RequirementMatch; postingId: nu
         <div className="flex flex-col items-end gap-1">
           <VerdictBadge verdict={match.verdict} />
           {match.user_verdict && <span className="text-xs text-slate-500">AI said: {verdictLabels[match.ai_verdict]}</span>}
-          {!editing && (
+          {!editing && !readOnly && (
             <button
               type="button"
               onClick={() => setEditing(true)}

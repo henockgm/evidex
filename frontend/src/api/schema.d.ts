@@ -2078,7 +2078,46 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        /** List a posting's report versions, newest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description versions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            match_reports: {
+                                id: number;
+                                version: number;
+                                /** @enum {string} */
+                                status: "pending" | "running" | "done" | "failed";
+                                model: string | null;
+                                counts: {
+                                    evidenced: number;
+                                    transferable: number;
+                                    gap: number;
+                                };
+                                /** Format: date-time */
+                                created_at: string;
+                                /** Format: date-time */
+                                completed_at: string | null;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
         put?: never;
         /**
          * Start a match report for a posting

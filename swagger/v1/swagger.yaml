@@ -1661,6 +1661,69 @@ paths:
       required: true
       schema:
         type: integer
+    get:
+      summary: List a posting's report versions, newest first
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_reports
+                properties:
+                  match_reports:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - version
+                      - status
+                      - model
+                      - counts
+                      - created_at
+                      - completed_at
+                      properties:
+                        id:
+                          type: integer
+                        version:
+                          type: integer
+                        status:
+                          type: string
+                          enum:
+                          - pending
+                          - running
+                          - done
+                          - failed
+                        model:
+                          type: string
+                          nullable: true
+                        counts:
+                          type: object
+                          required:
+                          - evidenced
+                          - transferable
+                          - gap
+                          properties:
+                            evidenced:
+                              type: integer
+                            transferable:
+                              type: integer
+                            gap:
+                              type: integer
+                        created_at:
+                          type: string
+                          format: date-time
+                        completed_at:
+                          type: string
+                          format: date-time
+                          nullable: true
     post:
       summary: Start a match report for a posting
       tags:

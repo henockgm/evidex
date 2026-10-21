@@ -13,6 +13,19 @@ module Api
         render json: { match_report: MatchReportSerializer.new(report) }, status: :accepted
       end
 
+      # All versions for a posting, newest first, without the per-requirement details.
+      def index
+        posting = Current.user.job_postings.find(params[:job_posting_id])
+        reports = posting.match_reports.latest_first.includes(:matches)
+        render json: {
+          match_reports: reports.map do |report|
+            report.slice(:id, :version, :status, :model).symbolize_keys.merge(
+              counts: report.counts, created_at: report.created_at.iso8601, completed_at: report.completed_at&.iso8601
+            )
+          end
+        }
+      end
+
       # The latest report for a posting, whatever its status.
       def latest
         posting = Current.user.job_postings.find(params[:id])

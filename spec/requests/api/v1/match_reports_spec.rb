@@ -23,6 +23,37 @@ RSpec.describe "Match reports API", type: :request do
   path "/api/v1/job_postings/{job_posting_id}/match_reports" do
     parameter name: :job_posting_id, in: :path, type: :integer
 
+    get "List a posting's report versions, newest first" do
+      tags "Match reports"
+      produces "application/json"
+      security [ { session_cookie: [] } ]
+
+      let(:job_posting_id) { posting.id }
+
+      response "200", "versions" do
+        schema type: :object, required: %w[match_reports], properties: {
+          match_reports: { type: :array, items: {
+            type: :object, required: %w[id version status model counts created_at completed_at],
+            properties: {
+              id: { type: :integer }, version: { type: :integer },
+              status: { type: :string, enum: MatchReport::STATUSES }, model: { type: :string, nullable: true },
+              counts: { type: :object, required: RequirementMatch::VERDICTS, properties: RequirementMatch::VERDICTS.index_with { { type: :integer } } },
+              created_at: { type: :string, format: "date-time" }, completed_at: { type: :string, format: "date-time", nullable: true }
+            }
+          } }
+        }
+
+        before do
+          finished_report
+          posting.match_reports.create!(user:, version: 2, status: "failed", error: "Busy")
+        end
+
+        run_test! do
+          expect(json["match_reports"].map { |r| [ r["version"], r["status"], r["counts"]["evidenced"] ] }).to eq([ [ 2, "failed", 0 ], [ 1, "done", 1 ] ])
+        end
+      end
+    end
+
     post "Start a match report for a posting" do
       tags "Match reports"
       produces "application/json"

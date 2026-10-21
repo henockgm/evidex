@@ -21,7 +21,8 @@ RSpec.describe DashboardQuery do
     create(:job_posting)
 
     expect(dashboard[:status_counts]).to eq(
-      "saved" => 2, "preparing" => 0, "applied" => 1, "interviewing" => 0, "offer" => 0, "rejected" => 0, "withdrawn" => 0
+      "saved" => 2, "preparing" => 0, "applied" => 1, "interviewing" => 0, "offer" => 0,
+      "accepted" => 0, "rejected" => 0, "no_response" => 0, "withdrawn" => 0
     )
     expect(dashboard[:total]).to eq(3)
   end

@@ -596,7 +596,9 @@ paths:
                     - applied
                     - interviewing
                     - offer
+                    - accepted
                     - rejected
+                    - no_response
                     - withdrawn
                     properties:
                       saved:
@@ -609,7 +611,11 @@ paths:
                         type: integer
                       offer:
                         type: integer
+                      accepted:
+                        type: integer
                       rejected:
+                        type: integer
+                      no_response:
                         type: integer
                       withdrawn:
                         type: integer
@@ -1393,7 +1399,9 @@ components:
       - applied
       - interviewing
       - offer
+      - accepted
       - rejected
+      - no_response
       - withdrawn
       description: saved → preparing → applied → interviewing → offer, or rejected
         / withdrawn

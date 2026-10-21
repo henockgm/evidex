@@ -3,17 +3,23 @@
 class JobApplication < ApplicationRecord
   class InvalidTransition < StandardError; end
 
-  # Allowed next statuses. "withdrawn" covers dropping out and declining an offer.
+  # Allowed next statuses. "withdrawn" covers dropping out and declining an offer;
+  # "no_response" closes an application the employer never answered, but a late
+  # reply can still move it on.
   TRANSITIONS = {
     "saved" => %w[preparing applied withdrawn],
     "preparing" => %w[saved applied withdrawn],
-    "applied" => %w[interviewing offer rejected withdrawn],
-    "interviewing" => %w[offer rejected withdrawn],
-    "offer" => %w[withdrawn],
+    "applied" => %w[interviewing offer rejected no_response withdrawn],
+    "interviewing" => %w[offer rejected no_response withdrawn],
+    "offer" => %w[accepted withdrawn],
+    "accepted" => [],
     "rejected" => [],
+    "no_response" => %w[interviewing offer rejected],
     "withdrawn" => []
   }.freeze
   STATUSES = TRANSITIONS.keys.freeze
+  # Finished, one way or another: no deadlines or follow-ups needed.
+  CLOSED_STATUSES = %w[accepted rejected no_response withdrawn].freeze
   NOTE_MAX_LENGTH = 2_000
   NOTES_MAX_LENGTH = 20_000
   MAX_LINKS = 20

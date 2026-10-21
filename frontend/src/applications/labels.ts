@@ -6,7 +6,9 @@ export const statusLabels: Record<ApplicationStatus, string> = {
   applied: 'Applied',
   interviewing: 'Interviewing',
   offer: 'Offer',
+  accepted: 'Accepted',
   rejected: 'Rejected',
+  no_response: 'No response',
   withdrawn: 'Withdrawn',
 }
 
@@ -17,6 +19,8 @@ export const transitionLabels: Record<ApplicationStatus, string> = {
   applied: 'Mark as applied',
   interviewing: 'Got an interview',
   offer: 'Got an offer',
+  accepted: 'Accept the offer',
   rejected: 'Mark as rejected',
+  no_response: 'Mark as no response',
   withdrawn: 'Withdraw',
 }

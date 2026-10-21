@@ -71,7 +71,7 @@ export function DashboardPage() {
                 All postings ({dashboard.total}) →
               </Link>
             </div>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
               {statuses.map((status) => (
                 <li key={status}>
                   <Link

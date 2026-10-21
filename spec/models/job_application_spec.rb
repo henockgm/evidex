@@ -30,8 +30,24 @@ RSpec.describe JobApplication do
     expect(application.events.count).to eq(2)
   end
 
-  it "treats rejected and withdrawn as final" do
-    expect(JobApplication::TRANSITIONS.values_at("rejected", "withdrawn")).to all(be_empty)
+  it "treats accepted, rejected and withdrawn as final" do
+    expect(JobApplication::TRANSITIONS.values_at("accepted", "rejected", "withdrawn")).to all(be_empty)
+  end
+
+  it "accepts an offer" do
+    application.transition_to!("applied")
+    application.transition_to!("offer")
+    application.transition_to!("accepted")
+    expect(application.reload.status).to eq("accepted")
+  end
+
+  it "closes an unanswered application as no response, and reopens it on a late reply" do
+    application.transition_to!("applied")
+    application.transition_to!("no_response", note: "Nothing after 4 weeks")
+    expect(application.available_transitions).to eq(%w[interviewing offer rejected])
+
+    application.transition_to!("interviewing")
+    expect(application.reload.status).to eq("interviewing")
   end
 
   it "is deleted, with its timeline, when the posting is" do

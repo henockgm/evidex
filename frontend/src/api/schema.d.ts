@@ -908,7 +908,9 @@ export interface paths {
                                 applied: number;
                                 interviewing: number;
                                 offer: number;
+                                accepted: number;
                                 rejected: number;
+                                no_response: number;
                                 withdrawn: number;
                             };
                             total: number;
@@ -1713,7 +1715,7 @@ export interface components {
          * @description saved → preparing → applied → interviewing → offer, or rejected / withdrawn
          * @enum {string}
          */
-        ApplicationStatus: "saved" | "preparing" | "applied" | "interviewing" | "offer" | "rejected" | "withdrawn";
+        ApplicationStatus: "saved" | "preparing" | "applied" | "interviewing" | "offer" | "accepted" | "rejected" | "no_response" | "withdrawn";
         JobApplication: {
             id: number;
             status: components["schemas"]["ApplicationStatus"];

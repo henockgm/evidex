@@ -53,7 +53,7 @@ export function ApplicationCard({ postingId, application }: { postingId: number;
             {application.available_transitions.map((status) => (
               <Button
                 key={status}
-                variant={status === 'withdrawn' || status === 'rejected' || status === 'saved' ? 'secondary' : 'primary'}
+                variant={['withdrawn', 'rejected', 'no_response', 'saved'].includes(status) ? 'secondary' : 'primary'}
                 disabled={move.isPending}
                 onClick={() => move.mutate(status)}
               >

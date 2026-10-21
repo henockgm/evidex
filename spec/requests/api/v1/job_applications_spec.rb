@@ -91,7 +91,7 @@ RSpec.describe "Job applications API", type: :request do
         let(:body) { { to_status: "applied", note: "Applied through their careers page" } }
 
         run_test! do
-          expect(json["application"]).to include("status" => "applied", "available_transitions" => %w[interviewing offer rejected withdrawn])
+          expect(json["application"]).to include("status" => "applied", "available_transitions" => %w[interviewing offer rejected no_response withdrawn])
           expect(json["application"]["events"].last).to include("from_status" => "saved", "to_status" => "applied",
             "note" => "Applied through their careers page")
         end

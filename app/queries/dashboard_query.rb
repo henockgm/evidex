@@ -45,7 +45,7 @@ class DashboardQuery
     def next_actions
       applications.includes(:job_posting)
         .where(next_action_on: ..(@today + NEXT_ACTION_WINDOW))
-        .where.not(status: %w[rejected withdrawn])
+        .where.not(status: JobApplication::CLOSED_STATUSES)
         .order(:next_action_on, :id).limit(LIST_LIMIT)
         .map do |application|
           posting_brief(application.job_posting).merge(

@@ -59,10 +59,11 @@ group :development, :test do
   gem "rswag-specs", "~> 2.17"
   gem "factory_bot_rails", "~> 6.5"
   gem "faker", "~> 3.8"
-  gem "dotenv-rails", "~> 3.2"
 end
 
 group :development do
+  # Loads .env (git-ignored) in development only, so tests never see real secrets
+  gem "dotenv-rails", "~> 3.2"
   # Preview sent emails at /letter_opener
   gem "letter_opener_web", "~> 3.0"
 end

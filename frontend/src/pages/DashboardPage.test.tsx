@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { baseRoutes, json, mockApi, renderApp, user } from '../test/render'
 
-const statusCounts = { saved: 3, preparing: 1, applied: 2, interviewing: 1, offer: 0, rejected: 1, withdrawn: 0 }
+const statusCounts = { saved: 3, preparing: 1, applied: 2, interviewing: 1, offer: 0, accepted: 0, rejected: 1, no_response: 0, withdrawn: 0 }
 
 describe('Dashboard', () => {
   it('shows counts per status, deadlines, next actions and activity', async () => {
@@ -43,7 +43,7 @@ describe('Dashboard', () => {
       'GET /api/v1/me': () => json({ user }),
       'GET /api/v1/dashboard': () =>
         json({
-          status_counts: { saved: 0, preparing: 0, applied: 0, interviewing: 0, offer: 0, rejected: 0, withdrawn: 0 },
+          status_counts: { saved: 0, preparing: 0, applied: 0, interviewing: 0, offer: 0, accepted: 0, rejected: 0, no_response: 0, withdrawn: 0 },
           total: 0,
           upcoming_deadlines: [],
           next_actions: [],

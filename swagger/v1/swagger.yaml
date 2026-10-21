@@ -1758,6 +1758,69 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Problem"
+  "/api/v1/requirement_matches/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Set your own verdict or note on a requirement
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: user_verdict replaces the AI's verdict in counts (null clears it).
+        Overrides carry over to new versions while the requirement's text is unchanged.
+      parameters: []
+      responses:
+        '200':
+          description: updated; returns the whole report
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '422':
+          description: invalid verdict
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's report
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - requirement_match
+              properties:
+                requirement_match:
+                  type: object
+                  properties:
+                    user_verdict:
+                      type: string
+                      enum:
+                      - evidenced
+                      - transferable
+                      - gap
+                      nullable: true
+                    user_note:
+                      type: string
+                      nullable: true
+                      maxLength: 2000
   "/api/v1/job_postings/{job_posting_id}/requirements":
     parameters:
     - name: job_posting_id
@@ -2227,6 +2290,9 @@ components:
       - requirement_kind
       - requirement_text
       - verdict
+      - ai_verdict
+      - user_verdict
+      - user_note
       - reasoning
       - citations
       properties:
@@ -2251,6 +2317,23 @@ components:
           - evidenced
           - transferable
           - gap
+          description: The user's verdict if set, else the AI's
+        ai_verdict:
+          type: string
+          enum:
+          - evidenced
+          - transferable
+          - gap
+        user_verdict:
+          type: string
+          enum:
+          - evidenced
+          - transferable
+          - gap
+          nullable: true
+        user_note:
+          type: string
+          nullable: true
         reasoning:
           type: string
           nullable: true

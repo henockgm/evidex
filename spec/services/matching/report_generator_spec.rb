@@ -81,4 +81,21 @@ RSpec.describe Matching::ReportGenerator, :ai do
     expect(citation.document_chunk_id).to be_nil
     expect(citation.excerpt).to include("Acme Oy")
   end
+
+  it "carries the user's overrides over to the next version when the requirement is unchanged" do
+    stub_claude(json: claude_answer([ { requirement_id: "R1", verdict: "gap", reasoning: "No.", passage_ids: [] } ]))
+    described_class.new(report).call
+    report.update!(status: "done")
+    report.matches.find_by!(requirement: rails_req).update!(user_verdict: "evidenced", user_note: "Five years at Acme.")
+    report.matches.find_by!(requirement: k8s_req).update!(user_note: "Learning it now.")
+    k8s_req.update!(text: "Kubernetes and Helm")
+
+    next_report = posting.match_reports.create!(user:, version: 2, status: "running")
+    described_class.new(next_report).call
+
+    rails_match = next_report.matches.find_by!(requirement: rails_req)
+    expect(rails_match).to have_attributes(verdict: "gap", user_verdict: "evidenced", user_note: "Five years at Acme.", effective_verdict: "evidenced")
+    expect(next_report.matches.find_by!(requirement: k8s_req)).to have_attributes(user_verdict: nil, user_note: nil)
+    expect(next_report.counts["evidenced"]).to eq(1)
+  end
 end

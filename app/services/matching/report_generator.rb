@@ -62,7 +62,8 @@ module Matching
     end
 
     def call
-      requirements = @posting.requirements.to_a
+      requirements = @posting.requirements.reload.to_a
+      @previous_overrides = previous_overrides
       passages = collect_passages(requirements)
 
       data, response = AiUsage.track(user: @user, feature: "match_report") do
@@ -123,9 +124,10 @@ module Matching
             end
             cited = [] if verdict == "gap"
 
+            override = @previous_overrides[[ requirement.id, requirement.text ]] || {}
             requirement_match = @report.matches.create!(
               requirement:, requirement_kind: requirement.kind, requirement_text: requirement.text,
-              verdict:, reasoning: reasoning.first(1_000), position: index
+              verdict:, reasoning: reasoning.first(1_000), position: index, **override
             )
             cited.each { |chunk| cite(requirement_match, chunk) }
           end
@@ -135,6 +137,17 @@ module Matching
             strengths: clean_list(data["strengths"]), gaps: clean_list(data["gaps"])
           )
         end
+      end
+
+      # The user's overrides from the latest finished report, carried over for
+      # requirements whose text hasn't changed since (MATCH-05).
+      def previous_overrides
+        previous = @posting.match_reports.where(status: "done").where.not(id: @report.id).order(version: :desc).first
+        return {} unless previous
+
+        previous.matches.where.not(requirement_id: nil)
+          .where("user_verdict IS NOT NULL OR user_note IS NOT NULL")
+          .to_h { |match| [ [ match.requirement_id, match.requirement_text ], { user_verdict: match.user_verdict, user_note: match.user_note } ] }
       end
 
       def cite(requirement_match, chunk)

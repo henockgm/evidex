@@ -22,6 +22,7 @@ Rails.application.routes.draw do
 
       resource :dashboard, only: :show
       resources :match_reports, only: :show
+      resources :requirement_matches, only: :update
       get "library/search", to: "library_searches#show", as: :library_search
       resources :documents, only: %i[index show create update destroy] do
         get :file, on: :member, action: :download

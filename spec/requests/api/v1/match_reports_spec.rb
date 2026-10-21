@@ -116,6 +116,66 @@ RSpec.describe "Match reports API", type: :request do
     end
   end
 
+  path "/api/v1/requirement_matches/{id}" do
+    parameter name: :id, in: :path, type: :integer
+
+    patch "Set your own verdict or note on a requirement" do
+      tags "Match reports"
+      consumes "application/json"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      description "user_verdict replaces the AI's verdict in counts (null clears it). Overrides carry over to new versions while the requirement's text is unchanged."
+      parameter name: :body, in: :body, schema: {
+        type: :object, required: %w[requirement_match],
+        properties: { requirement_match: { type: :object, properties: {
+          user_verdict: { type: :string, enum: RequirementMatch::VERDICTS, nullable: true },
+          user_note: { type: :string, nullable: true, maxLength: 2000 }
+        } } }
+      }
+
+      let(:report) { finished_report }
+      let(:id) { report.matches.first.id }
+
+      response "200", "updated; returns the whole report" do
+        schema type: :object, required: %w[match_report], properties: { match_report: { "$ref" => "#/components/schemas/MatchReport" } }
+        let(:body) { { requirement_match: { user_verdict: "transferable", user_note: "Only side projects." } } }
+
+        run_test! do
+          match = json["match_report"]["matches"].first
+          expect(match).to include("verdict" => "transferable", "ai_verdict" => "evidenced", "user_note" => "Only side projects.")
+          expect(json["match_report"]["counts"]).to include("evidenced" => 0, "transferable" => 1)
+        end
+      end
+
+      response "422", "invalid verdict" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:body) { { requirement_match: { user_verdict: "maybe" } } }
+        run_test!
+      end
+
+      response "404", "someone else's report" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:id) do
+          other = create(:job_posting)
+          other.match_reports.create!(user: other.user, version: 1).matches.create!(
+            requirement_kind: "required", requirement_text: "x", verdict: "gap", position: 0
+          ).id
+        end
+        let(:body) { { requirement_match: { user_verdict: "evidenced" } } }
+        run_test!
+      end
+    end
+  end
+
+  it "clears an override with null" do
+    match = finished_report.matches.first
+    match.update!(user_verdict: "gap", user_note: "x")
+
+    patch "/api/v1/requirement_matches/#{match.id}", params: { requirement_match: { user_verdict: nil, user_note: "" } }, as: :json
+
+    expect(match.reload).to have_attributes(user_verdict: nil, user_note: nil, effective_verdict: "evidenced")
+  end
+
   it "needs a library before running", :ai do
     create(:requirement, job_posting: posting, text: "Rails")
     post "/api/v1/job_postings/#{posting.id}/match_reports"

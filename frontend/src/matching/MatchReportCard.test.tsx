@@ -36,11 +36,13 @@ const doneReport: MatchReport = {
   matches: [
     {
       id: 1, requirement_id: 11, requirement_kind: 'required', requirement_text: 'Ruby on Rails', verdict: 'evidenced',
+      ai_verdict: 'evidenced', user_verdict: null, user_note: null,
       reasoning: 'Built REST APIs with Rails at Acme.',
       citations: [{ id: 5, document_id: 2, document_title: 'My CV', page: 1, section: 'Experience', excerpt: 'Built REST APIs with Ruby on Rails.' }],
     },
     {
       id: 2, requirement_id: 12, requirement_kind: 'required', requirement_text: 'Kubernetes', verdict: 'gap',
+      ai_verdict: 'gap', user_verdict: null, user_note: null,
       reasoning: 'Nothing about Kubernetes.', citations: [],
     },
   ],
@@ -97,5 +99,36 @@ describe('Match report', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Run match report' }))
 
     await waitFor(() => expect(screen.getByText('Upload your CV to the career library first.')).toBeInTheDocument())
+  })
+
+  it('lets the user override a verdict and add a note', async () => {
+    let report = doneReport
+    let sent: unknown
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/job_postings/7': () => json({ job_posting: posting }),
+      'GET /api/v1/job_postings/7/match_report': () => json({ match_report: report }),
+      'PATCH /api/v1/requirement_matches/2': async (request) => {
+        sent = await request.json()
+        report = {
+          ...report,
+          counts: { evidenced: 1, transferable: 1, gap: 0 },
+          matches: [report.matches[0], { ...report.matches[1], verdict: 'transferable', user_verdict: 'transferable', user_note: 'Ran k3s at home.' }],
+        }
+        return json({ match_report: report })
+      },
+    })
+
+    renderApp('/postings/7')
+    await userEvent.click(await screen.findByRole('button', { name: 'Change verdict for Kubernetes' }))
+    await userEvent.selectOptions(screen.getByLabelText('Your verdict'), 'Transferable')
+    await userEvent.type(screen.getByLabelText(/^Note/), 'Ran k3s at home.')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('AI said: Gap')).toBeInTheDocument()
+    expect(screen.getByText('Ran k3s at home.')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Summary' })).toHaveTextContent('Evidenced1Transferable1Gap0')
+    expect(sent).toEqual({ requirement_match: { user_verdict: 'transferable', user_note: 'Ran k3s at home.' } })
   })
 })

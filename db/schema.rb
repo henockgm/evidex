@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_125515) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -231,6 +231,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_125515) do
     t.integer "position", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "user_verdict"
+    t.text "user_note"
     t.index ["match_report_id"], name: "index_requirement_matches_on_match_report_id"
     t.index ["requirement_id"], name: "index_requirement_matches_on_requirement_id"
   end

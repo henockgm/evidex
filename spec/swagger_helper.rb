@@ -153,13 +153,16 @@ RSpec.configure do |config|
           },
           RequirementMatch: {
             type: :object,
-            required: %w[id requirement_id requirement_kind requirement_text verdict reasoning citations],
+            required: %w[id requirement_id requirement_kind requirement_text verdict ai_verdict user_verdict user_note reasoning citations],
             properties: {
               id: { type: :integer },
               requirement_id: { type: :integer, nullable: true, description: "null once the requirement is deleted" },
               requirement_kind: { type: :string, enum: Requirement::KINDS },
               requirement_text: { type: :string, description: "As it was when the report ran" },
-              verdict: { type: :string, enum: RequirementMatch::VERDICTS },
+              verdict: { type: :string, enum: RequirementMatch::VERDICTS, description: "The user's verdict if set, else the AI's" },
+              ai_verdict: { type: :string, enum: RequirementMatch::VERDICTS },
+              user_verdict: { type: :string, enum: RequirementMatch::VERDICTS, nullable: true },
+              user_note: { type: :string, nullable: true },
               reasoning: { type: :string, nullable: true },
               citations: { type: :array, items: {
                 type: :object, required: %w[id document_id document_title page section excerpt],

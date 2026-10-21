@@ -2236,6 +2236,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/requirement_matches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set your own verdict or note on a requirement
+         * @description user_verdict replaces the AI's verdict in counts (null clears it). Overrides carry over to new versions while the requirement's text is unchanged.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        requirement_match: {
+                            /** @enum {string|null} */
+                            user_verdict?: "evidenced" | "transferable" | "gap" | null;
+                            user_note?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated; returns the whole report */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            match_report: components["schemas"]["MatchReport"];
+                        };
+                    };
+                };
+                /** @description someone else's report */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid verdict */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/job_postings/{job_posting_id}/requirements": {
         parameters: {
             query?: never;
@@ -2557,8 +2630,16 @@ export interface components {
             requirement_kind: "required" | "preferred" | "responsibility";
             /** @description As it was when the report ran */
             requirement_text: string;
-            /** @enum {string} */
+            /**
+             * @description The user's verdict if set, else the AI's
+             * @enum {string}
+             */
             verdict: "evidenced" | "transferable" | "gap";
+            /** @enum {string} */
+            ai_verdict: "evidenced" | "transferable" | "gap";
+            /** @enum {string|null} */
+            user_verdict: "evidenced" | "transferable" | "gap" | null;
+            user_note: string | null;
             reasoning: string | null;
             citations: {
                 id: number;

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { ApiError, api, unwrap, type MatchReport, type RequirementMatch } from '../api/client'
 import { useMe } from '../auth/useAuth'
 import { Alert, Button, Card } from '../components/ui'
@@ -72,13 +72,13 @@ export function MatchReportCard({ postingId }: { postingId: number }) {
           </p>
         )}
 
-        {report?.status === 'done' && <ReportBody report={report} />}
+        {report?.status === 'done' && <ReportBody report={report} postingId={postingId} />}
       </div>
     </Card>
   )
 }
 
-function ReportBody({ report }: { report: MatchReport }) {
+function ReportBody({ report, postingId }: { report: MatchReport; postingId: number }) {
   return (
     <div className="space-y-5">
       <ul aria-label="Summary" className="grid grid-cols-3 gap-3">
@@ -99,7 +99,7 @@ function ReportBody({ report }: { report: MatchReport }) {
 
       <ol aria-label="Requirements" className="divide-y divide-slate-200 dark:divide-slate-800">
         {report.matches.map((match) => (
-          <MatchRow key={match.id} match={match} />
+          <MatchRow key={match.id} match={match} postingId={postingId} />
         ))}
       </ol>
     </div>
@@ -131,8 +131,29 @@ function VerdictBadge({ verdict }: { verdict: Verdict }) {
   )
 }
 
-function MatchRow({ match }: { match: RequirementMatch }) {
+function MatchRow({ match, postingId }: { match: RequirementMatch; postingId: number }) {
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const queryClient = useQueryClient()
+
+  const save = useMutation({
+    mutationFn: (changes: { user_verdict: Verdict | null; user_note: string | null }) =>
+      unwrap(api.PATCH('/api/v1/requirement_matches/{id}', { params: { path: { id: match.id } }, body: { requirement_match: changes } })),
+    onSuccess: ({ match_report }) => {
+      queryClient.setQueryData(matchReportQueryKey(postingId), match_report)
+      setEditing(false)
+    },
+  })
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const verdict = String(form.get('user_verdict') ?? '')
+    save.mutate({
+      user_verdict: verdict ? (verdict as Verdict) : null,
+      user_note: String(form.get('user_note') ?? '').trim() || null,
+    })
+  }
 
   return (
     <li className="space-y-2 py-3 text-sm">
@@ -141,9 +162,67 @@ function MatchRow({ match }: { match: RequirementMatch }) {
           <p className="text-xs uppercase tracking-wide text-slate-500">{kindLabels[match.requirement_kind]}</p>
           <p className="font-medium">{match.requirement_text}</p>
           {match.reasoning && <p className="mt-1 text-slate-600 dark:text-slate-400">{match.reasoning}</p>}
+          {match.user_note && !editing && (
+            <p className="mt-1 rounded bg-indigo-50 px-2 py-1 text-indigo-900 dark:bg-indigo-950 dark:text-indigo-100">
+              <span className="font-semibold">Your note:</span> {match.user_note}
+            </p>
+          )}
         </div>
-        <VerdictBadge verdict={match.verdict} />
+        <div className="flex flex-col items-end gap-1">
+          <VerdictBadge verdict={match.verdict} />
+          {match.user_verdict && <span className="text-xs text-slate-500">AI said: {verdictLabels[match.ai_verdict]}</span>}
+          {!editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              aria-label={`Change verdict for ${match.requirement_text}`}
+              className="text-xs font-medium text-slate-500 hover:text-slate-900 hover:underline dark:hover:text-slate-100"
+            >
+              Change
+            </button>
+          )}
+        </div>
       </div>
+      {editing && (
+        <form onSubmit={handleSubmit} className="space-y-2 rounded-md p-3 ring-1 ring-inset ring-slate-200 dark:ring-slate-800">
+          <label className="block text-xs font-medium" htmlFor={`verdict-${match.id}`}>
+            Your verdict
+          </label>
+          <select
+            id={`verdict-${match.id}`}
+            name="user_verdict"
+            defaultValue={match.user_verdict ?? ''}
+            className="rounded-md border-0 bg-white py-1.5 pl-3 pr-8 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:ring-slate-700"
+          >
+            <option value="">Keep the AI's verdict ({verdictLabels[match.ai_verdict]})</option>
+            {(Object.keys(verdictLabels) as Verdict[]).map((verdict) => (
+              <option key={verdict} value={verdict}>
+                {verdictLabels[verdict]}
+              </option>
+            ))}
+          </select>
+          <label className="block text-xs font-medium" htmlFor={`note-${match.id}`}>
+            Note <span className="font-normal text-slate-500">(e.g. evidence to add to your CV)</span>
+          </label>
+          <textarea
+            id={`note-${match.id}`}
+            name="user_note"
+            rows={2}
+            maxLength={2000}
+            defaultValue={match.user_note ?? ''}
+            className="block w-full rounded-md border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:ring-slate-700"
+          />
+          {save.isError && <Alert tone="error">{save.error.message}</Alert>}
+          <div className="flex gap-2">
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? 'Saving…' : 'Save'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
       {match.citations.length > 0 && (
         <div>
           <button

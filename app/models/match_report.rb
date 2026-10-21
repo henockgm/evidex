@@ -16,7 +16,7 @@ class MatchReport < ApplicationRecord
   end
 
   def counts
-    tally = matches.map(&:verdict).tally
+    tally = matches.map(&:effective_verdict).tally
     RequirementMatch::VERDICTS.index_with { |verdict| tally.fetch(verdict, 0) }
   end
 end

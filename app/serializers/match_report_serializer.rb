@@ -27,7 +27,10 @@ class MatchReportSerializer
         requirement_id: match.requirement_id,
         requirement_kind: match.requirement_kind,
         requirement_text: match.requirement_text,
-        verdict: match.verdict,
+        verdict: match.effective_verdict,
+        ai_verdict: match.verdict,
+        user_verdict: match.user_verdict,
+        user_note: match.user_note,
         reasoning: match.reasoning,
         citations: match.citations.map do |citation|
           citation.slice(:id, :document_id, :document_title, :page, :section, :excerpt).symbolize_keys

@@ -16,6 +16,9 @@ FileUtils.chdir APP_ROOT do
   system("bundle check") || system!("bundle install")
   system! "npm ci --prefix frontend"
 
+  puts "\n== Enabling git hooks (secret check before each commit) =="
+  system! "git config core.hooksPath .githooks"
+
   # puts "\n== Copying sample files =="
   # unless File.exist?("config/database.yml")
   #   FileUtils.cp "config/database.yml.sample", "config/database.yml"

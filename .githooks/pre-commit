@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Refuses commits that add something that looks like a secret.
+# Enabled by bin/setup (git config core.hooksPath .githooks).
+set -euo pipefail
+
+patterns=(
+  'sk-ant-[A-Za-z0-9_-]{20,}'              # Anthropic API keys
+  'sk-[A-Za-z0-9]{32,}'                    # OpenAI-style keys
+  'AKIA[0-9A-Z]{16}'                       # AWS access key IDs
+  'GOCSPX-[A-Za-z0-9_-]{20,}'              # Google OAuth client secrets
+  'gh[pousr]_[A-Za-z0-9]{36,}'             # GitHub tokens
+  '-----BEGIN [A-Z ]*PRIVATE KEY-----'     # private keys
+)
+
+added_lines=$(git diff --cached --unified=0 --no-color | grep -E '^\+[^+]' || true)
+[ -z "$added_lines" ] && exit 0
+
+for pattern in "${patterns[@]}"; do
+  if grep -Eq -- "$pattern" <<<"$added_lines"; then
+    echo "pre-commit: refusing to commit; a staged change looks like a secret (pattern: $pattern)." >&2
+    echo "Put secrets in .env (git-ignored), not in tracked files. Files involved:" >&2
+    git diff --cached --name-only -G "$pattern" | sed 's/^/  /' >&2
+    exit 1
+  fi
+done

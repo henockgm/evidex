@@ -24,6 +24,7 @@ Rails.application.routes.draw do
       resources :documents, only: %i[index show create update destroy] do
         get :file, on: :member, action: :download
         get :text, on: :member
+        get :chunks, on: :member
         post :retry, on: :member
       end
       resource :job_posting_import, only: :create

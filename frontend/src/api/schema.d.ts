@@ -1240,6 +1240,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{id}/chunks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** Passages the document was split into */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description chunks in reading order */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            chunks: {
+                                id: number;
+                                position: number;
+                                /** @description 1-based page, PDFs only */
+                                page: number | null;
+                                /** @description Nearest heading above the passage */
+                                section: string | null;
+                                content: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description someone else's document */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{id}/retry": {
         parameters: {
             query?: never;
@@ -2271,6 +2328,8 @@ export interface components {
             /** @description Pages of extracted text (1 for non-PDF files) */
             page_count: number;
             character_count: number;
+            /** @description Passages indexed for search and matching */
+            chunk_count: number;
             /** Format: date-time */
             processed_at: string | null;
             /** Format: date-time */

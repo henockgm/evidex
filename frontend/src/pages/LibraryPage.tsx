@@ -121,8 +121,8 @@ function DocumentRow({ document }: { document: Document }) {
               {document.status === 'ready' && (
                 <>
                   {' '}
-                  · {document.page_count} {document.page_count === 1 ? 'page' : 'pages'}, {document.character_count.toLocaleString()}{' '}
-                  characters
+                  · {document.page_count} {document.page_count === 1 ? 'page' : 'pages'}, {document.chunk_count}{' '}
+                  {document.chunk_count === 1 ? 'passage' : 'passages'}
                 </>
               )}
             </p>

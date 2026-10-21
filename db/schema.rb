@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_111442) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_111837) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -77,6 +77,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_111442) do
     t.datetime "created_at", null: false
     t.index ["user_id", "created_at"], name: "index_audit_events_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_audit_events_on_user_id"
+  end
+
+  create_table "document_chunks", force: :cascade do |t|
+    t.bigint "document_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "position", null: false
+    t.integer "page"
+    t.string "section"
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.index ["document_id", "position"], name: "index_document_chunks_on_document_id_and_position", unique: true
+    t.index ["document_id"], name: "index_document_chunks_on_document_id"
+    t.index ["user_id"], name: "index_document_chunks_on_user_id"
   end
 
   create_table "documents", force: :cascade do |t|
@@ -213,6 +226,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_111442) do
   add_foreign_key "ai_usages", "users", on_delete: :cascade
   add_foreign_key "application_contacts", "job_applications", on_delete: :cascade
   add_foreign_key "audit_events", "users"
+  add_foreign_key "document_chunks", "documents", on_delete: :cascade
+  add_foreign_key "document_chunks", "users", on_delete: :cascade
   add_foreign_key "documents", "users", on_delete: :cascade
   add_foreign_key "identities", "users"
   add_foreign_key "interviews", "job_applications", on_delete: :cascade

@@ -17,6 +17,7 @@ class DocumentSerializer
       byte_size: blob&.byte_size,
       page_count: @document.text_pages.size,
       character_count: @document.character_count,
+      chunk_count: @document.chunks.size,
       processed_at: @document.processed_at&.iso8601,
       created_at: @document.created_at.iso8601,
       updated_at: @document.updated_at.iso8601

@@ -174,6 +174,40 @@ RSpec.describe "Documents API", type: :request do
     end
   end
 
+  path "/api/v1/documents/{id}/chunks" do
+    parameter name: :id, in: :path, type: :integer
+
+    get "Passages the document was split into" do
+      tags "Career library"
+      produces "application/json"
+      security [ { session_cookie: [] } ]
+
+      response "200", "chunks in reading order" do
+        schema type: :object, required: %w[chunks], properties: {
+          chunks: { type: :array, items: {
+            type: :object, required: %w[id position page section content],
+            properties: {
+              id: { type: :integer }, position: { type: :integer },
+              page: { type: :integer, nullable: true, description: "1-based page, PDFs only" },
+              section: { type: :string, nullable: true, description: "Nearest heading above the passage" },
+              content: { type: :string }
+            }
+          } }
+        }
+        let(:id) { create(:document, user:).tap { |d| ProcessDocumentJob.perform_now(d.id) }.id }
+
+        run_test! do
+          expect(json["chunks"].pluck("section")).to eq(%w[Experience Skills Education])
+        end
+      end
+
+      response "404", "someone else's document" do
+        let(:id) { create(:document).id }
+        run_test!
+      end
+    end
+  end
+
   path "/api/v1/documents/{id}/retry" do
     parameter name: :id, in: :path, type: :integer
 

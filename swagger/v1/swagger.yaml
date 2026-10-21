@@ -949,6 +949,56 @@ paths:
                     type: array
                     items:
                       type: string
+  "/api/v1/documents/{id}/chunks":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Passages the document was split into
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: chunks in reading order
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - chunks
+                properties:
+                  chunks:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - position
+                      - page
+                      - section
+                      - content
+                      properties:
+                        id:
+                          type: integer
+                        position:
+                          type: integer
+                        page:
+                          type: integer
+                          nullable: true
+                          description: 1-based page, PDFs only
+                        section:
+                          type: string
+                          nullable: true
+                          description: Nearest heading above the passage
+                        content:
+                          type: string
+        '404':
+          description: someone else's document
   "/api/v1/documents/{id}/retry":
     parameters:
     - name: id
@@ -1949,6 +1999,7 @@ components:
       - byte_size
       - page_count
       - character_count
+      - chunk_count
       - processed_at
       - created_at
       - updated_at
@@ -1990,6 +2041,9 @@ components:
           description: Pages of extracted text (1 for non-PDF files)
         character_count:
           type: integer
+        chunk_count:
+          type: integer
+          description: Passages indexed for search and matching
         processed_at:
           type: string
           format: date-time

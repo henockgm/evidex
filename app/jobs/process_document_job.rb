@@ -1,4 +1,4 @@
-# Reads an uploaded document's text. Later steps add chunking and embeddings.
+# Reads an uploaded document's text and splits it into chunks. A later step adds embeddings.
 class ProcessDocumentJob < ApplicationJob
   queue_as :default
   discard_on ActiveRecord::RecordNotFound
@@ -9,7 +9,12 @@ class ProcessDocumentJob < ApplicationJob
 
     document.update!(status: "processing", error: nil)
     pages = Library::TextExtractor.call(document.file.blob)
-    document.update!(status: "ready", text_pages: pages, character_count: pages.sum(&:length), processed_at: Time.current)
+    chunks = Library::Chunker.call(pages, paginated: document.file.blob.content_type == "application/pdf")
+
+    Document.transaction do
+      document.rebuild_chunks!(chunks)
+      document.update!(status: "ready", text_pages: pages, character_count: pages.sum(&:length), processed_at: Time.current)
+    end
   rescue Library::TextExtractor::Error => error
     document.update_columns(status: "failed", error: error.message.first(255), updated_at: Time.current)
   end

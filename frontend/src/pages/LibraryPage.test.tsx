@@ -16,6 +16,7 @@ const cv: Document = {
   byte_size: 48_000,
   page_count: 0,
   character_count: 0,
+  chunk_count: 0,
   processed_at: null,
   created_at: '2026-10-21T10:00:00Z',
   updated_at: '2026-10-21T10:00:00Z',
@@ -107,7 +108,7 @@ describe('Career library', () => {
       ...baseRoutes,
       'GET /api/v1/me': () => json({ user }),
       'GET /api/v1/documents': () => {
-        const current = { ...cv, status, page_count: status === 'ready' ? 2 : 0, character_count: status === 'ready' ? 180 : 0 }
+        const current = { ...cv, status, page_count: status === 'ready' ? 2 : 0, chunk_count: status === 'ready' ? 3 : 0 }
         status = status === 'processing' ? 'ready' : status
         return json({
           documents: [
@@ -125,7 +126,7 @@ describe('Career library', () => {
 
     renderApp('/library')
     expect(await screen.findByText('Reading…')).toBeInTheDocument()
-    expect(await screen.findByText(/2 pages, 180 characters/, {}, { timeout: 4000 })).toBeInTheDocument()
+    expect(await screen.findByText(/2 pages, 3 passages/, {}, { timeout: 4000 })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'View text' }))
     expect(await screen.findByRole('region', { name: 'Extracted text' })).toHaveTextContent('Page 2Skills: Ruby')

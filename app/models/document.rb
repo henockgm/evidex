@@ -15,6 +15,7 @@ class Document < ApplicationRecord
 
   belongs_to :user
   has_one_attached :file
+  has_many :chunks, -> { ordered }, class_name: "DocumentChunk", dependent: :delete_all, inverse_of: :document
 
   normalizes :title, with: ->(value) { value.squish }
 
@@ -30,6 +31,19 @@ class Document < ApplicationRecord
 
   def text
     text_pages.join("\n\n")
+  end
+
+  # Replaces the document's chunks with freshly split ones.
+  def rebuild_chunks!(pieces)
+    now = Time.current
+    transaction do
+      chunks.delete_all
+      rows = pieces.each_with_index.map do |piece, index|
+        { document_id: id, user_id:, position: index, page: piece.page, section: piece.section&.first(200),
+          content: piece.content, created_at: now }
+      end
+      DocumentChunk.insert_all!(rows) if rows.any?
+    end
   end
 
   # Starts reading the file again after a failure.

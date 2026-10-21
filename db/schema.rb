@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_111837) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_112338) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -87,8 +87,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_111837) do
     t.string "section"
     t.text "content", null: false
     t.datetime "created_at", null: false
+    t.vector "embedding", limit: 384
+    t.string "embedding_model"
     t.index ["document_id", "position"], name: "index_document_chunks_on_document_id_and_position", unique: true
     t.index ["document_id"], name: "index_document_chunks_on_document_id"
+    t.index ["embedding"], name: "index_document_chunks_on_embedding", opclass: :vector_cosine_ops, using: :hnsw
     t.index ["user_id"], name: "index_document_chunks_on_user_id"
   end
 

@@ -80,3 +80,6 @@ gem "anthropic", "~> 1.80"
 
 gem "pdf-reader", "~> 2.16"
 gem "rubyzip", "~> 3.7"
+
+gem "informers", "~> 1.3"
+gem "neighbor", "~> 1.2"

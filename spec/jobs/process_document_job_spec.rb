@@ -16,6 +16,7 @@ RSpec.describe ProcessDocumentJob do
     expect(document.character_count).to eq(document.text_pages.sum(&:length))
     expect(document.processed_at).to be_present
     expect(document.chunks.map { |c| [ c.page, c.section, c.user_id ] }).to eq([ [ 1, "Experience", document.user_id ], [ 2, "Skills", document.user_id ], [ 2, "Education", document.user_id ] ])
+    expect(document.chunks.map { |c| [ c.embedding.size, c.embedding_model ] }.uniq).to eq([ [ 384, "fake" ] ])
   end
 
   it "replaces old chunks when a document is read again" do

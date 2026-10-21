@@ -33,14 +33,14 @@ class Document < ApplicationRecord
     text_pages.join("\n\n")
   end
 
-  # Replaces the document's chunks with freshly split ones.
-  def rebuild_chunks!(pieces)
+  # Replaces the document's chunks with freshly split and embedded ones.
+  def rebuild_chunks!(pieces, embeddings:, embedding_model:)
     now = Time.current
     transaction do
       chunks.delete_all
       rows = pieces.each_with_index.map do |piece, index|
         { document_id: id, user_id:, position: index, page: piece.page, section: piece.section&.first(200),
-          content: piece.content, created_at: now }
+          content: piece.content, embedding: embeddings[index], embedding_model:, created_at: now }
       end
       DocumentChunk.insert_all!(rows) if rows.any?
     end

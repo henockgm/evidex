@@ -15,6 +15,9 @@ class DocumentSerializer
       filename: blob&.filename.to_s,
       content_type: blob&.content_type,
       byte_size: blob&.byte_size,
+      page_count: @document.text_pages.size,
+      character_count: @document.character_count,
+      processed_at: @document.processed_at&.iso8601,
       created_at: @document.created_at.iso8601,
       updated_at: @document.updated_at.iso8601
     }

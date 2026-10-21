@@ -53,6 +53,20 @@ module Api
         head :no_content
       end
 
+      # Extracted text, page by page (PDFs) or as one page (other formats).
+      def text
+        render json: { pages: document.text_pages }
+      end
+
+      def retry
+        unless document.status == "failed"
+          return render_problem(:conflict, "Nothing to retry", detail: "Only documents that failed to process can be retried.")
+        end
+
+        document.retry_processing!
+        render json: { document: DocumentSerializer.new(document) }, status: :accepted
+      end
+
       # Streams the original file to its owner as an attachment.
       def download
         blob = document.file.blob

@@ -922,6 +922,65 @@ paths:
           description: the file, as an attachment
         '404':
           description: someone else's document
+  "/api/v1/documents/{id}/text":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Extracted text, page by page
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: pages (one entry for non-PDF files)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - pages
+                properties:
+                  pages:
+                    type: array
+                    items:
+                      type: string
+  "/api/v1/documents/{id}/retry":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Read a document again after a failure
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '202':
+          description: queued again
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - document
+                properties:
+                  document:
+                    "$ref": "#/components/schemas/Document"
+        '409':
+          description: not failed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/job_applications/{job_application_id}/interviews":
     parameters:
     - name: job_application_id
@@ -1888,6 +1947,9 @@ components:
       - filename
       - content_type
       - byte_size
+      - page_count
+      - character_count
+      - processed_at
       - created_at
       - updated_at
       properties:
@@ -1923,6 +1985,15 @@ components:
           type: string
         byte_size:
           type: integer
+        page_count:
+          type: integer
+          description: Pages of extracted text (1 for non-PDF files)
+        character_count:
+          type: integer
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
         created_at:
           type: string
           format: date-time

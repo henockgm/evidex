@@ -13,6 +13,9 @@ export function LibraryPage() {
   const { data: documents, isPending, error } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: async () => (await unwrap(api.GET('/api/v1/documents'))).documents,
+    // Poll while any document is still being read.
+    refetchInterval: (query) =>
+      query.state.data?.some((document) => document.status === 'pending' || document.status === 'processing') ? 2000 : false,
   })
 
   return (
@@ -65,6 +68,11 @@ function DocumentRow({ document }: { document: Document }) {
     mutationFn: () => unwrap(api.DELETE('/api/v1/documents/{id}', { params: { path: { id: document.id } } })),
     onSuccess: refresh,
   })
+  const retry = useMutation({
+    mutationFn: () => unwrap(api.POST('/api/v1/documents/{id}/retry', { params: { path: { id: document.id } } })),
+    onSuccess: refresh,
+  })
+  const [showingText, setShowingText] = useState(false)
 
   function handleRename(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -107,11 +115,30 @@ function DocumentRow({ document }: { document: Document }) {
             </p>
             <p className="mt-0.5 text-slate-500">
               {document.filename} · {formatBytes(document.byte_size)} · added {dateFormat.format(new Date(document.created_at))} ·{' '}
-              {documentStatusLabels[document.status]}
+              <span className={document.status === 'failed' ? 'font-medium text-rose-700 dark:text-rose-300' : undefined}>
+                {documentStatusLabels[document.status]}
+              </span>
+              {document.status === 'ready' && (
+                <>
+                  {' '}
+                  · {document.page_count} {document.page_count === 1 ? 'page' : 'pages'}, {document.character_count.toLocaleString()}{' '}
+                  characters
+                </>
+              )}
             </p>
             {document.status === 'failed' && document.error && <p className="text-rose-700 dark:text-rose-300">{document.error}</p>}
           </div>
           <div className="flex flex-wrap gap-2">
+            {document.status === 'failed' && (
+              <Button onClick={() => retry.mutate()} disabled={retry.isPending}>
+                Retry
+              </Button>
+            )}
+            {document.status === 'ready' && (
+              <Button variant="secondary" onClick={() => setShowingText((shown) => !shown)} aria-expanded={showingText}>
+                {showingText ? 'Hide text' : 'View text'}
+              </Button>
+            )}
             <a
               href={`/api/v1/documents/${document.id}/file`}
               className="rounded-md bg-white px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-900 dark:ring-slate-700 dark:hover:bg-slate-800"
@@ -135,6 +162,8 @@ function DocumentRow({ document }: { document: Document }) {
         </div>
       )}
       {update.isError && <Alert tone="error">{update.error.message}</Alert>}
+      {retry.isError && <Alert tone="error">{retry.error.message}</Alert>}
+      {showingText && <ExtractedText documentId={document.id} />}
       {confirmingDelete && (
         <Alert tone="error">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -151,5 +180,31 @@ function DocumentRow({ document }: { document: Document }) {
         </Alert>
       )}
     </li>
+  )
+}
+
+function ExtractedText({ documentId }: { documentId: number }) {
+  const { data: pages, isPending, error } = useQuery({
+    queryKey: [...libraryQueryKey, documentId, 'text'],
+    queryFn: async () =>
+      (await unwrap(api.GET('/api/v1/documents/{id}/text', { params: { path: { id: documentId } } }))).pages,
+  })
+
+  if (isPending) return <p className="text-slate-500">Loading text…</p>
+  if (error) return <Alert tone="error">{error.message}</Alert>
+
+  return (
+    <div
+      role="region"
+      aria-label="Extracted text"
+      className="max-h-96 space-y-4 overflow-y-auto rounded-md bg-slate-50 p-4 text-sm leading-6 ring-1 ring-inset ring-slate-200 dark:bg-slate-950 dark:ring-slate-800"
+    >
+      {pages.map((page, index) => (
+        <section key={index}>
+          {pages.length > 1 && <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Page {index + 1}</p>}
+          <p className="whitespace-pre-wrap">{page}</p>
+        </section>
+      ))}
+    </div>
   )
 }

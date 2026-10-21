@@ -26,6 +26,18 @@ class Document < ApplicationRecord
 
   scope :newest_first, -> { order(created_at: :desc, id: :desc) }
 
+  after_create_commit -> { ProcessDocumentJob.perform_later(id) }
+
+  def text
+    text_pages.join("\n\n")
+  end
+
+  # Starts reading the file again after a failure.
+  def retry_processing!
+    update!(status: "pending", error: nil)
+    ProcessDocumentJob.perform_later(id)
+  end
+
   # Makes this the user's main CV; the previous one stops being primary.
   def make_primary!
     transaction do

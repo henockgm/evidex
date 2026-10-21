@@ -155,6 +155,51 @@ RSpec.describe "Documents API", type: :request do
     end
   end
 
+  path "/api/v1/documents/{id}/text" do
+    parameter name: :id, in: :path, type: :integer
+
+    get "Extracted text, page by page" do
+      tags "Career library"
+      produces "application/json"
+      security [ { session_cookie: [] } ]
+
+      response "200", "pages (one entry for non-PDF files)" do
+        schema type: :object, required: %w[pages], properties: { pages: { type: :array, items: { type: :string } } }
+        let(:id) { create(:document, user:).tap { |d| ProcessDocumentJob.perform_now(d.id) }.id }
+
+        run_test! do
+          expect(json["pages"].first).to include("Alex Example")
+        end
+      end
+    end
+  end
+
+  path "/api/v1/documents/{id}/retry" do
+    parameter name: :id, in: :path, type: :integer
+
+    post "Read a document again after a failure" do
+      tags "Career library"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+
+      response "202", "queued again" do
+        schema type: :object, required: %w[document], properties: { document: { "$ref" => "#/components/schemas/Document" } }
+        let(:id) { create(:document, user:).tap { |d| d.update_columns(status: "failed", error: "Boom") }.id }
+
+        run_test! do
+          expect(json["document"]).to include("status" => "pending", "error" => nil)
+          expect(ProcessDocumentJob).to have_been_enqueued.with(id).at_least(:once)
+        end
+      end
+
+      response "409", "not failed" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:id) { create(:document, user:).id }
+        run_test!
+      end
+    end
+  end
+
   it "has no public Active Storage routes" do
     expect(Rails.application.routes.routes.map(&:path).map(&:spec).map(&:to_s).grep(/active_storage/)).to be_empty
   end

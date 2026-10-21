@@ -23,6 +23,8 @@ Rails.application.routes.draw do
       resource :dashboard, only: :show
       resources :documents, only: %i[index show create update destroy] do
         get :file, on: :member, action: :download
+        get :text, on: :member
+        post :retry, on: :member
       end
       resource :job_posting_import, only: :create
       resources :job_applications, only: :update do

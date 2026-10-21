@@ -1198,6 +1198,99 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{id}/text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** Extracted text, page by page */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description pages (one entry for non-PDF files) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            pages: string[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Read a document again after a failure */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description queued again */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            document: components["schemas"]["Document"];
+                        };
+                    };
+                };
+                /** @description not failed */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{job_application_id}/interviews": {
         parameters: {
             query?: never;
@@ -2175,6 +2268,11 @@ export interface components {
             filename: string;
             content_type: string;
             byte_size: number;
+            /** @description Pages of extracted text (1 for non-PDF files) */
+            page_count: number;
+            character_count: number;
+            /** Format: date-time */
+            processed_at: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */

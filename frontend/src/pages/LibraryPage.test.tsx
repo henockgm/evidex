@@ -14,6 +14,9 @@ const cv: Document = {
   filename: 'cv.pdf',
   content_type: 'application/pdf',
   byte_size: 48_000,
+  page_count: 0,
+  character_count: 0,
+  processed_at: null,
   created_at: '2026-10-21T10:00:00Z',
   updated_at: '2026-10-21T10:00:00Z',
 }
@@ -95,5 +98,40 @@ describe('Career library', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete CV 2026' }))
     await userEvent.click(screen.getByRole('button', { name: 'Delete document' }))
     await waitFor(() => expect(screen.queryByText('CV 2026')).not.toBeInTheDocument())
+  })
+
+  it('polls until a document is read, shows its text, and retries a failure', async () => {
+    let status: Document['status'] = 'processing'
+    let retried = false
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/documents': () => {
+        const current = { ...cv, status, page_count: status === 'ready' ? 2 : 0, character_count: status === 'ready' ? 180 : 0 }
+        status = status === 'processing' ? 'ready' : status
+        return json({
+          documents: [
+            current,
+            { ...cv, id: 2, title: 'Scan', primary: false, status: retried ? 'pending' : 'failed', error: retried ? null : 'No text found.' },
+          ],
+        })
+      },
+      'GET /api/v1/documents/1/text': () => json({ pages: ['Alex Example - Backend Developer', 'Skills: Ruby'] }),
+      'POST /api/v1/documents/2/retry': () => {
+        retried = true
+        return json({ document: { ...cv, id: 2, status: 'pending' } }, 202)
+      },
+    })
+
+    renderApp('/library')
+    expect(await screen.findByText('Reading…')).toBeInTheDocument()
+    expect(await screen.findByText(/2 pages, 180 characters/, {}, { timeout: 4000 })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'View text' }))
+    expect(await screen.findByRole('region', { name: 'Extracted text' })).toHaveTextContent('Page 2Skills: Ruby')
+
+    expect(screen.getByText('No text found.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    await waitFor(() => expect(retried).toBe(true))
   })
 })

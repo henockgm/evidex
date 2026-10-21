@@ -134,7 +134,7 @@ RSpec.configure do |config|
           },
           Document: {
             type: :object,
-            required: %w[id title kind primary status error filename content_type byte_size created_at updated_at],
+            required: %w[id title kind primary status error filename content_type byte_size page_count character_count processed_at created_at updated_at],
             properties: {
               id: { type: :integer },
               title: { type: :string },
@@ -145,6 +145,9 @@ RSpec.configure do |config|
               filename: { type: :string },
               content_type: { type: :string },
               byte_size: { type: :integer },
+              page_count: { type: :integer, description: "Pages of extracted text (1 for non-PDF files)" },
+              character_count: { type: :integer },
+              processed_at: { type: :string, format: "date-time", nullable: true },
               created_at: { type: :string, format: "date-time" },
               updated_at: { type: :string, format: "date-time" }
             }

@@ -77,3 +77,6 @@ end
 gem "nokogiri", "~> 1.19"
 
 gem "anthropic", "~> 1.80"
+
+gem "pdf-reader", "~> 2.16"
+gem "rubyzip", "~> 3.7"

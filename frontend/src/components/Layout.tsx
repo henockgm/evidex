@@ -24,6 +24,9 @@ export function Layout() {
               <NavLink to="/postings" className="hover:underline">
                 Postings
               </NavLink>
+              <NavLink to="/library" className="hover:underline">
+                Library
+              </NavLink>
               <NavLink to="/settings/security" className="hover:underline">
                 Security
               </NavLink>

@@ -5,6 +5,7 @@ import { Layout } from './components/Layout'
 import { DashboardPage } from './pages/DashboardPage'
 import { EditPostingPage } from './pages/EditPostingPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { LibraryPage } from './pages/LibraryPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewPostingPage } from './pages/NewPostingPage'
 import { PostingPage } from './pages/PostingPage'
@@ -31,6 +32,7 @@ export function AppRoutes() {
           <Route path="postings/new" element={<NewPostingPage />} />
           <Route path="postings/:id" element={<PostingPage />} />
           <Route path="postings/:id/edit" element={<EditPostingPage />} />
+          <Route path="library" element={<LibraryPage />} />
           <Route path="settings/security" element={<SecurityPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

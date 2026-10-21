@@ -41,6 +41,10 @@ module Evidex
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # Uploaded files are only served through authenticated API endpoints,
+    # never through Active Storage's public (signed URL) routes.
+    config.active_storage.draw_routes = false
+
     # The SPA and API share one origin and authenticate with cookies, so the
     # API-only stack needs cookie and session middleware back. The Rails session
     # only carries the CSRF token and OmniAuth state; sign-in sessions live in

@@ -132,6 +132,23 @@ RSpec.configure do |config|
               }
             }
           },
+          Document: {
+            type: :object,
+            required: %w[id title kind primary status error filename content_type byte_size created_at updated_at],
+            properties: {
+              id: { type: :integer },
+              title: { type: :string },
+              kind: { type: :string, enum: Document::KINDS },
+              primary: { type: :boolean, description: "The user's main CV" },
+              status: { type: :string, enum: Document::STATUSES, description: "Text extraction and indexing progress" },
+              error: { type: :string, nullable: true },
+              filename: { type: :string },
+              content_type: { type: :string },
+              byte_size: { type: :integer },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" }
+            }
+          },
           Interview: {
             type: :object, required: %w[id round scheduled_at format location status notes],
             properties: {

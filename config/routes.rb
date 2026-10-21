@@ -21,6 +21,9 @@ Rails.application.routes.draw do
       resource :password_reset, only: %i[create update]
 
       resource :dashboard, only: :show
+      resources :documents, only: %i[index show create update destroy] do
+        get :file, on: :member, action: :download
+      end
       resource :job_posting_import, only: :create
       resources :job_applications, only: :update do
         post :transitions, on: :member, action: :transition

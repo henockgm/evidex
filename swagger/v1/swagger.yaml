@@ -754,6 +754,174 @@ paths:
                         created_at:
                           type: string
                           format: date-time
+  "/api/v1/documents":
+    get:
+      summary: List your career documents, newest first
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: documents
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - documents
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Document"
+    post:
+      summary: Upload a document (PDF, Word .docx, Markdown or plain text, up to 10
+        MB)
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: The type is checked from the file's content. The first CV uploaded
+        becomes the primary CV.
+      parameters: []
+      responses:
+        '201':
+          description: uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - document
+                properties:
+                  document:
+                    "$ref": "#/components/schemas/Document"
+        '422':
+          description: not an allowed file type
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+                  maxLength: 200
+                  description: Defaults to the file name
+                kind:
+                  type: string
+                  enum:
+                  - cv
+                  - project
+                  - certificate
+                  - reference
+                  - other
+                  default: cv
+        required: true
+  "/api/v1/documents/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Rename, re-tag or set as primary CV
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - document
+                properties:
+                  document:
+                    "$ref": "#/components/schemas/Document"
+        '422':
+          description: invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's document
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - document
+              properties:
+                document:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      maxLength: 200
+                    kind:
+                      type: string
+                      enum:
+                      - cv
+                      - project
+                      - certificate
+                      - reference
+                      - other
+                    primary:
+                      type: boolean
+                      description: true makes this the primary CV (the previous one
+                        stops being primary)
+    delete:
+      summary: Delete a document and its file
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+        csrf_token: []
+      responses:
+        '204':
+          description: deleted
+  "/api/v1/documents/{id}/file":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Download the original file
+      tags:
+      - Career library
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: the file, as an attachment
+        '404':
+          description: someone else's document
   "/api/v1/job_applications/{job_application_id}/interviews":
     parameters:
     - name: job_application_id
@@ -1708,6 +1876,59 @@ components:
               created_at:
                 type: string
                 format: date-time
+    Document:
+      type: object
+      required:
+      - id
+      - title
+      - kind
+      - primary
+      - status
+      - error
+      - filename
+      - content_type
+      - byte_size
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        kind:
+          type: string
+          enum:
+          - cv
+          - project
+          - certificate
+          - reference
+          - other
+        primary:
+          type: boolean
+          description: The user's main CV
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - ready
+          - failed
+          description: Text extraction and indexing progress
+        error:
+          type: string
+          nullable: true
+        filename:
+          type: string
+        content_type:
+          type: string
+        byte_size:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     Interview:
       type: object
       required:

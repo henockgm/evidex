@@ -975,6 +975,229 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List your career documents, newest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description documents */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            documents: components["schemas"]["Document"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Upload a document (PDF, Word .docx, Markdown or plain text, up to 10 MB)
+         * @description The type is checked from the file's content. The first CV uploaded becomes the primary CV.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                        /** @description Defaults to the file name */
+                        title?: string;
+                        /**
+                         * @default cv
+                         * @enum {string}
+                         */
+                        kind?: "cv" | "project" | "certificate" | "reference" | "other";
+                    };
+                };
+            };
+            responses: {
+                /** @description uploaded */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            document: components["schemas"]["Document"];
+                        };
+                    };
+                };
+                /** @description not an allowed file type */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a document and its file */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename, re-tag or set as primary CV */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        document: {
+                            title?: string;
+                            /** @enum {string} */
+                            kind?: "cv" | "project" | "certificate" | "reference" | "other";
+                            /** @description true makes this the primary CV (the previous one stops being primary) */
+                            primary?: boolean;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            document: components["schemas"]["Document"];
+                        };
+                    };
+                };
+                /** @description someone else's document */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/documents/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** Download the original file */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description the file, as an attachment */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description someone else's document */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{job_application_id}/interviews": {
         parameters: {
             query?: never;
@@ -1935,6 +2158,27 @@ export interface components {
                 /** Format: date-time */
                 created_at: string;
             }[];
+        };
+        Document: {
+            id: number;
+            title: string;
+            /** @enum {string} */
+            kind: "cv" | "project" | "certificate" | "reference" | "other";
+            /** @description The user's main CV */
+            primary: boolean;
+            /**
+             * @description Text extraction and indexing progress
+             * @enum {string}
+             */
+            status: "pending" | "processing" | "ready" | "failed";
+            error: string | null;
+            filename: string;
+            content_type: string;
+            byte_size: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
         };
         Interview: {
             id: number;

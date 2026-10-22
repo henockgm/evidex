@@ -2069,6 +2069,285 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/job_postings/{job_posting_id}/match_reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        /** List a posting's report versions, newest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description versions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            match_reports: {
+                                id: number;
+                                version: number;
+                                /** @enum {string} */
+                                status: "pending" | "running" | "done" | "failed";
+                                model: string | null;
+                                counts: {
+                                    evidenced: number;
+                                    transferable: number;
+                                    gap: number;
+                                };
+                                /** Format: date-time */
+                                created_at: string;
+                                /** Format: date-time */
+                                completed_at: string | null;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Start a match report for a posting
+         * @description Runs in the background; poll GET /api/v1/job_postings/{id}/match_report until status is "done" or "failed".
+         *     Each run is a new version. Needs a confirmed email, requirements on the posting, at least one processed
+         *     document, and counts toward the daily AI limit.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description started */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            match_report: components["schemas"]["MatchReport"];
+                        };
+                    };
+                };
+                /** @description a report is already being prepared */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description no requirements or empty library */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/job_postings/{id}/match_report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** The latest match report for a posting */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description latest report */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            match_report: components["schemas"]["MatchReport"];
+                        };
+                    };
+                };
+                /** @description no report yet */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/match_reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** A specific match report version */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description report */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            match_report: components["schemas"]["MatchReport"];
+                        };
+                    };
+                };
+                /** @description someone else's report */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/requirement_matches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set your own verdict or note on a requirement
+         * @description user_verdict replaces the AI's verdict in counts (null clears it). Overrides carry over to new versions while the requirement's text is unchanged.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        requirement_match: {
+                            /** @enum {string|null} */
+                            user_verdict?: "evidenced" | "transferable" | "gap" | null;
+                            user_note?: string | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description updated; returns the whole report */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            match_report: components["schemas"]["MatchReport"];
+                        };
+                    };
+                };
+                /** @description someone else's report */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description invalid verdict */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/job_postings/{job_posting_id}/requirements": {
         parameters: {
             query?: never;
@@ -2359,6 +2638,56 @@ export interface components {
                 note?: string | null;
                 /** Format: date-time */
                 created_at: string;
+            }[];
+        };
+        MatchReport: {
+            id: number;
+            job_posting_id: number;
+            version: number;
+            /** @enum {string} */
+            status: "pending" | "running" | "done" | "failed";
+            error: string | null;
+            model: string | null;
+            counts: {
+                evidenced: number;
+                transferable: number;
+                gap: number;
+            };
+            strengths: string[];
+            gaps: string[];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            completed_at: string | null;
+            matches: components["schemas"]["RequirementMatch"][];
+        };
+        RequirementMatch: {
+            id: number;
+            /** @description null once the requirement is deleted */
+            requirement_id: number | null;
+            /** @enum {string} */
+            requirement_kind: "required" | "preferred" | "responsibility";
+            /** @description As it was when the report ran */
+            requirement_text: string;
+            /**
+             * @description The user's verdict if set, else the AI's
+             * @enum {string}
+             */
+            verdict: "evidenced" | "transferable" | "gap";
+            /** @enum {string} */
+            ai_verdict: "evidenced" | "transferable" | "gap";
+            /** @enum {string|null} */
+            user_verdict: "evidenced" | "transferable" | "gap" | null;
+            user_note: string | null;
+            reasoning: string | null;
+            citations: {
+                id: number;
+                document_id: number | null;
+                document_title: string;
+                page: number | null;
+                section: string | null;
+                /** @description The cited passage, saved when the report ran */
+                excerpt: string;
             }[];
         };
         Document: {

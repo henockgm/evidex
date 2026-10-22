@@ -7,6 +7,7 @@ import { formatDate, workModelLabels } from '../postings/labels'
 import { postingListsQueryKey, postingQueryKey } from '../postings/queries'
 import { RequirementsCard } from '../postings/RequirementsCard'
 import { AiExtractionCard } from '../postings/AiExtractionCard'
+import { MatchReportCard } from '../matching/MatchReportCard'
 import { ApplicationCard } from '../applications/ApplicationCard'
 import { ApplicationDetailsCard } from '../applications/ApplicationDetailsCard'
 import { ContactsCard } from '../applications/ContactsCard'
@@ -136,6 +137,8 @@ export function PostingPage() {
       <AiExtractionCard posting={posting} />
 
       <RequirementsCard postingId={posting.id} requirements={posting.requirements} />
+
+      <MatchReportCard postingId={posting.id} />
 
       <Card title="Job ad text">
         <div className="whitespace-pre-wrap text-sm leading-6">{posting.description}</div>

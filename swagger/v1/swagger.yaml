@@ -1654,6 +1654,236 @@ paths:
                             enum:
                             - semantic
                             - keyword
+  "/api/v1/job_postings/{job_posting_id}/match_reports":
+    parameters:
+    - name: job_posting_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: List a posting's report versions, newest first
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_reports
+                properties:
+                  match_reports:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - version
+                      - status
+                      - model
+                      - counts
+                      - created_at
+                      - completed_at
+                      properties:
+                        id:
+                          type: integer
+                        version:
+                          type: integer
+                        status:
+                          type: string
+                          enum:
+                          - pending
+                          - running
+                          - done
+                          - failed
+                        model:
+                          type: string
+                          nullable: true
+                        counts:
+                          type: object
+                          required:
+                          - evidenced
+                          - transferable
+                          - gap
+                          properties:
+                            evidenced:
+                              type: integer
+                            transferable:
+                              type: integer
+                            gap:
+                              type: integer
+                        created_at:
+                          type: string
+                          format: date-time
+                        completed_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+    post:
+      summary: Start a match report for a posting
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: |
+        Runs in the background; poll GET /api/v1/job_postings/{id}/match_report until status is "done" or "failed".
+        Each run is a new version. Needs a confirmed email, requirements on the posting, at least one processed
+        document, and counts toward the daily AI limit.
+      responses:
+        '202':
+          description: started
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '422':
+          description: no requirements or empty library
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '409':
+          description: a report is already being prepared
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+  "/api/v1/job_postings/{id}/match_report":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: The latest match report for a posting
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: latest report
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '404':
+          description: no report yet
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+  "/api/v1/match_reports/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: A specific match report version
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+      responses:
+        '200':
+          description: report
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '404':
+          description: someone else's report
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+  "/api/v1/requirement_matches/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: Set your own verdict or note on a requirement
+      tags:
+      - Match reports
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: user_verdict replaces the AI's verdict in counts (null clears it).
+        Overrides carry over to new versions while the requirement's text is unchanged.
+      parameters: []
+      responses:
+        '200':
+          description: updated; returns the whole report
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - match_report
+                properties:
+                  match_report:
+                    "$ref": "#/components/schemas/MatchReport"
+        '422':
+          description: invalid verdict
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '404':
+          description: someone else's report
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - requirement_match
+              properties:
+                requirement_match:
+                  type: object
+                  properties:
+                    user_verdict:
+                      type: string
+                      enum:
+                      - evidenced
+                      - transferable
+                      - gap
+                      nullable: true
+                    user_note:
+                      type: string
+                      nullable: true
+                      maxLength: 2000
   "/api/v1/job_postings/{job_posting_id}/requirements":
     parameters:
     - name: job_posting_id
@@ -2048,6 +2278,156 @@ components:
               created_at:
                 type: string
                 format: date-time
+    MatchReport:
+      type: object
+      required:
+      - id
+      - job_posting_id
+      - version
+      - status
+      - error
+      - model
+      - counts
+      - strengths
+      - gaps
+      - created_at
+      - completed_at
+      - matches
+      properties:
+        id:
+          type: integer
+        job_posting_id:
+          type: integer
+        version:
+          type: integer
+        status:
+          type: string
+          enum:
+          - pending
+          - running
+          - done
+          - failed
+        error:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        counts:
+          type: object
+          required:
+          - evidenced
+          - transferable
+          - gap
+          properties:
+            evidenced:
+              type: integer
+            transferable:
+              type: integer
+            gap:
+              type: integer
+        strengths:
+          type: array
+          items:
+            type: string
+        gaps:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        matches:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RequirementMatch"
+    RequirementMatch:
+      type: object
+      required:
+      - id
+      - requirement_id
+      - requirement_kind
+      - requirement_text
+      - verdict
+      - ai_verdict
+      - user_verdict
+      - user_note
+      - reasoning
+      - citations
+      properties:
+        id:
+          type: integer
+        requirement_id:
+          type: integer
+          nullable: true
+          description: null once the requirement is deleted
+        requirement_kind:
+          type: string
+          enum:
+          - required
+          - preferred
+          - responsibility
+        requirement_text:
+          type: string
+          description: As it was when the report ran
+        verdict:
+          type: string
+          enum:
+          - evidenced
+          - transferable
+          - gap
+          description: The user's verdict if set, else the AI's
+        ai_verdict:
+          type: string
+          enum:
+          - evidenced
+          - transferable
+          - gap
+        user_verdict:
+          type: string
+          enum:
+          - evidenced
+          - transferable
+          - gap
+          nullable: true
+        user_note:
+          type: string
+          nullable: true
+        reasoning:
+          type: string
+          nullable: true
+        citations:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - document_id
+            - document_title
+            - page
+            - section
+            - excerpt
+            properties:
+              id:
+                type: integer
+              document_id:
+                type: integer
+                nullable: true
+              document_title:
+                type: string
+              page:
+                type: integer
+                nullable: true
+              section:
+                type: string
+                nullable: true
+              excerpt:
+                type: string
+                description: The cited passage, saved when the report ran
     Document:
       type: object
       required:

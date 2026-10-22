@@ -114,7 +114,8 @@ describe('Job postings', () => {
     await userEvent.clear(screen.getByLabelText('Application deadline'))
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(await screen.findByRole('heading', { name: 'Lead Rails Developer' })).toBeInTheDocument()
+    // Level 1: the posting page's title. The edit form's card (h2) briefly shows the new title before navigating away.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Lead Rails Developer' })).toBeInTheDocument()
     expect(sent?.job_posting).toMatchObject({ title: 'Lead Rails Developer', deadline: null, company: 'Acme Oy' })
   })
 

@@ -93,4 +93,39 @@ describe('SecurityPage', () => {
 
     expect(await screen.findByText('Type your email address to confirm')).toBeInTheDocument()
   })
+
+  it('sends a Google-only user to Google to confirm it is them', async () => {
+    const googleUser = {
+      ...user,
+      has_password: false,
+      identities: [{ id: 5, provider: 'google_oauth2' as const, label: 'Google', email: 'ada@example.com', created_at: '2026-10-20T10:00:00Z' }],
+    }
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user: googleUser }),
+      'GET /api/v1/me/sessions': () => json({ sessions: sessions.slice(0, 1) }),
+      'PATCH /api/v1/me/password': () => reauthenticationRequired(),
+    })
+
+    renderApp('/settings/security')
+    await userEvent.type(await screen.findByLabelText('New password'), 'a brand new long password')
+    await userEvent.click(screen.getByRole('button', { name: 'Save password' }))
+
+    const dialog = await screen.findByRole('dialog', { name: "Confirm it's you" })
+    expect(within(dialog).queryByLabelText('Password')).not.toBeInTheDocument()
+    const button = within(dialog).getByRole('button', { name: 'Continue with Google' })
+    expect(button.closest('form')).toHaveAttribute('action', '/auth/google_oauth2?intent=reauthenticate')
+  })
+
+  it('says so when the user comes back confirmed', async () => {
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user }),
+      'GET /api/v1/me/sessions': () => json({ sessions: sessions.slice(0, 1) }),
+    })
+
+    renderApp('/settings/security?reauthenticated=1')
+
+    expect(await screen.findByText("Thanks, that's confirmed. You can make your change now.")).toBeInTheDocument()
+  })
 })

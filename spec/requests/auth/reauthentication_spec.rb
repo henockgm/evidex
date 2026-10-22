@@ -101,3 +101,53 @@ RSpec.describe "Re-authentication (sudo mode)", type: :request do
     expect(response).to have_http_status(:too_many_requests)
   end
 end
+
+RSpec.describe "Re-authentication with Google or Microsoft", type: :request do
+  let(:user) { create(:user, :oauth_only) }
+  let(:identity) { user.identities.sole }
+
+  def reauthenticate_with_google(uid: identity.uid)
+    mock_google(uid:, email: user.email_address)
+    post "/auth/google_oauth2?intent=reauthenticate"
+    follow_redirect!
+  end
+
+  before do
+    mock_google(uid: identity.uid, email: user.email_address)
+    oauth_sign_in(:google_oauth2)
+    travel 30.minutes
+  end
+
+  it "confirms it's the user when they sign in again with a connected account" do
+    reauthenticate_with_google
+
+    expect(response).to redirect_to("/settings/security?reauthenticated=1")
+    expect(AuditEvent.last).to have_attributes(action: "reauthenticated", metadata: { "provider" => "google_oauth2" })
+    patch "/api/v1/me/password", params: { password: "my first real password" }, as: :json
+    expect(response).to have_http_status(:ok)
+  end
+
+  it "refuses a provider account that isn't connected, without connecting it" do
+    reauthenticate_with_google(uid: "someone-else")
+
+    expect(response).to redirect_to("/settings/security?error=reauthentication_failed")
+    expect(user.identities.count).to eq(1)
+    patch "/api/v1/me/password", params: { password: "my first real password" }, as: :json
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "isn't enough when two-factor sign-in is on" do
+    user.enable_two_factor!(ROTP::Base32.random)
+
+    reauthenticate_with_google
+
+    expect(response).to redirect_to("/settings/security?error=reauthentication_failed")
+  end
+
+  it "lists where to start it for each provider" do
+    get "/api/v1/auth/providers"
+
+    expect(json["providers"].pluck("reauthenticate_path"))
+      .to eq([ "/auth/google_oauth2?intent=reauthenticate", "/auth/entra_id?intent=reauthenticate&prompt=login" ])
+  end
+end

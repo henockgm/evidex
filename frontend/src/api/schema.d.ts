@@ -766,7 +766,7 @@ export interface paths {
         };
         /**
          * List enabled Google/Microsoft sign-in providers
-         * @description Start a provider sign-in with a browser form POST to `path` that includes `authenticity_token`.
+         * @description Start a provider sign-in with a browser form POST to `path` that includes `authenticity_token`. A signed-in user without a password or two-factor sign-in posts to `reauthenticate_path` instead to confirm it's them.
          */
         get: {
             parameters: {
@@ -788,6 +788,7 @@ export interface paths {
                                 id: string;
                                 label: string;
                                 path: string;
+                                reauthenticate_path: string;
                             }[];
                         };
                     };

@@ -5,7 +5,9 @@ module Api
 
       def index
         providers = Evidex.enabled_oauth_providers.map do |id|
-          { id: id.to_s, label: Evidex::OAUTH_PROVIDERS.dig(id, :label), path: "/auth/#{id}" }
+          provider = Evidex::OAUTH_PROVIDERS.fetch(id)
+          { id: id.to_s, label: provider[:label], path: "/auth/#{id}",
+            reauthenticate_path: "/auth/#{id}?#{provider[:reauthenticate].to_query}" }
         end
         render json: { providers: }
       end

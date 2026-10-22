@@ -2,6 +2,8 @@ import { useMutation } from '@tanstack/react-query'
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { ApiError, api, unwrap } from '../api/client'
 import { useMe } from '../auth/useAuth'
+import { useProviders } from '../auth/useProviders'
+import { OAuthButton } from '../components/OAuthButtons'
 import { Alert, Button, Field } from '../components/ui'
 import { ReauthenticationCancelled, SudoContext, needsReauthentication, type WithSudo } from './sudo'
 
@@ -50,6 +52,7 @@ export function SudoProvider({ children }: { children: ReactNode }) {
 
 function ReauthDialog({ onConfirmed, onCancel }: { onConfirmed: () => void; onCancel: () => void }) {
   const { data: user } = useMe()
+  const { data: providers = [] } = useProviders()
   const [error, setError] = useState<ApiError | null>(null)
 
   const confirm = useMutation({
@@ -66,6 +69,7 @@ function ReauthDialog({ onConfirmed, onCancel }: { onConfirmed: () => void; onCa
 
   if (!user) return null
   const canConfirmHere = user.has_password || user.two_factor_enabled
+  const connected = providers.filter((provider) => user.identities.some((identity) => identity.provider === provider.id))
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -125,10 +129,16 @@ function ReauthDialog({ onConfirmed, onCancel }: { onConfirmed: () => void; onCa
             </div>
           </form>
         ) : (
-          <div className="mt-4 space-y-4">
-            <p className="text-sm">Sign out and sign in again with Google or Microsoft, then try again.</p>
-            <Button type="button" variant="secondary" onClick={onCancel}>
-              Close
+          // Leaves the page for the provider; it comes back to the security page,
+          // where the user makes the change again.
+          <div className="mt-4 space-y-3">
+            {connected.map((provider) => (
+              <OAuthButton key={provider.id} path={provider.reauthenticate_path}>
+                Continue with {provider.label}
+              </OAuthButton>
+            ))}
+            <Button type="button" variant="secondary" className="w-full" onClick={onCancel}>
+              Cancel
             </Button>
           </div>
         )}

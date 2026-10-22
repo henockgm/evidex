@@ -12,7 +12,7 @@ module Api
           user = Current.user
           unless user.password? || user.two_factor_enabled?
             return render_problem(:unprocessable_content, "Confirm with your connected account",
-              detail: "Sign in with Google or Microsoft again to confirm it's you.")
+              detail: "Sign in with Google or Microsoft again (POST to the provider's reauthenticate_path) to confirm it's you.")
           end
 
           errors = {}

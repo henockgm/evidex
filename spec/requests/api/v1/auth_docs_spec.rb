@@ -21,12 +21,13 @@ RSpec.describe "Authentication API", type: :request do
     get "List enabled Google/Microsoft sign-in providers" do
       tags "Authentication"
       produces "application/json"
-      description "Start a provider sign-in with a browser form POST to `path` that includes `authenticity_token`."
+      description "Start a provider sign-in with a browser form POST to `path` that includes `authenticity_token`. " \
+        "A signed-in user without a password or two-factor sign-in posts to `reauthenticate_path` instead to confirm it's them."
 
       response "200", "providers" do
         schema type: :object, required: %w[providers], properties: {
-          providers: { type: :array, items: { type: :object, required: %w[id label path], properties: {
-            id: { type: :string }, label: { type: :string }, path: { type: :string }
+          providers: { type: :array, items: { type: :object, required: %w[id label path reauthenticate_path], properties: {
+            id: { type: :string }, label: { type: :string }, path: { type: :string }, reauthenticate_path: { type: :string }
           } } }
         }
         run_test!

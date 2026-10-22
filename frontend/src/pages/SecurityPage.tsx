@@ -16,6 +16,7 @@ const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeS
 export function SecurityPage() {
   const [searchParams] = useSearchParams()
   const linked = searchParams.get('linked')
+  const reauthenticated = searchParams.get('reauthenticated')
   const linkError = oauthErrorMessage(searchParams.get('error'))
 
   return (
@@ -23,6 +24,7 @@ export function SecurityPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Security</h1>
         {linked && <Alert tone="success">Account connected. You can now sign in with it.</Alert>}
+        {reauthenticated && <Alert tone="success">Thanks, that's confirmed. You can make your change now.</Alert>}
         {linkError && <Alert tone="error">{linkError}</Alert>}
         <PasswordSection />
         <TwoFactorCard />

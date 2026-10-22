@@ -9,6 +9,8 @@ class OmniauthCallbacksController < ApplicationController
 
   def create
     resume_session
+    return reauthenticate if Current.user && request.env["omniauth.params"]&.dig("intent") == "reauthenticate"
+
     linking = Current.user.present?
     result = OauthSignIn.new(auth: request.env["omniauth.auth"], current_user: Current.user).call
 
@@ -36,6 +38,22 @@ class OmniauthCallbacksController < ApplicationController
   end
 
   private
+    # Sudo mode for accounts that only sign in with Google/Microsoft: signing in
+    # again with a provider account already connected to this user. Accounts with
+    # a password or two-factor sign-in confirm with those instead.
+    def reauthenticate
+      auth = request.env["omniauth.auth"]
+      user = Current.user
+      if !user.password? && !user.two_factor_enabled? && user.identities.exists?(provider: auth.provider, uid: auth.uid)
+        Current.session.reauthenticate!
+        AuditEvent.record(:reauthenticated, user:, request:, provider:)
+        redirect_to "/settings/security?reauthenticated=1"
+      else
+        AuditEvent.record(:reauthentication_failed, user:, request:, provider:)
+        redirect_to "/settings/security?error=reauthentication_failed"
+      end
+    end
+
     def provider
       request.env["omniauth.auth"].provider
     end

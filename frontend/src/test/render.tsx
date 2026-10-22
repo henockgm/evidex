@@ -66,7 +66,16 @@ export function mockApi(routes: Record<string, Handler>) {
 export const baseRoutes: Record<string, Handler> = {
   'GET /api/v1/csrf_token': () => json({ csrf_token: 'csrf-123' }),
   'GET /api/v1/auth/providers': () =>
-    json({ providers: [{ id: 'google_oauth2', label: 'Google', path: '/auth/google_oauth2' }] }),
+    json({
+      providers: [
+        {
+          id: 'google_oauth2',
+          label: 'Google',
+          path: '/auth/google_oauth2',
+          reauthenticate_path: '/auth/google_oauth2?intent=reauthenticate',
+        },
+      ],
+    }),
 }
 
 /** Fields a posting's detail response has before AI extraction runs. */

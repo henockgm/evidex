@@ -1,8 +1,8 @@
 module Authentication
   extend ActiveSupport::Concern
 
-  SESSION_COOKIE = :evidex_session
-  DEVICE_COOKIE = :evidex_device
+  SESSION_COOKIE = :"#{Rails.configuration.x.cookie_prefix}evidex_session"
+  DEVICE_COOKIE = :"#{Rails.configuration.x.cookie_prefix}evidex_device"
 
   included do
     before_action :require_authentication

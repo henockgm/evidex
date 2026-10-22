@@ -30,10 +30,14 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
+  # (Also lets Rails write its Secure, __Host- cookies when the image is run over plain
+  # HTTP on localhost, which browsers allow.)
   config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  # EVIDEX_FORCE_SSL=false is only for running the image over plain HTTP on localhost
+  # (smoke tests); it also drops upgrade-insecure-requests from the CSP.
+  config.force_ssl = ENV.fetch("EVIDEX_FORCE_SSL", "true") != "false"
 
   # Skip http-to-https redirect for the default health check endpoint.
   config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }

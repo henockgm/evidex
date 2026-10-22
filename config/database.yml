@@ -85,10 +85,13 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
+  # One Postgres server holds all four databases (app, cache, queue, cable).
   primary: &primary_production
     <<: *default
     database: evidex_production
-    username: evidex
+    host: <%= ENV.fetch("EVIDEX_DATABASE_HOST", "localhost") %>
+    port: <%= ENV.fetch("EVIDEX_DATABASE_PORT", 5432) %>
+    username: <%= ENV.fetch("EVIDEX_DATABASE_USERNAME", "evidex") %>
     password: <%= ENV["EVIDEX_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production

@@ -36,3 +36,6 @@
 
 # Editor and IDE settings
 /.idea/
+
+# Embeddings model baked into the Docker image (EVIDEX_MODEL_DIR)
+/models

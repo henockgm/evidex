@@ -43,3 +43,11 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+
+# Built in the image's frontend stage instead
+/frontend/node_modules
+/frontend/dist
+
+# Test and local-only output
+/coverage
+/models

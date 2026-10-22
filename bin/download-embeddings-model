@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+# Downloads the local embeddings model into EVIDEX_MODEL_DIR (used while building
+# the Docker image), without booting the app. Keep MODEL in sync with
+# Library::Embedder::Local::MODEL.
+require "bundler/setup"
+require "informers"
+
+MODEL = "Xenova/multilingual-e5-small".freeze
+
+Informers.cache_dir = ENV.fetch("EVIDEX_MODEL_DIR")
+vector = Informers.pipeline("embedding", MODEL, quantized: true).([ "query: test" ]).first
+abort "Unexpected embedding size #{vector.size}" unless vector.size == 384
+puts "#{MODEL} is ready in #{Informers.cache_dir}"

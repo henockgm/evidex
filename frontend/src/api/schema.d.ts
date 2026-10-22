@@ -359,6 +359,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Security activity on the account, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description events and paging info (20 per page) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            events: components["schemas"]["AuditEvent"][];
+                            meta: {
+                                page: number;
+                                per_page: number;
+                                total: number;
+                                total_pages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/sessions": {
         parameters: {
             query?: never;
@@ -3086,6 +3132,27 @@ export interface components {
             source_url?: string | null;
             /** @description The posting text */
             description?: string;
+        };
+        AuditEvent: {
+            id: number;
+            /** @enum {string} */
+            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed";
+            /** Format: date-time */
+            created_at: string;
+            ip_address?: string | null;
+            /** @description Browser and system, e.g. "Chrome on macOS" */
+            device?: string | null;
+            details: {
+                provider?: string;
+                method?: string;
+                /** @enum {string} */
+                second_factor?: "authenticator" | "recovery_code";
+                /**
+                 * Format: date-time
+                 * @description End of an account lock
+                 */
+                until?: string;
+            };
         };
         Session: {
             id: number;

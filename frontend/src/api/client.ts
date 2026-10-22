@@ -4,6 +4,7 @@ import type { components, paths } from './schema'
 export type User = components['schemas']['User']
 export type Identity = components['schemas']['Identity']
 export type Session = components['schemas']['Session']
+export type AuditEvent = components['schemas']['AuditEvent']
 export type Problem = components['schemas']['Problem']
 export type JobPostingSummary = components['schemas']['JobPostingSummary']
 export type JobPosting = components['schemas']['JobPosting']

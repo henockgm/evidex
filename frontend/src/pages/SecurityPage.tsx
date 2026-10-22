@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { ApiError, api, unwrap, type Session } from '../api/client'
 import { oauthErrorMessage } from '../auth/oauthErrors'
 import { leaveApp, meQueryKey, useAuthChanged, useMe } from '../auth/useAuth'
@@ -22,7 +22,12 @@ export function SecurityPage() {
   return (
     <SudoProvider>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Security</h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-4">
+          <h1 className="text-2xl font-bold tracking-tight">Security</h1>
+          <Link to="/settings/activity" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+            Security activity →
+          </Link>
+        </div>
         {linked && <Alert tone="success">Account connected. You can now sign in with it.</Alert>}
         {reauthenticated && <Alert tone="success">Thanks, that's confirmed. You can make your change now.</Alert>}
         {linkError && <Alert tone="error">{linkError}</Alert>}

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { GuestOnly, RequireAuth } from './auth/guards'
 import { Layout } from './components/Layout'
+import { ActivityPage } from './pages/ActivityPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { EditPostingPage } from './pages/EditPostingPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
@@ -36,6 +37,7 @@ export function AppRoutes() {
           <Route path="postings/:id/edit" element={<EditPostingPage />} />
           <Route path="library" element={<LibraryPage />} />
           <Route path="settings/security" element={<SecurityPage />} />
+          <Route path="settings/activity" element={<ActivityPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

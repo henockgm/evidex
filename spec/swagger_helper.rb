@@ -292,6 +292,25 @@ RSpec.configure do |config|
               description: { type: :string, maxLength: JobPosting::DESCRIPTION_MAX_LENGTH, description: "The posting text" }
             }
           },
+          AuditEvent: {
+            type: :object,
+            required: %w[id action created_at details],
+            properties: {
+              id: { type: :integer },
+              action: { type: :string, enum: AuditEvent::ACTIONS },
+              created_at: { type: :string, format: "date-time" },
+              ip_address: { type: :string, nullable: true },
+              device: { type: :string, nullable: true, description: 'Browser and system, e.g. "Chrome on macOS"' },
+              details: {
+                type: :object,
+                properties: {
+                  provider: { type: :string }, method: { type: :string },
+                  second_factor: { type: :string, enum: %w[authenticator recovery_code] },
+                  until: { type: :string, format: "date-time", description: "End of an account lock" }
+                }
+              }
+            }
+          },
           Session: {
             type: :object,
             required: %w[id current created_at last_active_at],

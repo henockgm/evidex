@@ -179,6 +179,29 @@ RSpec.describe "Account API", type: :request do
     end
   end
 
+  path "/api/v1/me/activity" do
+    get "Security activity on the account, newest first" do
+      tags "Account"
+      produces "application/json"
+      security [ { session_cookie: [] } ]
+      parameter name: :page, in: :query, type: :integer, required: false
+
+      response "200", "events and paging info (20 per page)" do
+        schema type: :object, required: %w[events meta], properties: {
+          events: { type: :array, items: { "$ref" => "#/components/schemas/AuditEvent" } },
+          meta: {
+            type: :object, required: %w[page per_page total total_pages],
+            properties: { page: { type: :integer }, per_page: { type: :integer }, total: { type: :integer }, total_pages: { type: :integer } }
+          }
+        }
+        let(:page) { 1 }
+        run_test! do
+          expect(json["events"].first).to include("action" => "signed_in", "details" => { "method" => "password" })
+        end
+      end
+    end
+  end
+
   path "/api/v1/me/sessions" do
     get "List signed-in devices" do
       tags "Account"

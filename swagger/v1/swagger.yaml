@@ -244,6 +244,50 @@ paths:
                     type: array
                     items:
                       type: string
+  "/api/v1/me/activity":
+    get:
+      summary: Security activity on the account, newest first
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: events and paging info (20 per page)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - events
+                - meta
+                properties:
+                  events:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/AuditEvent"
+                  meta:
+                    type: object
+                    required:
+                    - page
+                    - per_page
+                    - total
+                    - total_pages
+                    properties:
+                      page:
+                        type: integer
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+                      total_pages:
+                        type: integer
   "/api/v1/me/sessions":
     get:
       summary: List signed-in devices
@@ -2941,6 +2985,66 @@ components:
           type: string
           maxLength: 100000
           description: The posting text
+    AuditEvent:
+      type: object
+      required:
+      - id
+      - action
+      - created_at
+      - details
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+          enum:
+          - registered
+          - registration_duplicate
+          - signed_in
+          - sign_in_failed
+          - account_locked
+          - signed_out
+          - session_revoked
+          - other_sessions_revoked
+          - email_verified
+          - password_reset_requested
+          - password_reset
+          - password_changed
+          - identity_linked
+          - identity_unlinked
+          - oauth_signed_in
+          - second_factor_failed
+          - two_factor_enabled
+          - two_factor_disabled
+          - recovery_codes_regenerated
+          - reauthenticated
+          - reauthentication_failed
+        created_at:
+          type: string
+          format: date-time
+        ip_address:
+          type: string
+          nullable: true
+        device:
+          type: string
+          nullable: true
+          description: Browser and system, e.g. "Chrome on macOS"
+        details:
+          type: object
+          properties:
+            provider:
+              type: string
+            method:
+              type: string
+            second_factor:
+              type: string
+              enum:
+              - authenticator
+              - recovery_code
+            until:
+              type: string
+              format: date-time
+              description: End of an account lock
     Session:
       type: object
       required:

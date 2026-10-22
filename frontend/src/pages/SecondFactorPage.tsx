@@ -1,12 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { ApiError, api, unwrap } from '../api/client'
+import { safeNext } from '../auth/safeNext'
 import { useAuthChanged } from '../auth/useAuth'
 import { Alert, AuthCard, Button, Field } from '../components/ui'
 
-function safeNext(next: string | null) {
-  return next?.startsWith('/') && !next.startsWith('//') ? next : '/'
-}
 
 /** Second sign-in step for accounts with two-factor sign-in turned on. */
 export function SecondFactorPage() {

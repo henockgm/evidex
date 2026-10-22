@@ -2,14 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { ApiError, api, resetCsrfToken, unwrap } from '../api/client'
 import { oauthErrorMessage } from '../auth/oauthErrors'
+import { safeNext } from '../auth/safeNext'
 import { useAuthChanged } from '../auth/useAuth'
 import { OAuthButtons } from '../components/OAuthButtons'
 import { Alert, AuthCard, Button, Field } from '../components/ui'
 
-// Only same-site paths, so ?next= can't redirect to another origin.
-function safeNext(next: string | null) {
-  return next?.startsWith('/') && !next.startsWith('//') ? next : '/'
-}
 
 export function LoginPage() {
   const [searchParams] = useSearchParams()

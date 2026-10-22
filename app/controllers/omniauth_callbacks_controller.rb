@@ -21,6 +21,9 @@ class OmniauthCallbacksController < ApplicationController
 
     if linking
       redirect_to "/settings/security?linked=#{provider}"
+    elsif user.two_factor_enabled?
+      begin_second_factor_for(user, method: provider)
+      redirect_to "/login/verify"
     else
       start_new_session_for(user)
       redirect_to "/"
@@ -46,6 +49,6 @@ class OmniauthCallbacksController < ApplicationController
         AuditEvent.record(:identity_linked, user:, request:, provider:)
         UserMailer.with(user:, provider:).identity_linked.deliver_later
       end
-      AuditEvent.record(:oauth_signed_in, user:, request:, provider:) unless Current.user
+      AuditEvent.record(:oauth_signed_in, user:, request:, provider:) unless Current.user || user.two_factor_enabled?
     end
 end

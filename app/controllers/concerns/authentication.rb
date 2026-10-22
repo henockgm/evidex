@@ -44,6 +44,23 @@ module Authentication
       end
     end
 
+    SECOND_FACTOR_WINDOW = 5.minutes
+
+    # After the first factor (password or Google/Microsoft) for a user with 2FA:
+    # remember who is half-way signed in, in the encrypted Rails session.
+    def begin_second_factor_for(user, method:)
+      reset_session
+      session[:pending_second_factor] = {
+        "user_id" => user.id, "method" => method, "attempts" => 0,
+        "expires_at" => SECOND_FACTOR_WINDOW.from_now.to_i
+      }
+    end
+
+    def pending_second_factor
+      pending = session[:pending_second_factor]
+      pending if pending.is_a?(Hash) && pending["expires_at"].to_i > Time.current.to_i
+    end
+
     def terminate_session
       Current.session&.destroy
       Current.session = nil

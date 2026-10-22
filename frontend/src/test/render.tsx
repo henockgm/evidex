@@ -35,6 +35,8 @@ export const user = {
   email_verified: true,
   has_password: true,
   ai_configured: true,
+  two_factor_enabled: false,
+  recovery_codes_remaining: 0,
   identities: [],
   created_at: '2026-10-20T10:00:00Z',
 }

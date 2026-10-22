@@ -81,6 +81,13 @@ RSpec.describe "Authentication API", type: :request do
         run_test!
       end
 
+      response "202", "password accepted; a second factor is required" do
+        schema type: :object, required: %w[second_factor_required], properties: { second_factor_required: { type: :boolean } }
+        let(:body) { { email_address: user.email_address, password: AuthHelpers::PASSWORD } }
+        before { user.enable_two_factor!(ROTP::Base32.random) }
+        run_test!
+      end
+
       response "401", "invalid credentials or locked account" do
         schema "$ref" => "#/components/schemas/Problem"
         let(:body) { { email_address: user.email_address, password: "wrong password!!" } }
@@ -94,6 +101,36 @@ RSpec.describe "Authentication API", type: :request do
 
       response "204", "signed out" do
         before { sign_in(user) }
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/session/second_factor" do
+    post "Second sign-in step: an authenticator or recovery code" do
+      tags "Authentication"
+      consumes "application/json"
+      produces "application/json"
+      security [ { csrf_token: [] } ]
+      description "Follows a 202 from POST /api/v1/session (or a Google/Microsoft redirect to /login/verify). Valid for 5 minutes and 5 attempts; wrong codes count toward account lockout."
+      parameter name: :body, in: :body, schema: { type: :object, required: %w[code], properties: { code: { type: :string, description: "6-digit code or a recovery code" } } }
+
+      let(:secret) { ROTP::Base32.random }
+
+      before do
+        user.enable_two_factor!(secret)
+        post "/api/v1/session", params: { email_address: user.email_address, password: AuthHelpers::PASSWORD }, as: :json
+      end
+
+      response "201", "signed in" do
+        schema "$ref" => "#/components/schemas/UserEnvelope"
+        let(:body) { { code: ROTP::TOTP.new(secret).now } }
+        run_test!
+      end
+
+      response "422", "wrong code" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:body) { { code: "000000" } }
         run_test!
       end
     end

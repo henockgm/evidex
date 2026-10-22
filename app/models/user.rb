@@ -12,11 +12,14 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :delete_all
   has_many :identities, dependent: :delete_all
   has_many :audit_events, dependent: :delete_all
+  has_many :recovery_codes, dependent: :delete_all
   has_many :job_postings, dependent: :destroy
   has_many :documents, dependent: :destroy
   has_many :document_chunks, dependent: :delete_all
 
   normalizes :email_address, with: ->(email) { email.strip.downcase }
+
+  encrypts :otp_secret
 
   validates :email_address, presence: true, uniqueness: true, length: { maximum: 254 },
     format: { with: URI::MailTo::EMAIL_REGEXP }
@@ -47,6 +50,50 @@ class User < ApplicationRecord
 
   def sign_in_methods_count
     identities.count + (password? ? 1 : 0)
+  end
+
+  OTP_ISSUER = "Evidex"
+
+  def two_factor_enabled?
+    otp_enabled_at.present?
+  end
+
+  def totp(secret = otp_secret)
+    ROTP::TOTP.new(secret, issuer: OTP_ISSUER)
+  end
+
+  # True for a current code that hasn't been used before; remembers its time
+  # step so the same code can't be replayed.
+  def verify_otp!(code, secret: otp_secret)
+    return false if secret.blank? || code.to_s.gsub(/\s/, "") !~ /\A\d{6}\z/
+
+    accepted_at = totp(secret).verify(code.to_s.gsub(/\s/, ""), drift_behind: 30, drift_ahead: 30,
+      after: otp_last_timestep && Time.at(otp_last_timestep * 30))
+    return false unless accepted_at
+
+    update_columns(otp_last_timestep: accepted_at / 30, updated_at: Time.current)
+    true
+  end
+
+  # Accepts an authenticator code or an unused recovery code.
+  def verify_second_factor!(code)
+    return false unless two_factor_enabled?
+
+    verify_otp!(code) || RecoveryCode.consume!(self, code)
+  end
+
+  def enable_two_factor!(secret)
+    transaction do
+      update!(otp_secret: secret, otp_enabled_at: Time.current)
+      RecoveryCode.regenerate_for!(self)
+    end
+  end
+
+  def disable_two_factor!
+    transaction do
+      update!(otp_secret: nil, otp_enabled_at: nil, otp_last_timestep: nil)
+      recovery_codes.delete_all
+    end
   end
 
   def locked?

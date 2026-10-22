@@ -9,6 +9,13 @@ FactoryBot.define do
       email_verified_at { nil }
     end
 
+    trait :two_factor do
+      after(:create) do |user|
+        user.update!(otp_secret: ROTP::Base32.random, otp_enabled_at: Time.current)
+        RecoveryCode.regenerate_for!(user)
+      end
+    end
+
     trait :oauth_only do
       password { nil }
       after(:create) { |user| create(:identity, user:) }

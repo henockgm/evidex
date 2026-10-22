@@ -74,6 +74,87 @@ RSpec.describe "Account API", type: :request do
     end
   end
 
+  path "/api/v1/me/two_factor/setup" do
+    post "Start setting up two-factor sign-in" do
+      tags "Account"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      description "Returns a new secret as a QR code; nothing changes until it is confirmed with POST /api/v1/me/two_factor."
+
+      response "200", "secret to add to an authenticator app" do
+        schema type: :object, required: %w[secret otpauth_uri qr_code], properties: {
+          secret: { type: :string }, otpauth_uri: { type: :string }, qr_code: { type: :string, description: "SVG as a data: URL" }
+        }
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/me/two_factor" do
+    post "Turn on two-factor sign-in by confirming a code" do
+      tags "Account"
+      consumes "application/json"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      parameter name: :body, in: :body, schema: { type: :object, required: %w[code], properties: { code: { type: :string } } }
+
+      response "201", "on; the recovery codes are shown only now" do
+        schema type: :object, required: %w[user recovery_codes], properties: {
+          user: { "$ref" => "#/components/schemas/User" }, recovery_codes: { type: :array, items: { type: :string } }
+        }
+        let(:body) do
+          post "/api/v1/me/two_factor/setup"
+          { code: ROTP::TOTP.new(json["secret"]).now }
+        end
+        run_test!
+      end
+    end
+
+    delete "Turn off two-factor sign-in" do
+      tags "Account"
+      consumes "application/json"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      parameter name: :body, in: :body, schema: { type: :object, required: %w[code], properties: { code: { type: :string, description: "Authenticator or recovery code" } } }
+
+      let(:secret) { ROTP::Base32.random }
+      before { user.enable_two_factor!(secret) }
+
+      response "200", "off" do
+        schema "$ref" => "#/components/schemas/UserEnvelope"
+        let(:body) { { code: ROTP::TOTP.new(secret).now } }
+        run_test!
+      end
+
+      response "422", "wrong code" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:body) { { code: "000000" } }
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/me/two_factor/recovery_codes" do
+    post "Replace the recovery codes" do
+      tags "Account"
+      consumes "application/json"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      parameter name: :body, in: :body, schema: { type: :object, required: %w[code], properties: { code: { type: :string, description: "Authenticator code" } } }
+
+      let(:secret) { ROTP::Base32.random }
+      before { user.enable_two_factor!(secret) }
+
+      response "200", "new codes; the old ones stop working" do
+        schema type: :object, required: %w[user recovery_codes], properties: {
+          user: { "$ref" => "#/components/schemas/User" }, recovery_codes: { type: :array, items: { type: :string } }
+        }
+        let(:body) { { code: ROTP::TOTP.new(secret).now } }
+        run_test!
+      end
+    end
+  end
+
   path "/api/v1/me/sessions" do
     get "List signed-in devices" do
       tags "Account"

@@ -64,7 +64,7 @@ RSpec.configure do |config|
           },
           User: {
             type: :object,
-            required: %w[id email_address email_verified has_password ai_configured identities created_at],
+            required: %w[id email_address email_verified has_password ai_configured two_factor_enabled recovery_codes_remaining identities created_at],
             properties: {
               id: { type: :integer },
               email_address: { type: :string, format: :email },
@@ -72,6 +72,8 @@ RSpec.configure do |config|
               email_verified: { type: :boolean },
               has_password: { type: :boolean },
               ai_configured: { type: :boolean, description: "The server has an AI provider configured" },
+              two_factor_enabled: { type: :boolean },
+              recovery_codes_remaining: { type: :integer },
               identities: { type: :array, items: { "$ref" => "#/components/schemas/Identity" } },
               created_at: { type: :string, format: "date-time" }
             }

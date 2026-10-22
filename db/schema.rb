@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_082205) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -221,6 +221,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
     t.index ["user_id"], name: "index_match_reports_on_user_id"
   end
 
+  create_table "recovery_codes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "code_digest", null: false
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.index ["code_digest"], name: "index_recovery_codes_on_code_digest", unique: true
+    t.index ["user_id"], name: "index_recovery_codes_on_user_id"
+  end
+
   create_table "requirement_matches", force: :cascade do |t|
     t.bigint "match_report_id", null: false
     t.bigint "requirement_id"
@@ -270,6 +279,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
     t.datetime "locked_until"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "otp_secret"
+    t.datetime "otp_enabled_at"
+    t.integer "otp_last_timestep"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
@@ -292,6 +304,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
   add_foreign_key "match_citations", "requirement_matches", on_delete: :cascade
   add_foreign_key "match_reports", "job_postings", on_delete: :cascade
   add_foreign_key "match_reports", "users", on_delete: :cascade
+  add_foreign_key "recovery_codes", "users", on_delete: :cascade
   add_foreign_key "requirement_matches", "match_reports", on_delete: :cascade
   add_foreign_key "requirement_matches", "requirements", on_delete: :nullify
   add_foreign_key "requirements", "job_postings", on_delete: :cascade

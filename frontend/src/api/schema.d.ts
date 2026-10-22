@@ -138,6 +138,177 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/me/two_factor/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start setting up two-factor sign-in
+         * @description Returns a new secret as a QR code; nothing changes until it is confirmed with POST /api/v1/me/two_factor.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description secret to add to an authenticator app */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            secret: string;
+                            otpauth_uri: string;
+                            /** @description SVG as a data: URL */
+                            qr_code: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/two_factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn on two-factor sign-in by confirming a code */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description on; the recovery codes are shown only now */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            user: components["schemas"]["User"];
+                            recovery_codes: string[];
+                        };
+                    };
+                };
+            };
+        };
+        /** Turn off two-factor sign-in */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Authenticator or recovery code */
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description off */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UserEnvelope"];
+                    };
+                };
+                /** @description wrong code */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/two_factor/recovery_codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Replace the recovery codes */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Authenticator code */
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description new codes; the old ones stop working */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            user: components["schemas"]["User"];
+                            recovery_codes: string[];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/sessions": {
         parameters: {
             query?: never;
@@ -675,6 +846,17 @@ export interface paths {
                         "application/json": components["schemas"]["UserEnvelope"];
                     };
                 };
+                /** @description password accepted; a second factor is required */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            second_factor_required: boolean;
+                        };
+                    };
+                };
                 /** @description invalid credentials or locked account */
                 401: {
                     headers: {
@@ -705,6 +887,61 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/session/second_factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Second sign-in step: an authenticator or recovery code
+         * @description Follows a 202 from POST /api/v1/session (or a Google/Microsoft redirect to /login/verify). Valid for 5 minutes and 5 attempts; wrong codes count toward account lockout.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description 6-digit code or a recovery code */
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description signed in */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UserEnvelope"];
+                    };
+                };
+                /** @description wrong code */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2587,6 +2824,8 @@ export interface components {
             has_password: boolean;
             /** @description The server has an AI provider configured */
             ai_configured: boolean;
+            two_factor_enabled: boolean;
+            recovery_codes_remaining: number;
             identities: components["schemas"]["Identity"][];
             /** Format: date-time */
             created_at: string;

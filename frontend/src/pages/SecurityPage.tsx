@@ -6,6 +6,7 @@ import { oauthErrorMessage } from '../auth/oauthErrors'
 import { leaveApp, meQueryKey, useAuthChanged, useMe } from '../auth/useAuth'
 import { useProviders } from '../auth/useProviders'
 import { OAuthButton } from '../components/OAuthButtons'
+import { TwoFactorCard } from '../security/TwoFactorCard'
 import { Alert, Button, Card, Field } from '../components/ui'
 
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -21,6 +22,7 @@ export function SecurityPage() {
       {linked && <Alert tone="success">Account connected. You can now sign in with it.</Alert>}
       {linkError && <Alert tone="error">{linkError}</Alert>}
       <PasswordSection />
+      <TwoFactorCard />
       <ConnectedAccountsSection />
       <SessionsSection />
       <DeleteAccountSection />

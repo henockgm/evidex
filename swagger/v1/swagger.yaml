@@ -89,6 +89,140 @@ paths:
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/me/two_factor/setup":
+    post:
+      summary: Start setting up two-factor sign-in
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Returns a new secret as a QR code; nothing changes until it is
+        confirmed with POST /api/v1/me/two_factor.
+      responses:
+        '200':
+          description: secret to add to an authenticator app
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - secret
+                - otpauth_uri
+                - qr_code
+                properties:
+                  secret:
+                    type: string
+                  otpauth_uri:
+                    type: string
+                  qr_code:
+                    type: string
+                    description: 'SVG as a data: URL'
+  "/api/v1/me/two_factor":
+    post:
+      summary: Turn on two-factor sign-in by confirming a code
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: on; the recovery codes are shown only now
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - user
+                - recovery_codes
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/User"
+                  recovery_codes:
+                    type: array
+                    items:
+                      type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+    delete:
+      summary: Turn off two-factor sign-in
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: 'off'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserEnvelope"
+        '422':
+          description: wrong code
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  description: Authenticator or recovery code
+  "/api/v1/me/two_factor/recovery_codes":
+    post:
+      summary: Replace the recovery codes
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '200':
+          description: new codes; the old ones stop working
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - user
+                - recovery_codes
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/User"
+                  recovery_codes:
+                    type: array
+                    items:
+                      type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  description: Authenticator code
   "/api/v1/me/sessions":
     get:
       summary: List signed-in devices
@@ -431,6 +565,17 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/UserEnvelope"
+        '202':
+          description: password accepted; a second factor is required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - second_factor_required
+                properties:
+                  second_factor_required:
+                    type: boolean
         '401':
           description: invalid credentials or locked account
           content:
@@ -461,6 +606,41 @@ paths:
       responses:
         '204':
           description: signed out
+  "/api/v1/session/second_factor":
+    post:
+      summary: 'Second sign-in step: an authenticator or recovery code'
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      description: Follows a 202 from POST /api/v1/session (or a Google/Microsoft
+        redirect to /login/verify). Valid for 5 minutes and 5 attempts; wrong codes
+        count toward account lockout.
+      parameters: []
+      responses:
+        '201':
+          description: signed in
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserEnvelope"
+        '422':
+          description: wrong code
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  description: 6-digit code or a recovery code
   "/api/v1/email_verification":
     post:
       summary: Confirm an email address with the emailed token
@@ -2116,6 +2296,8 @@ components:
       - email_verified
       - has_password
       - ai_configured
+      - two_factor_enabled
+      - recovery_codes_remaining
       - identities
       - created_at
       properties:
@@ -2134,6 +2316,10 @@ components:
         ai_configured:
           type: boolean
           description: The server has an AI provider configured
+        two_factor_enabled:
+          type: boolean
+        recovery_codes_remaining:
+          type: integer
         identities:
           type: array
           items:

@@ -66,4 +66,9 @@ Rails.application.routes.draw do
   # OmniAuth handles POST /auth/:provider itself and redirects to the provider.
   match "/auth/:provider/callback", to: "omniauth_callbacks#create", via: %i[get post], as: :oauth_callback
   get "/auth/failure", to: "omniauth_callbacks#failure"
+
+  # Everything else a browser opens is a page of the React app.
+  root "spa#show"
+  get "*path", to: "spa#show", as: :spa, format: false,
+    constraints: ->(request) { request.format.html? && !request.path.start_with?("/api/", "/auth/", "/rails/") }
 end

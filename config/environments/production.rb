@@ -15,6 +15,14 @@ Rails.application.configure do
   # Cache assets for far-future expiry since they are all digest stamped.
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
 
+  # The React app's hashed assets (/assets/index-abc123.js) never change, so cache
+  # them for a year. Only these paths are served from the build; index.html always
+  # comes from SpaController, uncached.
+  require "rack/static"
+  config.middleware.insert_after ActionDispatch::Static, Rack::Static,
+    urls: %w[/assets /favicon.svg], root: config.x.spa_root.to_s, cascade: true,
+    header_rules: [ [ :all, { "cache-control" => "public, max-age=#{1.year.to_i}, immutable" } ] ]
+
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 

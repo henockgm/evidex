@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_091117) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -190,6 +190,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
     t.index ["user_id"], name: "index_job_postings_on_user_id"
   end
 
+  create_table "known_devices", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "device_digest", null: false
+    t.string "user_agent"
+    t.string "ip_address"
+    t.datetime "last_seen_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "device_digest"], name: "index_known_devices_on_user_id_and_device_digest", unique: true
+    t.index ["user_id"], name: "index_known_devices_on_user_id"
+  end
+
   create_table "match_citations", force: :cascade do |t|
     t.bigint "requirement_match_id", null: false
     t.bigint "document_chunk_id"
@@ -219,6 +231,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
     t.index ["job_posting_id", "version"], name: "index_match_reports_on_job_posting_id_and_version", unique: true
     t.index ["job_posting_id"], name: "index_match_reports_on_job_posting_id"
     t.index ["user_id"], name: "index_match_reports_on_user_id"
+  end
+
+  create_table "recovery_codes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "code_digest", null: false
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.index ["code_digest"], name: "index_recovery_codes_on_code_digest", unique: true
+    t.index ["user_id"], name: "index_recovery_codes_on_user_id"
   end
 
   create_table "requirement_matches", force: :cascade do |t|
@@ -256,6 +277,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
     t.datetime "last_active_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "authenticated_at", null: false
     t.index ["token_digest"], name: "index_sessions_on_token_digest", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
@@ -270,6 +292,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
     t.datetime "locked_until"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "otp_secret"
+    t.datetime "otp_enabled_at"
+    t.integer "otp_last_timestep"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
@@ -287,11 +312,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_130115) do
   add_foreign_key "job_applications", "job_postings", on_delete: :cascade
   add_foreign_key "job_applications", "users"
   add_foreign_key "job_postings", "users"
+  add_foreign_key "known_devices", "users", on_delete: :cascade
   add_foreign_key "match_citations", "document_chunks", on_delete: :nullify
   add_foreign_key "match_citations", "documents", on_delete: :nullify
   add_foreign_key "match_citations", "requirement_matches", on_delete: :cascade
   add_foreign_key "match_reports", "job_postings", on_delete: :cascade
   add_foreign_key "match_reports", "users", on_delete: :cascade
+  add_foreign_key "recovery_codes", "users", on_delete: :cascade
   add_foreign_key "requirement_matches", "match_reports", on_delete: :cascade
   add_foreign_key "requirement_matches", "requirements", on_delete: :nullify
   add_foreign_key "requirements", "job_postings", on_delete: :cascade

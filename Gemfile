@@ -83,3 +83,6 @@ gem "rubyzip", "~> 3.7"
 
 gem "informers", "~> 1.3"
 gem "neighbor", "~> 1.2"
+
+gem "rotp", "~> 6.3"
+gem "rqrcode", "~> 3.2"

@@ -14,7 +14,9 @@ Rails.application.routes.draw do
       get "auth/providers", to: "auth_providers#index", as: :auth_providers
 
       resource :registration, only: :create
-      resource :session, only: %i[create destroy]
+      resource :session, only: %i[create destroy] do
+        resource :second_factor, only: :create
+      end
       resource :email_verification, only: :create do
         post :resend
       end
@@ -50,6 +52,12 @@ Rails.application.routes.draw do
           end
           resources :identities, only: %i[index destroy]
           resource :password, only: :update
+          resource :reauthentication, only: :create
+          resource :activity, only: :show
+          resource :two_factor, only: %i[create destroy] do
+            post :setup
+            post :recovery_codes
+          end
         end
       end
     end

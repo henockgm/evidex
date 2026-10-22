@@ -43,7 +43,10 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete the account and all its data */
+        /**
+         * Delete the account and all its data
+         * @description Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -54,10 +57,8 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @description Required when the account has a password */
-                        password?: string;
-                        /** @description Required instead of password for Google/Microsoft-only accounts */
-                        confirm_email?: string;
+                        /** @description The account's email address, typed out */
+                        confirm_email: string;
                     };
                 };
             };
@@ -69,7 +70,14 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description confirmation failed */
+                /** @description re-authentication needed */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description email doesn't match */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -98,7 +106,7 @@ export interface paths {
         head?: never;
         /**
          * Change password (or add one to a Google/Microsoft-only account)
-         * @description Signs out all other sessions. Accounts without a password must have signed in within the last 10 minutes.
+         * @description Signs out all other sessions. Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
          */
         patch: {
             parameters: {
@@ -110,7 +118,6 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        current_password?: string;
                         password: string;
                     };
                 };
@@ -125,7 +132,7 @@ export interface paths {
                         "application/json": components["schemas"]["UserEnvelope"];
                     };
                 };
-                /** @description wrong current password or invalid new password */
+                /** @description invalid new password */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -136,6 +143,266 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/me/reauthentication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm it's you before a sensitive change (sudo mode)
+         * @description Asks for the password, plus a code when two-factor sign-in is on. Accounts without a password give a code, or sign in with Google/Microsoft again. Sensitive changes are then allowed for 10 minutes.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Required when the account has a password */
+                        password?: string;
+                        /** @description Authenticator or recovery code; required when two-factor sign-in is on */
+                        code?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description confirmed */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: date-time */
+                            recently_authenticated_until: string;
+                        };
+                    };
+                };
+                /** @description wrong password or code */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/two_factor/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start setting up two-factor sign-in
+         * @description Returns a new secret as a QR code; nothing changes until it is confirmed with POST /api/v1/me/two_factor. Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description secret to add to an authenticator app */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            secret: string;
+                            otpauth_uri: string;
+                            /** @description SVG as a data: URL */
+                            qr_code: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/two_factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn on two-factor sign-in by confirming a code */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description on; the recovery codes are shown only now */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            user: components["schemas"]["User"];
+                            recovery_codes: string[];
+                        };
+                    };
+                };
+            };
+        };
+        /**
+         * Turn off two-factor sign-in
+         * @description Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description off */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UserEnvelope"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/two_factor/recovery_codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Replace the recovery codes
+         * @description Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description new codes; the old ones stop working */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            user: components["schemas"]["User"];
+                            recovery_codes: string[];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Security activity on the account, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description events and paging info (20 per page) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            events: components["schemas"]["AuditEvent"][];
+                            meta: {
+                                page: number;
+                                per_page: number;
+                                total: number;
+                                total_pages: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/me/sessions": {
@@ -307,7 +574,7 @@ export interface paths {
         post?: never;
         /**
          * Disconnect a Google/Microsoft account
-         * @description Refused when it is the account's only sign-in method.
+         * @description Refused when it is the account's only sign-in method. Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
          */
         delete: {
             parameters: {
@@ -545,7 +812,7 @@ export interface paths {
         };
         /**
          * List enabled Google/Microsoft sign-in providers
-         * @description Start a provider sign-in with a browser form POST to `path` that includes `authenticity_token`.
+         * @description Start a provider sign-in with a browser form POST to `path` that includes `authenticity_token`. A signed-in user without a password or two-factor sign-in posts to `reauthenticate_path` instead to confirm it's them.
          */
         get: {
             parameters: {
@@ -567,6 +834,7 @@ export interface paths {
                                 id: string;
                                 label: string;
                                 path: string;
+                                reauthenticate_path: string;
                             }[];
                         };
                     };
@@ -675,6 +943,17 @@ export interface paths {
                         "application/json": components["schemas"]["UserEnvelope"];
                     };
                 };
+                /** @description password accepted; a second factor is required */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            second_factor_required: boolean;
+                        };
+                    };
+                };
                 /** @description invalid credentials or locked account */
                 401: {
                     headers: {
@@ -705,6 +984,61 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/session/second_factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Second sign-in step: an authenticator or recovery code
+         * @description Follows a 202 from POST /api/v1/session (or a Google/Microsoft redirect to /login/verify). Valid for 5 minutes and 5 attempts; wrong codes count toward account lockout.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description 6-digit code or a recovery code */
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description signed in */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UserEnvelope"];
+                    };
+                };
+                /** @description wrong code */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2587,6 +2921,8 @@ export interface components {
             has_password: boolean;
             /** @description The server has an AI provider configured */
             ai_configured: boolean;
+            two_factor_enabled: boolean;
+            recovery_codes_remaining: number;
             identities: components["schemas"]["Identity"][];
             /** Format: date-time */
             created_at: string;
@@ -2796,6 +3132,27 @@ export interface components {
             source_url?: string | null;
             /** @description The posting text */
             description?: string;
+        };
+        AuditEvent: {
+            id: number;
+            /** @enum {string} */
+            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed";
+            /** Format: date-time */
+            created_at: string;
+            ip_address?: string | null;
+            /** @description Browser and system, e.g. "Chrome on macOS" */
+            device?: string | null;
+            details: {
+                provider?: string;
+                method?: string;
+                /** @enum {string} */
+                second_factor?: "authenticator" | "recovery_code";
+                /**
+                 * Format: date-time
+                 * @description End of an account lock
+                 */
+                until?: string;
+            };
         };
         Session: {
             id: number;

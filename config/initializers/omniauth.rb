@@ -4,9 +4,12 @@
 # OmniAuth request phase is POST-only with a Rails CSRF token
 # (omniauth-rails_csrf_protection), which prevents login CSRF.
 module Evidex
+  # reauthenticate: query for confirming it's the user before a sensitive change.
+  # Microsoft can be asked to show its sign-in form again; Google can only be
+  # asked to show its account chooser (already the default).
   OAUTH_PROVIDERS = {
-    google_oauth2: { label: "Google", env: %w[GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET] },
-    entra_id: { label: "Microsoft", env: %w[MICROSOFT_CLIENT_ID MICROSOFT_CLIENT_SECRET] }
+    google_oauth2: { label: "Google", env: %w[GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET], reauthenticate: { intent: "reauthenticate" } },
+    entra_id: { label: "Microsoft", env: %w[MICROSOFT_CLIENT_ID MICROSOFT_CLIENT_SECRET], reauthenticate: { intent: "reauthenticate", prompt: "login" } }
   }.freeze
 
   def self.enabled_oauth_providers

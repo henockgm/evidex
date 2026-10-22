@@ -1,15 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { ApiError, api, unwrap } from '../api/client'
+import { ApiError, api, resetCsrfToken, unwrap } from '../api/client'
 import { oauthErrorMessage } from '../auth/oauthErrors'
+import { safeNext } from '../auth/safeNext'
 import { useAuthChanged } from '../auth/useAuth'
 import { OAuthButtons } from '../components/OAuthButtons'
 import { Alert, AuthCard, Button, Field } from '../components/ui'
 
-// Only same-site paths, so ?next= can't redirect to another origin.
-function safeNext(next: string | null) {
-  return next?.startsWith('/') && !next.startsWith('//') ? next : '/'
-}
 
 export function LoginPage() {
   const [searchParams] = useSearchParams()
@@ -25,12 +22,19 @@ export function LoginPage() {
     setError(null)
 
     try {
-      const { user } = await unwrap(
+      const result = await unwrap(
         api.POST('/api/v1/session', {
           body: { email_address: String(form.get('email_address')), password: String(form.get('password')) },
         }),
       )
-      authChanged(user)
+      if ('second_factor_required' in result) {
+        // Rails replaced its session (and CSRF token) for the half-finished sign-in.
+        resetCsrfToken()
+        const next = searchParams.get('next')
+        navigate(next ? `/login/verify?next=${encodeURIComponent(next)}` : '/login/verify')
+        return
+      }
+      authChanged(result.user)
       navigate(safeNext(searchParams.get('next')), { replace: true })
     } catch (caught) {
       setError(caught instanceof ApiError ? (caught.problem?.title ?? caught.message) : 'Something went wrong.')

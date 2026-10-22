@@ -33,25 +33,27 @@ paths:
       security:
       - session_cookie: []
         csrf_token: []
+      description: Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication)
+        from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
       parameters: []
       responses:
         '204':
           description: deleted
+        '403':
+          description: re-authentication needed
         '422':
-          description: confirmation failed
+          description: email doesn't match
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required:
+              - confirm_email
               properties:
-                password:
-                  type: string
-                  description: Required when the account has a password
                 confirm_email:
                   type: string
-                  description: Required instead of password for Google/Microsoft-only
-                    accounts
+                  description: The account's email address, typed out
   "/api/v1/me/password":
     patch:
       summary: Change password (or add one to a Google/Microsoft-only account)
@@ -60,8 +62,9 @@ paths:
       security:
       - session_cookie: []
         csrf_token: []
-      description: Signs out all other sessions. Accounts without a password must
-        have signed in within the last 10 minutes.
+      description: Signs out all other sessions. Needs a sign-in or re-authentication
+        (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403
+        with type urn:evidex:problem:reauthentication-required.
       parameters: []
       responses:
         '200':
@@ -71,7 +74,7 @@ paths:
               schema:
                 "$ref": "#/components/schemas/UserEnvelope"
         '422':
-          description: wrong current password or invalid new password
+          description: invalid new password
           content:
             application/json:
               schema:
@@ -84,11 +87,207 @@ paths:
               required:
               - password
               properties:
-                current_password:
-                  type: string
                 password:
                   type: string
                   minLength: 12
+  "/api/v1/me/reauthentication":
+    post:
+      summary: Confirm it's you before a sensitive change (sudo mode)
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Asks for the password, plus a code when two-factor sign-in is on.
+        Accounts without a password give a code, or sign in with Google/Microsoft
+        again. Sensitive changes are then allowed for 10 minutes.
+      parameters: []
+      responses:
+        '201':
+          description: confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - recently_authenticated_until
+                properties:
+                  recently_authenticated_until:
+                    type: string
+                    format: date-time
+        '422':
+          description: wrong password or code
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: Required when the account has a password
+                code:
+                  type: string
+                  description: Authenticator or recovery code; required when two-factor
+                    sign-in is on
+  "/api/v1/me/two_factor/setup":
+    post:
+      summary: Start setting up two-factor sign-in
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Returns a new secret as a QR code; nothing changes until it is
+        confirmed with POST /api/v1/me/two_factor. Needs a sign-in or re-authentication
+        (POST /api/v1/me/reauthentication) from the last 10 minutes; otherwise 403
+        with type urn:evidex:problem:reauthentication-required.
+      responses:
+        '200':
+          description: secret to add to an authenticator app
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - secret
+                - otpauth_uri
+                - qr_code
+                properties:
+                  secret:
+                    type: string
+                  otpauth_uri:
+                    type: string
+                  qr_code:
+                    type: string
+                    description: 'SVG as a data: URL'
+  "/api/v1/me/two_factor":
+    post:
+      summary: Turn on two-factor sign-in by confirming a code
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      parameters: []
+      responses:
+        '201':
+          description: on; the recovery codes are shown only now
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - user
+                - recovery_codes
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/User"
+                  recovery_codes:
+                    type: array
+                    items:
+                      type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+    delete:
+      summary: Turn off two-factor sign-in
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication)
+        from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
+      responses:
+        '200':
+          description: 'off'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserEnvelope"
+  "/api/v1/me/two_factor/recovery_codes":
+    post:
+      summary: Replace the recovery codes
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Needs a sign-in or re-authentication (POST /api/v1/me/reauthentication)
+        from the last 10 minutes; otherwise 403 with type urn:evidex:problem:reauthentication-required.
+      responses:
+        '200':
+          description: new codes; the old ones stop working
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - user
+                - recovery_codes
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/User"
+                  recovery_codes:
+                    type: array
+                    items:
+                      type: string
+  "/api/v1/me/activity":
+    get:
+      summary: Security activity on the account, newest first
+      tags:
+      - Account
+      security:
+      - session_cookie: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: events and paging info (20 per page)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - events
+                - meta
+                properties:
+                  events:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/AuditEvent"
+                  meta:
+                    type: object
+                    required:
+                    - page
+                    - per_page
+                    - total
+                    - total_pages
+                    properties:
+                      page:
+                        type: integer
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+                      total_pages:
+                        type: integer
   "/api/v1/me/sessions":
     get:
       summary: List signed-in devices
@@ -175,7 +374,9 @@ paths:
       security:
       - session_cookie: []
         csrf_token: []
-      description: Refused when it is the account's only sign-in method.
+      description: Refused when it is the account's only sign-in method. Needs a sign-in
+        or re-authentication (POST /api/v1/me/reauthentication) from the last 10 minutes;
+        otherwise 403 with type urn:evidex:problem:reauthentication-required.
       responses:
         '204':
           description: disconnected
@@ -348,7 +549,8 @@ paths:
       tags:
       - Authentication
       description: Start a provider sign-in with a browser form POST to `path` that
-        includes `authenticity_token`.
+        includes `authenticity_token`. A signed-in user without a password or two-factor
+        sign-in posts to `reauthenticate_path` instead to confirm it's them.
       responses:
         '200':
           description: providers
@@ -367,12 +569,15 @@ paths:
                       - id
                       - label
                       - path
+                      - reauthenticate_path
                       properties:
                         id:
                           type: string
                         label:
                           type: string
                         path:
+                          type: string
+                        reauthenticate_path:
                           type: string
   "/api/v1/registration":
     post:
@@ -431,6 +636,17 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/UserEnvelope"
+        '202':
+          description: password accepted; a second factor is required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - second_factor_required
+                properties:
+                  second_factor_required:
+                    type: boolean
         '401':
           description: invalid credentials or locked account
           content:
@@ -461,6 +677,41 @@ paths:
       responses:
         '204':
           description: signed out
+  "/api/v1/session/second_factor":
+    post:
+      summary: 'Second sign-in step: an authenticator or recovery code'
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      description: Follows a 202 from POST /api/v1/session (or a Google/Microsoft
+        redirect to /login/verify). Valid for 5 minutes and 5 attempts; wrong codes
+        count toward account lockout.
+      parameters: []
+      responses:
+        '201':
+          description: signed in
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserEnvelope"
+        '422':
+          description: wrong code
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  description: 6-digit code or a recovery code
   "/api/v1/email_verification":
     post:
       summary: Confirm an email address with the emailed token
@@ -2116,6 +2367,8 @@ components:
       - email_verified
       - has_password
       - ai_configured
+      - two_factor_enabled
+      - recovery_codes_remaining
       - identities
       - created_at
       properties:
@@ -2134,6 +2387,10 @@ components:
         ai_configured:
           type: boolean
           description: The server has an AI provider configured
+        two_factor_enabled:
+          type: boolean
+        recovery_codes_remaining:
+          type: integer
         identities:
           type: array
           items:
@@ -2728,6 +2985,66 @@ components:
           type: string
           maxLength: 100000
           description: The posting text
+    AuditEvent:
+      type: object
+      required:
+      - id
+      - action
+      - created_at
+      - details
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+          enum:
+          - registered
+          - registration_duplicate
+          - signed_in
+          - sign_in_failed
+          - account_locked
+          - signed_out
+          - session_revoked
+          - other_sessions_revoked
+          - email_verified
+          - password_reset_requested
+          - password_reset
+          - password_changed
+          - identity_linked
+          - identity_unlinked
+          - oauth_signed_in
+          - second_factor_failed
+          - two_factor_enabled
+          - two_factor_disabled
+          - recovery_codes_regenerated
+          - reauthenticated
+          - reauthentication_failed
+        created_at:
+          type: string
+          format: date-time
+        ip_address:
+          type: string
+          nullable: true
+        device:
+          type: string
+          nullable: true
+          description: Browser and system, e.g. "Chrome on macOS"
+        details:
+          type: object
+          properties:
+            provider:
+              type: string
+            method:
+              type: string
+            second_factor:
+              type: string
+              enum:
+              - authenticator
+              - recovery_code
+            until:
+              type: string
+              format: date-time
+              description: End of an account lock
     Session:
       type: object
       required:

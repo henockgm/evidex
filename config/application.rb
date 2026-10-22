@@ -50,8 +50,11 @@ module Evidex
     # only carries the CSRF token and OmniAuth state; sign-in sessions live in
     # the database (see Session).
     config.middleware.use ActionDispatch::Cookies
+    # In production cookie names get the __Host- prefix: browsers then only accept
+    # them over HTTPS, for the whole site, and never from a subdomain.
+    config.x.cookie_prefix = Rails.env.production? ? "__Host-" : ""
     config.middleware.use ActionDispatch::Session::CookieStore,
-      key: "_evidex_state", same_site: :lax, secure: Rails.env.production?, httponly: true
+      key: "#{config.x.cookie_prefix}evidex_state", same_site: :lax, secure: Rails.env.production?, httponly: true
 
     # Public URL of the SPA, used in email links and OAuth redirects.
     config.x.app_url = ENV.fetch("APP_URL", "http://localhost:5173")

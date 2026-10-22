@@ -13,6 +13,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:3000',
       '/auth': 'http://localhost:3000',
+      // Development mail preview (letter_opener_web)
+      '/letter_opener': 'http://localhost:3000',
     },
   },
   test: {

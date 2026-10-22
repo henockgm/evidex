@@ -9,8 +9,8 @@ RSpec.describe Matching::ReportGenerator, :ai do
   let(:report) { posting.match_reports.create!(user:, version: 1, status: "running") }
 
   before do
-    %w[cv.pdf project.docx].each do |fixture|
-      create(:document, user:, fixture:).tap { |document| ProcessDocumentJob.perform_now(document.id) }
+    { "cv.pdf" => "My CV", "project.docx" => "Route planner project" }.each do |fixture, title|
+      create(:document, user:, fixture:, title:).tap { |document| ProcessDocumentJob.perform_now(document.id) }
     end
   end
 
@@ -73,11 +73,12 @@ RSpec.describe Matching::ReportGenerator, :ai do
     stub_claude(json: claude_answer([ { requirement_id: "R1", verdict: "evidenced", reasoning: "Yes.", passage_ids: [ "P1" ] } ]))
     described_class.new(report).call
 
-    document = user.documents.find_by!(title: "My CV")
+    cited = report.reload.matches.first.citations.sole
+    document = cited.document
     document.update_columns(status: "pending")
     ProcessDocumentJob.perform_now(document.id)
 
-    citation = report.reload.matches.first.citations.sole
+    citation = cited.reload
     expect(citation.document_chunk_id).to be_nil
     expect(citation.excerpt).to include("Acme Oy")
   end

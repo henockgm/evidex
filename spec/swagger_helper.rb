@@ -64,7 +64,7 @@ RSpec.configure do |config|
           },
           User: {
             type: :object,
-            required: %w[id email_address email_verified has_password ai_configured identities created_at],
+            required: %w[id email_address email_verified has_password ai_configured two_factor_enabled recovery_codes_remaining identities created_at],
             properties: {
               id: { type: :integer },
               email_address: { type: :string, format: :email },
@@ -72,6 +72,8 @@ RSpec.configure do |config|
               email_verified: { type: :boolean },
               has_password: { type: :boolean },
               ai_configured: { type: :boolean, description: "The server has an AI provider configured" },
+              two_factor_enabled: { type: :boolean },
+              recovery_codes_remaining: { type: :integer },
               identities: { type: :array, items: { "$ref" => "#/components/schemas/Identity" } },
               created_at: { type: :string, format: "date-time" }
             }
@@ -288,6 +290,25 @@ RSpec.configure do |config|
               deadline: { type: :string, format: :date, nullable: true },
               source_url: { type: :string, format: :uri, nullable: true },
               description: { type: :string, maxLength: JobPosting::DESCRIPTION_MAX_LENGTH, description: "The posting text" }
+            }
+          },
+          AuditEvent: {
+            type: :object,
+            required: %w[id action created_at details],
+            properties: {
+              id: { type: :integer },
+              action: { type: :string, enum: AuditEvent::ACTIONS },
+              created_at: { type: :string, format: "date-time" },
+              ip_address: { type: :string, nullable: true },
+              device: { type: :string, nullable: true, description: 'Browser and system, e.g. "Chrome on macOS"' },
+              details: {
+                type: :object,
+                properties: {
+                  provider: { type: :string }, method: { type: :string },
+                  second_factor: { type: :string, enum: %w[authenticator recovery_code] },
+                  until: { type: :string, format: "date-time", description: "End of an account lock" }
+                }
+              }
             }
           },
           Session: {

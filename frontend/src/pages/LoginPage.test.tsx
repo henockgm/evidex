@@ -68,4 +68,30 @@ describe('LoginPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Sign in to Evidex' })).toBeInTheDocument()
   })
+
+  it('returns to the page the user came from after signing in', async () => {
+    let signedIn = false
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => (signedIn ? json({ user }) : problem(401, 'Authentication required')),
+      'POST /api/v1/session': () => {
+        signedIn = true
+        return json({ user }, 201)
+      },
+      'GET /api/v1/me/sessions': () => json({ sessions: [] }),
+    })
+
+    renderApp('/settings/security')
+    await userEvent.type(await screen.findByLabelText('Email'), 'ada@example.com')
+    await userEvent.type(screen.getByLabelText('Password'), 'correct horse battery staple')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    expect(await screen.findByRole('heading', { name: 'Security' })).toBeInTheDocument()
+  })
+
+  it('ignores a next link to another site', async () => {
+    mockApi({ ...baseRoutes, 'GET /api/v1/me': () => json({ user }) })
+    renderApp('/login?next=//evil.example.com')
+    expect(await screen.findByRole('heading', { name: 'Welcome, Ada' })).toBeInTheDocument()
+  })
 })

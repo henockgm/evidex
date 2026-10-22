@@ -82,7 +82,10 @@ module Matching
             chunks[result.chunk.id] ||= result.chunk
           end
         end
-        chunks.values.first(MAX_PASSAGES).each_with_index.to_h { |chunk, index| [ "P#{index + 1}", chunk ] }
+        # Keep the most relevant passages, then number them in a stable order
+        # (document, then position) so the same library always gives the same prompt.
+        chunks.values.first(MAX_PASSAGES).sort_by { |chunk| [ chunk.document_id, chunk.position ] }
+          .each_with_index.to_h { |chunk, index| [ "P#{index + 1}", chunk ] }
       end
 
       def prompt(requirements, passages)

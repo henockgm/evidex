@@ -28,6 +28,13 @@ export const problem = (status: number, title: string, errors?: Record<string, s
     headers: { 'Content-Type': 'application/problem+json' },
   })
 
+/** The API's answer when a sensitive change needs the user to confirm it's them. */
+export const reauthenticationRequired = () =>
+  new Response(
+    JSON.stringify({ type: 'urn:evidex:problem:reauthentication-required', title: "Confirm it's you", status: 403 }),
+    { status: 403, headers: { 'Content-Type': 'application/problem+json' } },
+  )
+
 export const user = {
   id: 1,
   email_address: 'ada@example.com',
@@ -35,6 +42,8 @@ export const user = {
   email_verified: true,
   has_password: true,
   ai_configured: true,
+  two_factor_enabled: false,
+  recovery_codes_remaining: 0,
   identities: [],
   created_at: '2026-10-20T10:00:00Z',
 }
@@ -57,7 +66,16 @@ export function mockApi(routes: Record<string, Handler>) {
 export const baseRoutes: Record<string, Handler> = {
   'GET /api/v1/csrf_token': () => json({ csrf_token: 'csrf-123' }),
   'GET /api/v1/auth/providers': () =>
-    json({ providers: [{ id: 'google_oauth2', label: 'Google', path: '/auth/google_oauth2' }] }),
+    json({
+      providers: [
+        {
+          id: 'google_oauth2',
+          label: 'Google',
+          path: '/auth/google_oauth2',
+          reauthenticate_path: '/auth/google_oauth2?intent=reauthenticate',
+        },
+      ],
+    }),
 }
 
 /** Fields a posting's detail response has before AI extraction runs. */

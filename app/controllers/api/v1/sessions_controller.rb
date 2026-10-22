@@ -12,7 +12,10 @@ module Api
         # authenticate_by takes the same time whether or not the email exists.
         user = User.authenticate_by(email_address: email, password: params[:password].to_s)
 
-        if user && !user.locked?
+        if user && !user.locked? && user.two_factor_enabled?
+          begin_second_factor_for(user, method: "password")
+          render json: { second_factor_required: true }, status: :accepted
+        elsif user && !user.locked?
           user.reset_failed_sign_ins!
           start_new_session_for(user)
           AuditEvent.record(:signed_in, user:, request:, method: "password")

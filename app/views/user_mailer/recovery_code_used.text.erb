@@ -1,0 +1,7 @@
+Hi,
+
+A recovery code was just used to sign in to your Evidex account. <%= @remaining.zero? ? "You have no recovery codes left." : "You have #{@remaining} left." %>
+
+If you lost your phone, set up two-factor sign-in again and replace your recovery codes: <%= @settings_url %>
+
+If this wasn't you, reset your password (<%= @reset_url %>) and replace your recovery codes now.

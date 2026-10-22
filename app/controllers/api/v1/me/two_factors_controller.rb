@@ -27,6 +27,7 @@ module Api
           codes = Current.user.enable_two_factor!(secret)
           session.delete(:otp_setup_secret)
           AuditEvent.record(:two_factor_enabled, user: Current.user, request:)
+          UserMailer.with(user: Current.user).two_factor_enabled.deliver_later
           render json: { user: UserSerializer.new(Current.user), recovery_codes: codes }, status: :created
         end
 
@@ -35,6 +36,7 @@ module Api
 
           Current.user.disable_two_factor!
           AuditEvent.record(:two_factor_disabled, user: Current.user, request:)
+          UserMailer.with(user: Current.user).two_factor_disabled.deliver_later
           render json: { user: UserSerializer.new(Current.user) }
         end
 
@@ -43,6 +45,7 @@ module Api
 
           codes = RecoveryCode.regenerate_for!(Current.user)
           AuditEvent.record(:recovery_codes_regenerated, user: Current.user, request:)
+          UserMailer.with(user: Current.user).recovery_codes_regenerated.deliver_later
           render json: { user: UserSerializer.new(Current.user), recovery_codes: codes }
         end
 

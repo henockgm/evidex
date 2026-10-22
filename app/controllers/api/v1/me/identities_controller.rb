@@ -17,6 +17,7 @@ module Api
 
           identity.destroy!
           AuditEvent.record(:identity_unlinked, user: Current.user, request:, provider: identity.provider)
+          UserMailer.with(user: Current.user, provider: identity.provider).identity_unlinked.deliver_later
           head :no_content
         end
       end

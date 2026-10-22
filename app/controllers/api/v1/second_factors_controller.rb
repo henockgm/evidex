@@ -23,6 +23,7 @@ module Api
           start_new_session_for(user)
           AuditEvent.record(:signed_in, user:, request:, method: pending["method"],
             second_factor: used_recovery_code ? "recovery_code" : "authenticator")
+          UserMailer.with(user:).recovery_code_used.deliver_later if used_recovery_code
           render json: { user: UserSerializer.new(user) }, status: :created
         else
           fail_attempt(user, pending)

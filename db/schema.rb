@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_22_085108) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_091117) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -190,6 +190,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_085108) do
     t.index ["user_id"], name: "index_job_postings_on_user_id"
   end
 
+  create_table "known_devices", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "device_digest", null: false
+    t.string "user_agent"
+    t.string "ip_address"
+    t.datetime "last_seen_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "device_digest"], name: "index_known_devices_on_user_id_and_device_digest", unique: true
+    t.index ["user_id"], name: "index_known_devices_on_user_id"
+  end
+
   create_table "match_citations", force: :cascade do |t|
     t.bigint "requirement_match_id", null: false
     t.bigint "document_chunk_id"
@@ -300,6 +312,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_085108) do
   add_foreign_key "job_applications", "job_postings", on_delete: :cascade
   add_foreign_key "job_applications", "users"
   add_foreign_key "job_postings", "users"
+  add_foreign_key "known_devices", "users", on_delete: :cascade
   add_foreign_key "match_citations", "document_chunks", on_delete: :nullify
   add_foreign_key "match_citations", "documents", on_delete: :nullify
   add_foreign_key "match_citations", "requirement_matches", on_delete: :cascade

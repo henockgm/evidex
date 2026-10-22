@@ -2,6 +2,7 @@ module Authentication
   extend ActiveSupport::Concern
 
   SESSION_COOKIE = :evidex_session
+  DEVICE_COOKIE = :evidex_device
 
   included do
     before_action :require_authentication
@@ -56,7 +57,18 @@ module Authentication
           secure: Rails.env.production?,
           same_site: :lax
         }
+        notify_if_new_device(user)
       end
+    end
+
+    # A random token per browser that outlives sign-outs, so a sign-in from a
+    # browser the user hasn't used before can be emailed to them.
+    def notify_if_new_device(user)
+      token = cookies.signed[DEVICE_COOKIE].presence || SecureRandom.base58(32)
+      cookies.signed[DEVICE_COOKIE] = { value: token, expires: 2.years.from_now, httponly: true, secure: Rails.env.production?, same_site: :lax }
+      return unless KnownDevice.new_for?(user, token, request)
+
+      UserMailer.with(user:, user_agent: request.user_agent, ip_address: request.remote_ip, at: Time.current).new_device_sign_in.deliver_later
     end
 
     SECOND_FACTOR_WINDOW = 5.minutes

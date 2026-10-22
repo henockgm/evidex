@@ -1,0 +1,11 @@
+Hi,
+
+Your Evidex account was just signed in to from a browser you haven't used before:
+
+  Device: <%= @device %>
+  IP address: <%= @ip_address %>
+  Time: <%= @at.utc.strftime("%-d %B %Y, %H:%M UTC") %>
+
+If this was you, there's nothing to do.
+
+If it wasn't, reset your password now (<%= @reset_url %>) and sign out the device under Security settings: <%= @settings_url %>

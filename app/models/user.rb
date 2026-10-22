@@ -13,6 +13,7 @@ class User < ApplicationRecord
   has_many :identities, dependent: :delete_all
   has_many :audit_events, dependent: :delete_all
   has_many :recovery_codes, dependent: :delete_all
+  has_many :known_devices, dependent: :delete_all
   has_many :job_postings, dependent: :destroy
   has_many :documents, dependent: :destroy
   has_many :document_chunks, dependent: :delete_all

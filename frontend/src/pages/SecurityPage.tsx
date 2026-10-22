@@ -161,14 +161,15 @@ function describeDevice(session: Session) {
         : /Safari\//.test(agent)
           ? 'Safari'
           : agent.slice(0, 40)
-  const os = /Mac OS X/.test(agent)
-    ? 'macOS'
-    : /Windows/.test(agent)
-      ? 'Windows'
-      : /Android/.test(agent)
-        ? 'Android'
-        : /iPhone|iPad/.test(agent)
-          ? 'iOS'
+  // Phones first: iOS user agents also say "like Mac OS X", Android ones "Linux".
+  const os = /iPhone|iPad/.test(agent)
+    ? 'iOS'
+    : /Android/.test(agent)
+      ? 'Android'
+      : /Mac OS X/.test(agent)
+        ? 'macOS'
+        : /Windows/.test(agent)
+          ? 'Windows'
           : /Linux/.test(agent)
             ? 'Linux'
             : null

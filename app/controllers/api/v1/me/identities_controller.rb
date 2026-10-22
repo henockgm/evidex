@@ -2,6 +2,8 @@ module Api
   module V1
     module Me
       class IdentitiesController < BaseController
+        require_recent_authentication only: :destroy
+
         def index
           render json: { identities: Current.user.identities.order(:created_at).map { |identity| IdentitySerializer.new(identity) } }
         end

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { ApiError, api, unwrap, type User } from '../api/client'
 import { useAuthChanged, useMe } from '../auth/useAuth'
 import { Alert, Button, Card, Field } from '../components/ui'
+import { useSudo } from './sudo'
 
 type Stage = { kind: 'idle' } | { kind: 'setup'; secret: string; qrCode: string } | { kind: 'codes'; codes: string[] }
 
@@ -19,29 +20,30 @@ function codeFrom(event: FormEvent<HTMLFormElement>) {
 export function TwoFactorCard() {
   const { data: user } = useMe()
   const authChanged = useAuthChanged()
+  const withSudo = useSudo()
   const [stage, setStage] = useState<Stage>({ kind: 'idle' })
   const [action, setAction] = useState<'disable' | 'regenerate' | null>(null)
 
   const setup = useMutation({
-    mutationFn: () => unwrap(api.POST('/api/v1/me/two_factor/setup')),
+    mutationFn: () => withSudo(() => unwrap(api.POST('/api/v1/me/two_factor/setup'))),
     onSuccess: ({ secret, qr_code }) => setStage({ kind: 'setup', secret, qrCode: qr_code }),
   })
   const enable = useMutation({
-    mutationFn: (code: string) => unwrap(api.POST('/api/v1/me/two_factor', { body: { code } })),
+    mutationFn: (code: string) => withSudo(() => unwrap(api.POST('/api/v1/me/two_factor', { body: { code } }))),
     onSuccess: ({ user: updated, recovery_codes }) => {
       authChanged(updated as User)
       setStage({ kind: 'codes', codes: recovery_codes })
     },
   })
   const disable = useMutation({
-    mutationFn: (code: string) => unwrap(api.DELETE('/api/v1/me/two_factor', { body: { code } })),
+    mutationFn: () => withSudo(() => unwrap(api.DELETE('/api/v1/me/two_factor'))),
     onSuccess: ({ user: updated }) => {
       authChanged(updated)
       setAction(null)
     },
   })
   const regenerate = useMutation({
-    mutationFn: (code: string) => unwrap(api.POST('/api/v1/me/two_factor/recovery_codes', { body: { code } })),
+    mutationFn: () => withSudo(() => unwrap(api.POST('/api/v1/me/two_factor/recovery_codes'))),
     onSuccess: ({ user: updated, recovery_codes }) => {
       authChanged(updated as User)
       setAction(null)
@@ -118,30 +120,26 @@ export function TwoFactorCard() {
           </span>
         </p>
         {action ? (
-          <form
-            onSubmit={(event: FormEvent<HTMLFormElement>) => {
-              event.preventDefault()
-              pendingAction.mutate(codeFrom(event))
-            }}
-            className="max-w-sm space-y-3"
-          >
+          <div className="max-w-sm space-y-3">
             {pendingAction.isError && <Alert tone="error">{errorText(pendingAction.error)}</Alert>}
-            <Field
-              label={action === 'disable' ? 'Code from your app or a recovery code' : 'Code from your authenticator app'}
-              name="code"
-              autoComplete="one-time-code"
-              required
-              autoFocus
-            />
+            <p>
+              {action === 'disable'
+                ? 'Signing in will only need your password or Google/Microsoft account.'
+                : 'Your current recovery codes will stop working.'}
+            </p>
             <div className="flex gap-3">
-              <Button type="submit" variant={action === 'disable' ? 'danger' : 'primary'} disabled={pendingAction.isPending}>
+              <Button
+                variant={action === 'disable' ? 'danger' : 'primary'}
+                disabled={pendingAction.isPending}
+                onClick={() => pendingAction.mutate()}
+              >
                 {action === 'disable' ? 'Turn off' : 'Replace codes'}
               </Button>
               <Button type="button" variant="secondary" onClick={() => setAction(null)}>
                 Cancel
               </Button>
             </div>
-          </form>
+          </div>
         ) : (
           <div className="flex flex-wrap gap-3">
             <Button variant="secondary" onClick={() => setAction('regenerate')}>

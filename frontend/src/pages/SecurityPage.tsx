@@ -6,7 +6,9 @@ import { oauthErrorMessage } from '../auth/oauthErrors'
 import { leaveApp, meQueryKey, useAuthChanged, useMe } from '../auth/useAuth'
 import { useProviders } from '../auth/useProviders'
 import { OAuthButton } from '../components/OAuthButtons'
+import { SudoProvider } from '../security/SudoProvider'
 import { TwoFactorCard } from '../security/TwoFactorCard'
+import { useSudo } from '../security/sudo'
 import { Alert, Button, Card, Field } from '../components/ui'
 
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -17,49 +19,46 @@ export function SecurityPage() {
   const linkError = oauthErrorMessage(searchParams.get('error'))
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Security</h1>
-      {linked && <Alert tone="success">Account connected. You can now sign in with it.</Alert>}
-      {linkError && <Alert tone="error">{linkError}</Alert>}
-      <PasswordSection />
-      <TwoFactorCard />
-      <ConnectedAccountsSection />
-      <SessionsSection />
-      <DeleteAccountSection />
-    </div>
+    <SudoProvider>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Security</h1>
+        {linked && <Alert tone="success">Account connected. You can now sign in with it.</Alert>}
+        {linkError && <Alert tone="error">{linkError}</Alert>}
+        <PasswordSection />
+        <TwoFactorCard />
+        <ConnectedAccountsSection />
+        <SessionsSection />
+        <DeleteAccountSection />
+      </div>
+    </SudoProvider>
   )
 }
 
 function PasswordSection() {
   const { data: user } = useMe()
   const authChanged = useAuthChanged()
-  const [error, setError] = useState<ApiError | null>(null)
+  const withSudo = useSudo()
+  const [error, setError] = useState<Error | null>(null)
   const [saved, setSaved] = useState(false)
 
   const change = useMutation({
-    mutationFn: (body: { current_password?: string; password: string }) => unwrap(api.PATCH('/api/v1/me/password', { body })),
+    mutationFn: (body: { password: string }) => withSudo(() => unwrap(api.PATCH('/api/v1/me/password', { body }))),
     onSuccess: ({ user: updated }, _variables) => {
       setSaved(true)
       setError(null)
       authChanged(updated)
     },
-    onError: (caught) => setError(caught instanceof ApiError ? caught : new ApiError(0)),
+    onError: setError,
   })
 
   if (!user) return null
+  const fieldErrors = error instanceof ApiError ? error.problem?.errors : undefined
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formElement = event.currentTarget
-    const form = new FormData(formElement)
     setSaved(false)
-    change.mutate(
-      {
-        current_password: user?.has_password ? String(form.get('current_password')) : undefined,
-        password: String(form.get('password')),
-      },
-      { onSuccess: () => formElement.reset() },
-    )
+    change.mutate({ password: String(new FormData(formElement).get('password')) }, { onSuccess: () => formElement.reset() })
   }
 
   return (
@@ -73,17 +72,7 @@ function PasswordSection() {
     >
       <form onSubmit={handleSubmit} className="max-w-sm space-y-4">
         {saved && <Alert tone="success">Password saved. Other devices were signed out.</Alert>}
-        {error && !error.problem?.errors && <Alert tone="error">{error.problem?.detail ?? error.message}</Alert>}
-        {user.has_password && (
-          <Field
-            label="Current password"
-            name="current_password"
-            type="password"
-            autoComplete="current-password"
-            required
-            errors={error?.fieldErrors('current_password')}
-          />
-        )}
+        {error && !fieldErrors && <Alert tone="error">{error.message}</Alert>}
         <Field
           label="New password"
           name="password"
@@ -92,7 +81,7 @@ function PasswordSection() {
           minLength={12}
           required
           hint="At least 12 characters."
-          errors={error?.fieldErrors('password')}
+          errors={fieldErrors?.password}
         />
         <Button type="submit" disabled={change.isPending}>
           {change.isPending ? 'Saving…' : 'Save password'}
@@ -106,9 +95,10 @@ function ConnectedAccountsSection() {
   const { data: user } = useMe()
   const { data: providers = [] } = useProviders()
   const queryClient = useQueryClient()
+  const withSudo = useSudo()
 
   const disconnect = useMutation({
-    mutationFn: (id: number) => unwrap(api.DELETE('/api/v1/me/identities/{id}', { params: { path: { id } } })),
+    mutationFn: (id: number) => withSudo(() => unwrap(api.DELETE('/api/v1/me/identities/{id}', { params: { path: { id } } }))),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: meQueryKey }),
   })
 
@@ -250,34 +240,27 @@ function SessionsSection() {
 
 function DeleteAccountSection() {
   const { data: user } = useMe()
-  const [error, setError] = useState<string | null>(null)
+  const withSudo = useSudo()
 
   const destroy = useMutation({
-    mutationFn: (body: { password?: string; confirm_email?: string }) => unwrap(api.DELETE('/api/v1/me', { body })),
+    mutationFn: (body: { confirm_email: string }) => withSudo(() => unwrap(api.DELETE('/api/v1/me', { body }))),
     onSuccess: () => leaveApp('/register'),
-    onError: (caught) => setError(caught instanceof ApiError ? (caught.problem?.detail ?? caught.message) : 'Something went wrong.'),
   })
 
   if (!user) return null
+  const error = destroy.error
+  const fieldErrors = error instanceof ApiError ? error.fieldErrors('confirm_email') : []
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    setError(null)
-    destroy.mutate(
-      user?.has_password ? { password: String(form.get('password')) } : { confirm_email: String(form.get('confirm_email')) },
-    )
+    destroy.mutate({ confirm_email: String(new FormData(event.currentTarget).get('confirm_email')) })
   }
 
   return (
     <Card title="Delete account" description="Permanently deletes your account and everything in it. This can't be undone.">
       <form onSubmit={handleSubmit} className="max-w-sm space-y-4">
-        {error && <Alert tone="error">{error}</Alert>}
-        {user.has_password ? (
-          <Field label="Password" name="password" type="password" autoComplete="current-password" required />
-        ) : (
-          <Field label={`Type ${user.email_address} to confirm`} name="confirm_email" type="email" required />
-        )}
+        {error && !fieldErrors.length && <Alert tone="error">{error.message}</Alert>}
+        <Field label={`Type ${user.email_address} to confirm`} name="confirm_email" type="email" required errors={fieldErrors} />
         <Button type="submit" variant="danger" disabled={destroy.isPending}>
           {destroy.isPending ? 'Deleting…' : 'Delete my account'}
         </Button>

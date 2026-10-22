@@ -28,9 +28,18 @@ class Session < ApplicationRecord
     update_column(:last_active_at, Time.current) if last_active_at < ACTIVITY_UPDATE_INTERVAL.ago
   end
 
-  # Signed in within the last few minutes: required before adding a first password.
+  # Signed in or re-authenticated within the last few minutes: required before
+  # sensitive account changes ("sudo mode").
   def recently_authenticated?
-    created_at > RECENT_AUTHENTICATION.ago
+    authenticated_at > RECENT_AUTHENTICATION.ago
+  end
+
+  def recently_authenticated_until
+    authenticated_at + RECENT_AUTHENTICATION
+  end
+
+  def reauthenticate!
+    update_column(:authenticated_at, Time.current)
   end
 
   private
@@ -38,5 +47,6 @@ class Session < ApplicationRecord
       @token = SecureRandom.base58(32)
       self.token_digest = self.class.digest(@token)
       self.last_active_at ||= Time.current
+      self.authenticated_at ||= Time.current
     end
 end

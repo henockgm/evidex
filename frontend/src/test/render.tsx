@@ -28,6 +28,13 @@ export const problem = (status: number, title: string, errors?: Record<string, s
     headers: { 'Content-Type': 'application/problem+json' },
   })
 
+/** The API's answer when a sensitive change needs the user to confirm it's them. */
+export const reauthenticationRequired = () =>
+  new Response(
+    JSON.stringify({ type: 'urn:evidex:problem:reauthentication-required', title: "Confirm it's you", status: 403 }),
+    { status: 403, headers: { 'Content-Type': 'application/problem+json' } },
+  )
+
 export const user = {
   id: 1,
   email_address: 'ada@example.com',

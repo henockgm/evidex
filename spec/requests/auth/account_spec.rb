@@ -47,17 +47,20 @@ RSpec.describe "Account security settings", type: :request do
   describe "password change" do
     let(:new_password) { "an even longer new password" }
 
-    it "requires the current password" do
-      patch "/api/v1/me/password", params: { current_password: "wrong password!!", password: new_password }, as: :json
+    it "needs a recent sign-in" do
+      travel 11.minutes do
+        patch "/api/v1/me/password", params: { password: new_password }, as: :json
+      end
 
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(json["errors"]).to have_key("current_password")
+      expect(response).to have_http_status(:forbidden)
+      expect(json["type"]).to eq("urn:evidex:problem:reauthentication-required")
+      expect(user.reload.authenticate(new_password)).to be(false)
     end
 
     it "changes the password and signs out other devices" do
       other = create(:session, user:)
 
-      expect { patch "/api/v1/me/password", params: { current_password: AuthHelpers::PASSWORD, password: new_password }, as: :json }
+      expect { patch "/api/v1/me/password", params: { password: new_password }, as: :json }
         .to have_enqueued_mail(UserMailer, :password_changed)
 
       expect(response).to have_http_status(:ok)
@@ -73,6 +76,17 @@ RSpec.describe "Account security settings", type: :request do
       delete "/api/v1/me/identities/#{identity.id}"
 
       expect(response).to have_http_status(:no_content)
+    end
+
+    it "needs a recent sign-in to unlink a provider" do
+      identity = create(:identity, user:)
+
+      travel 11.minutes do
+        delete "/api/v1/me/identities/#{identity.id}"
+      end
+
+      expect(response).to have_http_status(:forbidden)
+      expect(Identity.exists?(identity.id)).to be(true)
     end
 
     it "refuses to remove the last sign-in method" do
@@ -105,16 +119,26 @@ RSpec.describe "Account security settings", type: :request do
   end
 
   describe "account deletion" do
-    it "requires the password" do
-      delete "/api/v1/me", params: { password: "wrong password!!" }, as: :json
+    it "needs the email address typed out" do
+      delete "/api/v1/me", params: { confirm_email: "someone@else.example" }, as: :json
       expect(response).to have_http_status(:unprocessable_content)
+      expect(json["errors"]).to have_key("confirm_email")
+      expect(User.exists?(user.id)).to be(true)
+    end
+
+    it "needs a recent sign-in" do
+      travel 11.minutes do
+        delete "/api/v1/me", params: { confirm_email: user.email_address }, as: :json
+      end
+
+      expect(response).to have_http_status(:forbidden)
       expect(User.exists?(user.id)).to be(true)
     end
 
     it "deletes the user and all their data" do
       create(:identity, user:)
 
-      delete "/api/v1/me", params: { password: AuthHelpers::PASSWORD }, as: :json
+      delete "/api/v1/me", params: { confirm_email: user.email_address.upcase }, as: :json
 
       expect(response).to have_http_status(:no_content)
       expect(User.exists?(user.id)).to be(false)

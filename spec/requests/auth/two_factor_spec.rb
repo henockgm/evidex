@@ -109,18 +109,20 @@ RSpec.describe "Managing two-factor sign-in", type: :request do
 
     before { user.enable_two_factor!(secret) }
 
-    it "turns off with a valid code" do
-      delete "/api/v1/me/two_factor", params: { code: "000000" }, as: :json
-      expect(response).to have_http_status(:unprocessable_content)
+    it "turns off after a recent sign-in" do
+      travel 11.minutes do
+        delete "/api/v1/me/two_factor"
+        expect(response).to have_http_status(:forbidden)
+      end
 
-      delete "/api/v1/me/two_factor", params: { code: ROTP::TOTP.new(secret).now }, as: :json
+      delete "/api/v1/me/two_factor"
       expect(response).to have_http_status(:ok)
       expect(user.reload).not_to be_two_factor_enabled
     end
 
     it "replaces the recovery codes" do
       old = user.recovery_codes.pluck(:code_digest)
-      post "/api/v1/me/two_factor/recovery_codes", params: { code: ROTP::TOTP.new(secret).now }, as: :json
+      post "/api/v1/me/two_factor/recovery_codes"
 
       expect(json["recovery_codes"].size).to eq(10)
       expect(user.recovery_codes.reload.pluck(:code_digest) & old).to be_empty

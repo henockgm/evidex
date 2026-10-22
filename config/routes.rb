@@ -52,6 +52,7 @@ Rails.application.routes.draw do
           end
           resources :identities, only: %i[index destroy]
           resource :password, only: :update
+          resource :reauthentication, only: :create
           resource :two_factor, only: %i[create destroy] do
             post :setup
             post :recovery_codes

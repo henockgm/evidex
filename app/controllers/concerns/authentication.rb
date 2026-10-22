@@ -7,9 +7,17 @@ module Authentication
     before_action :require_authentication
   end
 
+  # Problem type the SPA watches for to ask the user to confirm it's them.
+  REAUTHENTICATION_REQUIRED = "urn:evidex:problem:reauthentication-required".freeze
+
   class_methods do
     def allow_unauthenticated_access(**options)
       skip_before_action :require_authentication, **options
+    end
+
+    # Sensitive changes need a sign-in or re-authentication from the last few minutes.
+    def require_recent_authentication(**options)
+      before_action :require_recent_authentication, **options
     end
   end
 
@@ -22,6 +30,13 @@ module Authentication
       return if authenticated?
 
       render_problem :unauthorized, "Authentication required"
+    end
+
+    def require_recent_authentication
+      return if Current.session&.recently_authenticated?
+
+      render_problem :forbidden, "Confirm it's you", type: REAUTHENTICATION_REQUIRED,
+        detail: "For your security, confirm your identity before making this change."
     end
 
     def resume_session

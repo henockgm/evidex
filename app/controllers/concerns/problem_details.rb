@@ -19,9 +19,9 @@ module ProblemDetails
   end
 
   private
-    def render_problem(status, title, detail: nil, errors: nil)
+    def render_problem(status, title, detail: nil, errors: nil, type: "about:blank")
       code = Rack::Utils.status_code(status)
-      body = { type: "about:blank", title:, status: code, detail:, errors: }.compact
+      body = { type:, title:, status: code, detail:, errors: }.compact
       render json: body, status: code, content_type: "application/problem+json"
     end
 

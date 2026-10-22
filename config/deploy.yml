@@ -30,6 +30,12 @@ builder:
   # Same as the Mac building it and the CAX11 running it
   arch: arm64
 
+# The key made for this server (~/.ssh/evidex_hetzner); it must be in the SSH agent
+ssh:
+  keys_only: true
+  keys:
+    - ~/.ssh/evidex_hetzner
+
 env:
   clear:
     APP_URL: https://<%= ENV.fetch("EVIDEX_DOMAIN") %>

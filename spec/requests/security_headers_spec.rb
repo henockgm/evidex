@@ -27,10 +27,11 @@ RSpec.describe "Security headers", type: :request do
     expect(response.headers["cache-control"]).not_to eq("no-store")
   end
 
-  it "allows inline code only for the Swagger UI" do
+  it "allows inline code and same-site framing only for the Swagger UI and mail preview" do
     get "/api-docs/index.html"
 
-    expect(response.headers["content-security-policy"]).to include("script-src 'self' 'unsafe-inline'")
+    expect(response.headers["content-security-policy"]).to include("script-src 'self' 'unsafe-inline'", "frame-ancestors 'self'")
+    expect(response.headers["x-frame-options"]).to eq("SAMEORIGIN")
   end
 end
 

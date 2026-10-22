@@ -4,8 +4,9 @@ module Evidex
   #
   # The SPA is built without inline scripts or styles, so its policy allows only
   # its own origin. Two exceptions: the Swagger UI and the development mail
-  # preview use inline code, and in development the policy is report-only so
-  # Rails' own error pages keep working.
+  # preview use inline code (and the preview shows each email in a same-site
+  # frame), and in development the policy is report-only so Rails' own error
+  # pages keep working.
   class SecurityHeaders
     # Google/Microsoft sign-in starts with a form POST that redirects to the
     # provider, and browsers check form-action along that redirect.
@@ -27,7 +28,8 @@ module Evidex
     INLINE_TOOL_POLICY = APP_POLICY.merge(
       "script-src" => "'self' 'unsafe-inline'",
       "style-src" => "'self' 'unsafe-inline'",
-      "form-action" => "'self'"
+      "form-action" => "'self'",
+      "frame-ancestors" => "'self'"
     ).freeze
     INLINE_TOOL_PATHS = %w[/api-docs /letter_opener].freeze
 
@@ -52,16 +54,18 @@ module Evidex
       path = env["PATH_INFO"].to_s
       status, headers, body = @app.call(env)
 
+      inline_tool = INLINE_TOOL_PATHS.any? { |prefix| path.start_with?(prefix) }
       HEADERS.each { |name, value| headers[name] = value }
-      headers[@policy_header] = policy_for(path)
+      headers["x-frame-options"] = "SAMEORIGIN" if inline_tool
+      headers[@policy_header] = policy_for(inline_tool)
       # Account data (recovery codes included) must never sit in a browser or proxy cache.
       headers["cache-control"] = "no-store" if path.start_with?("/api/")
       [ status, headers, body ]
     end
 
     private
-      def policy_for(path)
-        policy = INLINE_TOOL_PATHS.any? { |prefix| path.start_with?(prefix) } ? INLINE_TOOL_POLICY : APP_POLICY
+      def policy_for(inline_tool)
+        policy = inline_tool ? INLINE_TOOL_POLICY : APP_POLICY
         directives = policy.map { |name, value| "#{name} #{value}" }
         directives << "upgrade-insecure-requests" if @upgrade
         directives.join("; ")

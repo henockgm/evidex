@@ -830,6 +830,101 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/audit_events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Security events across all accounts (admins only)
+         * @description Newest first, 50 per page.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    user_id?: number;
+                    event_action?: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed" | "admin_locked" | "admin_unlocked" | "admin_signed_out";
+                    page?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            events: components["schemas"]["AdminAuditEvent"][];
+                            meta: components["schemas"]["PageMeta"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai_usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** AI calls, tokens and estimated cost per account (admins only) */
+        get: {
+            parameters: {
+                query?: {
+                    days?: 7 | 30 | 90;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description usage */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            days: number;
+                            totals: components["schemas"]["AiUsageSummary"];
+                            /** @description Most expensive first */
+                            users: (components["schemas"]["AiUsageSummary"] & {
+                                user: {
+                                    id: number;
+                                    /** Format: email */
+                                    email_address: string;
+                                };
+                            })[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{job_application_id}/contacts": {
         parameters: {
             query?: never;
@@ -3188,6 +3283,44 @@ export interface components {
         };
         AdminUserEnvelope: {
             user: components["schemas"]["AdminUser"];
+        };
+        AdminAuditEvent: {
+            id: number;
+            /** @enum {string} */
+            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed" | "admin_locked" | "admin_unlocked" | "admin_signed_out";
+            /** Format: date-time */
+            created_at: string;
+            /** @description Missing for failed sign-ins with an unknown email */
+            user?: {
+                id: number;
+                /** Format: email */
+                email_address: string;
+            } | null;
+            ip_address?: string | null;
+            device?: string | null;
+            details: {
+                provider?: string;
+                method?: string;
+                /** @enum {string} */
+                second_factor?: "authenticator" | "recovery_code";
+                /** Format: date-time */
+                until?: string;
+                /** @description Sessions ended by an admin sign-out */
+                sessions?: number;
+            };
+            /** @description The admin behind an admin_* action */
+            admin_email_address?: string | null;
+        };
+        AiUsageSummary: {
+            calls: number;
+            failed_calls: number;
+            input_tokens: number;
+            output_tokens: number;
+            /** @description At list prices (config/ai_prices.yml) */
+            estimated_cost_usd: number;
+            models: string[];
+            /** @description Models left out of the estimate */
+            unpriced_models: string[];
         };
         PageMeta: {
             page: number;

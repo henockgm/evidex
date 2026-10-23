@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { api, unwrap, type AdminUser } from '../api/client'
 import { Alert, Button, Spinner } from '../components/ui'
 import { AdminUserActions } from './AdminUserActions'
@@ -73,6 +73,9 @@ export function AdminUsersPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{user.email_address}</span>
                 {user.name && <span className="text-slate-500">{user.name}</span>}
+                <Link to={`/admin/activity?user_id=${user.id}`} className="text-indigo-600 hover:underline dark:text-indigo-400">
+                  Activity
+                </Link>
                 {user.admin && <Badge tone="indigo">Admin</Badge>}
                 {user.two_factor_enabled && <Badge>2FA</Badge>}
                 {!user.email_verified && <Badge tone="amber">Unverified</Badge>}

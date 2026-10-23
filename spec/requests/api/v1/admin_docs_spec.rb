@@ -111,4 +111,65 @@ RSpec.describe "Admin API", type: :request do
       end
     end
   end
+
+  path "/api/v1/admin/audit_events" do
+    get "Security events across all accounts (admins only)" do
+      tags "Admin"
+      produces "application/json"
+      security [ { session_cookie: [] } ]
+      description "Newest first, 50 per page."
+      parameter name: :user_id, in: :query, required: false, schema: { type: :integer }
+      parameter name: :event_action, in: :query, required: false, schema: { type: :string, enum: AuditEvent::ACTIONS }
+      parameter name: :page, in: :query, required: false, schema: { type: :integer, minimum: 1 }
+
+      response "200", "events" do
+        schema type: :object, required: %w[events meta],
+          properties: {
+            events: { type: :array, items: { "$ref" => "#/components/schemas/AdminAuditEvent" } },
+            meta: { "$ref" => "#/components/schemas/PageMeta" }
+          }
+        let(:user_id) { nil }
+        let(:event_action) { nil }
+        let(:page) { nil }
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/admin/ai_usage" do
+    get "AI calls, tokens and estimated cost per account (admins only)" do
+      tags "Admin"
+      produces "application/json"
+      security [ { session_cookie: [] } ]
+      parameter name: :days, in: :query, required: false, schema: { type: :integer, enum: [ 7, 30, 90 ], default: 30 }
+
+      response "200", "usage" do
+        schema type: :object, required: %w[days totals users],
+          properties: {
+            days: { type: :integer },
+            totals: { "$ref" => "#/components/schemas/AiUsageSummary" },
+            users: {
+              type: :array, description: "Most expensive first",
+              items: {
+                allOf: [
+                  { "$ref" => "#/components/schemas/AiUsageSummary" },
+                  {
+                    type: :object, required: %w[user],
+                    properties: {
+                      user: {
+                        type: :object, required: %w[id email_address],
+                        properties: { id: { type: :integer }, email_address: { type: :string, format: :email } }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        let(:days) { 7 }
+        before { AiUsage.create!(user: admin, feature: "match_report", model: "claude-opus-5-5", input_tokens: 10, output_tokens: 5) }
+        run_test!
+      end
+    end
+  end
 end

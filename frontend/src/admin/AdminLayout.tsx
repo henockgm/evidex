@@ -6,6 +6,8 @@ import { SudoProvider } from '../security/SudoProvider'
 const tabs = [
   { to: '/admin', label: 'Overview', end: true },
   { to: '/admin/users', label: 'Users', end: false },
+  { to: '/admin/activity', label: 'Activity', end: false },
+  { to: '/admin/ai-usage', label: 'AI usage', end: false },
 ]
 
 /** The admin area: admins only, and only with two-factor sign-in on (the API enforces both). */

@@ -9,6 +9,14 @@ class AiUsage < ApplicationRecord
 
   scope :today, -> { where(created_at: Time.current.all_day) }
 
+  PRICES = YAML.load_file(Rails.root.join("config/ai_prices.yml")).transform_values(&:symbolize_keys).freeze
+
+  # Estimated cost in US dollars at list prices; nil for a model without a price.
+  def self.estimated_cost(model:, input_tokens:, output_tokens:)
+    price = PRICES[model.to_s] or return nil
+    (input_tokens * price[:input] + output_tokens * price[:output]) / 1_000_000.0
+  end
+
   def self.daily_limit
     Integer(ENV.fetch("EVIDEX_AI_DAILY_LIMIT", 20))
   end

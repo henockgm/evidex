@@ -47,6 +47,8 @@ Rails.application.routes.draw do
 
       namespace :admin do
         resource :overview, only: :show
+        resources :audit_events, only: :index
+        resource :ai_usage, only: :show
         resources :users, only: :index do
           resource :lock, only: %i[create destroy], controller: "user_locks"
           resource :sign_out, only: :create, controller: "user_sign_outs"

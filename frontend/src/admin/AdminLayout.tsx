@@ -1,6 +1,7 @@
 import { Link, NavLink, Navigate, Outlet } from 'react-router'
 import { useMe } from '../auth/useAuth'
 import { Alert, Spinner } from '../components/ui'
+import { SudoProvider } from '../security/SudoProvider'
 
 const tabs = [
   { to: '/admin', label: 'Overview', end: true },
@@ -39,7 +40,9 @@ export function AdminLayout() {
               </NavLink>
             ))}
           </nav>
-          <Outlet />
+          <SudoProvider>
+            <Outlet />
+          </SudoProvider>
         </>
       ) : (
         <Alert tone="info">

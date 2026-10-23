@@ -108,8 +108,32 @@ class User < ApplicationRecord
     end
   end
 
+  # Locked out of password and two-factor sign-in: temporarily after failed
+  # attempts, or until an admin unlocks the account.
   def locked?
+    suspended? || temporarily_locked?
+  end
+
+  def temporarily_locked?
     locked_until.present? && locked_until.future?
+  end
+
+  def suspended?
+    suspended_at.present?
+  end
+
+  # Admin lock: blocks every sign-in and ends every session.
+  def suspend!
+    transaction do
+      update!(suspended_at: Time.current)
+      sessions.delete_all
+    end
+  end
+
+  # Lifts the admin lock and any temporary lock after failed sign-ins.
+  def unsuspend!
+    update!(suspended_at: nil)
+    reset_failed_sign_ins!
   end
 
   # Returns true when this failure locked the account. Each consecutive lockout

@@ -22,6 +22,9 @@ export const activityLabels: Record<AuditEvent['action'], string> = {
   recovery_codes_regenerated: 'Recovery codes replaced',
   reauthenticated: "Confirmed it's you",
   reauthentication_failed: "Failed to confirm it's you",
+  admin_locked: 'Account locked by an administrator',
+  admin_unlocked: 'Account unlocked by an administrator',
+  admin_signed_out: 'Signed out on all devices by an administrator',
 }
 
 /** Events worth a second look if the user doesn't recognise them. */
@@ -31,6 +34,7 @@ export const warningActions = new Set<AuditEvent['action']>([
   'account_locked',
   'second_factor_failed',
   'reauthentication_failed',
+  'admin_locked',
 ])
 
 const providerLabels: Record<string, string> = { google_oauth2: 'Google', entra_id: 'Microsoft', password: 'password' }

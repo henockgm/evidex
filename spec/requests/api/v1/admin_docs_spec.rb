@@ -51,4 +51,64 @@ RSpec.describe "Admin API", type: :request do
       end
     end
   end
+
+  path "/api/v1/admin/users/{user_id}/lock" do
+    parameter name: :user_id, in: :path, schema: { type: :integer }
+    let(:target) { create(:user) }
+    let(:user_id) { target.id }
+
+    post "Lock an account (admins only)" do
+      tags "Admin"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      description "Signs the account out everywhere, blocks every sign-in until unlocked and emails the user. Needs a recent sign-in (403 urn:evidex:problem:reauthentication-required)."
+
+      response "200", "locked" do
+        schema "$ref" => "#/components/schemas/AdminUserEnvelope"
+        run_test!
+      end
+
+      response "422", "own account" do
+        schema "$ref" => "#/components/schemas/Problem"
+        let(:user_id) { admin.id }
+        run_test!
+      end
+    end
+
+    delete "Unlock an account (admins only)" do
+      tags "Admin"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      description "Lifts an admin lock and any temporary lock after failed sign-ins. Needs a recent sign-in."
+
+      response "200", "unlocked" do
+        schema "$ref" => "#/components/schemas/AdminUserEnvelope"
+        before { target.suspend! }
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/admin/users/{user_id}/sign_out" do
+    parameter name: :user_id, in: :path, schema: { type: :integer }
+    let(:user_id) { create(:user).id }
+
+    post "Sign an account out on every device (admins only)" do
+      tags "Admin"
+      produces "application/json"
+      security [ { session_cookie: [], csrf_token: [] } ]
+      description "Ends every session; the user can sign in again. Needs a recent sign-in."
+
+      response "200", "signed out" do
+        schema "$ref" => "#/components/schemas/AdminUserEnvelope"
+        run_test!
+      end
+
+      response "403", "re-authentication needed" do
+        schema "$ref" => "#/components/schemas/Problem"
+        before { travel 11.minutes }
+        run_test!
+      end
+    end
+  end
 end

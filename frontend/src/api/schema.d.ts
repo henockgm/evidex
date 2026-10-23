@@ -701,6 +701,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{user_id}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lock an account (admins only)
+         * @description Signs the account out everywhere, blocks every sign-in until unlocked and emails the user. Needs a recent sign-in (403 urn:evidex:problem:reauthentication-required).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    user_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description locked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminUserEnvelope"];
+                    };
+                };
+                /** @description own account */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        /**
+         * Unlock an account (admins only)
+         * @description Lifts an admin lock and any temporary lock after failed sign-ins. Needs a recent sign-in.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    user_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description unlocked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminUserEnvelope"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/sign_out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign an account out on every device (admins only)
+         * @description Ends every session; the user can sign in again. Needs a recent sign-in.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    user_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description signed out */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminUserEnvelope"];
+                    };
+                };
+                /** @description re-authentication needed */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{job_application_id}/contacts": {
         parameters: {
             query?: never;
@@ -3045,12 +3174,20 @@ export interface components {
              * @description Temporary lock after failed sign-ins
              */
             locked_until?: string | null;
+            /**
+             * Format: date-time
+             * @description Locked by an admin until unlocked
+             */
+            suspended_at?: string | null;
             active_sessions: number;
             /** Format: date-time */
             last_active_at?: string | null;
             ai_calls_last_30_days: number;
             /** Format: date-time */
             created_at: string;
+        };
+        AdminUserEnvelope: {
+            user: components["schemas"]["AdminUser"];
         };
         PageMeta: {
             page: number;
@@ -3267,7 +3404,7 @@ export interface components {
         AuditEvent: {
             id: number;
             /** @enum {string} */
-            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed";
+            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed" | "admin_locked" | "admin_unlocked" | "admin_signed_out";
             /** Format: date-time */
             created_at: string;
             ip_address?: string | null;

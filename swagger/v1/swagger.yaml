@@ -458,6 +458,80 @@ paths:
                       "$ref": "#/components/schemas/AdminUser"
                   meta:
                     "$ref": "#/components/schemas/PageMeta"
+  "/api/v1/admin/users/{user_id}/lock":
+    parameters:
+    - name: user_id
+      in: path
+      schema:
+        type: integer
+      required: true
+    post:
+      summary: Lock an account (admins only)
+      tags:
+      - Admin
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Signs the account out everywhere, blocks every sign-in until unlocked
+        and emails the user. Needs a recent sign-in (403 urn:evidex:problem:reauthentication-required).
+      responses:
+        '200':
+          description: locked
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AdminUserEnvelope"
+        '422':
+          description: own account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+    delete:
+      summary: Unlock an account (admins only)
+      tags:
+      - Admin
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Lifts an admin lock and any temporary lock after failed sign-ins.
+        Needs a recent sign-in.
+      responses:
+        '200':
+          description: unlocked
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AdminUserEnvelope"
+  "/api/v1/admin/users/{user_id}/sign_out":
+    parameters:
+    - name: user_id
+      in: path
+      schema:
+        type: integer
+      required: true
+    post:
+      summary: Sign an account out on every device (admins only)
+      tags:
+      - Admin
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: Ends every session; the user can sign in again. Needs a recent
+        sign-in.
+      responses:
+        '200':
+          description: signed out
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AdminUserEnvelope"
+        '403':
+          description: re-authentication needed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/job_applications/{job_application_id}/contacts":
     parameters:
     - name: job_application_id
@@ -2523,6 +2597,11 @@ components:
           format: date-time
           nullable: true
           description: Temporary lock after failed sign-ins
+        suspended_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Locked by an admin until unlocked
         active_sessions:
           type: integer
         last_active_at:
@@ -2534,6 +2613,13 @@ components:
         created_at:
           type: string
           format: date-time
+    AdminUserEnvelope:
+      type: object
+      required:
+      - user
+      properties:
+        user:
+          "$ref": "#/components/schemas/AdminUser"
     PageMeta:
       type: object
       required:
@@ -3171,6 +3257,9 @@ components:
           - recovery_codes_regenerated
           - reauthenticated
           - reauthentication_failed
+          - admin_locked
+          - admin_unlocked
+          - admin_signed_out
         created_at:
           type: string
           format: date-time

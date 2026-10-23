@@ -93,11 +93,16 @@ RSpec.configure do |config|
               two_factor_enabled: { type: :boolean },
               providers: { type: :array, items: { type: :string, enum: %w[google_oauth2 entra_id] } },
               locked_until: { type: :string, format: "date-time", nullable: true, description: "Temporary lock after failed sign-ins" },
+              suspended_at: { type: :string, format: "date-time", nullable: true, description: "Locked by an admin until unlocked" },
               active_sessions: { type: :integer },
               last_active_at: { type: :string, format: "date-time", nullable: true },
               ai_calls_last_30_days: { type: :integer },
               created_at: { type: :string, format: "date-time" }
             }
+          },
+          AdminUserEnvelope: {
+            type: :object, required: %w[user],
+            properties: { user: { "$ref" => "#/components/schemas/AdminUser" } }
           },
           PageMeta: {
             type: :object, required: %w[page per_page total total_pages],

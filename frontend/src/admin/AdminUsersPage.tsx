@@ -3,6 +3,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { api, unwrap, type AdminUser } from '../api/client'
 import { Alert, Button, Spinner } from '../components/ui'
+import { AdminUserActions } from './AdminUserActions'
 
 const date = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -75,6 +76,7 @@ export function AdminUsersPage() {
                 {user.admin && <Badge tone="indigo">Admin</Badge>}
                 {user.two_factor_enabled && <Badge>2FA</Badge>}
                 {!user.email_verified && <Badge tone="amber">Unverified</Badge>}
+                {user.suspended_at && <Badge tone="rose">Locked by an admin</Badge>}
                 {user.locked_until && <Badge tone="rose">Locked until {dateTime.format(new Date(user.locked_until))}</Badge>}
               </div>
               <p className="text-slate-600 dark:text-slate-400">
@@ -86,6 +88,7 @@ export function AdminUsersPage() {
                   `joined ${date.format(new Date(user.created_at))}`,
                 ].join(' · ')}
               </p>
+              <AdminUserActions user={user} />
             </li>
           ))}
           {data.users.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-500">No accounts found.</li>}

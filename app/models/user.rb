@@ -19,12 +19,16 @@ class User < ApplicationRecord
   has_many :document_chunks, dependent: :delete_all
 
   # For the admin users list: session and AI usage figures per user, in one query.
+  # Last activity also counts sign-ins, so it survives sign-outs and admin locks.
   scope :with_admin_stats, -> {
     select("users.*",
       sanitize_sql_array([ <<~SQL.squish, { idle: Session::IDLE_TIMEOUT.ago, absolute: Session::ABSOLUTE_TIMEOUT.ago, ai_since: 30.days.ago } ]))
         (SELECT COUNT(*) FROM sessions s WHERE s.user_id = users.id
           AND s.last_active_at >= :idle AND s.created_at >= :absolute) AS active_sessions_count,
-        (SELECT MAX(s.last_active_at) FROM sessions s WHERE s.user_id = users.id) AS last_active_at,
+        GREATEST(
+          (SELECT MAX(s.last_active_at) FROM sessions s WHERE s.user_id = users.id),
+          (SELECT MAX(e.created_at) FROM audit_events e WHERE e.user_id = users.id AND e.action IN ('signed_in', 'oauth_signed_in'))
+        ) AS last_active_at,
         (SELECT COUNT(*) FROM ai_usages a WHERE a.user_id = users.id AND a.created_at >= :ai_since) AS ai_calls_last_30_days
       SQL
   }

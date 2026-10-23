@@ -24,6 +24,7 @@ RSpec.describe "Admin lock, unlock and force sign-out", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(json["user"]["suspended_at"]).to be_present
+      expect(json["user"]["last_active_at"]).to be_present # from the sign-in, though its session is gone
       expect(target.reload.sessions).to be_empty
       expect(AuditEvent.where(user: target, action: "admin_locked").last.metadata).to eq("admin_id" => admin.id)
 

@@ -20,6 +20,10 @@ claim what you can back up with a citation.
 - **Application tracking** (done): status pipeline with a timeline, applied date,
   next action, notes, links and contacts; filters, search, sorting, pagination;
   a dashboard with counts per status, upcoming deadlines and next actions
+- **Admin area** (done): accounts with search, lock/unlock and sign-out
+  everywhere, the security audit log across accounts, and AI calls, tokens and
+  estimated cost per account; admins never see users' documents, postings or
+  reports
 
 Planned:
 
@@ -85,6 +89,13 @@ cookies rather than tokens in browser storage.
   first password to a Google/Microsoft-only account requires a sign-in within the
   last 10 minutes. Users can't remove their last sign-in method.
 - **Audit trail.** Sign-ins, failures, lockouts, resets and linking are recorded.
+- **Admin area.** Admin rights are granted only from the server
+  (`bin/rails "evidex:admin:grant[email]"`), never through the API. The admin API
+  answers 404 to everyone else and requires two-factor sign-in; locking, unlocking
+  and signing out an account also need a sign-in from the last 10 minutes. Every
+  admin action is recorded and shown on the affected user's activity page. Admin
+  endpoints return account metadata only, and specs check that admins can't read
+  anyone's documents, postings or reports.
 - **Errors** follow RFC 9457 problem details (`application/problem+json`).
 
 ## Getting started

@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import { AdminLayout } from './admin/AdminLayout'
+import { AdminOverviewPage } from './admin/AdminOverviewPage'
 import { GuestOnly, RequireAuth } from './auth/guards'
 import { Layout } from './components/Layout'
 import { ActivityPage } from './pages/ActivityPage'
@@ -38,6 +40,9 @@ export function AppRoutes() {
           <Route path="library" element={<LibraryPage />} />
           <Route path="settings/security" element={<SecurityPage />} />
           <Route path="settings/activity" element={<ActivityPage />} />
+          <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<AdminOverviewPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

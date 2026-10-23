@@ -16,6 +16,12 @@ FactoryBot.define do
       end
     end
 
+    # Admins need two-factor sign-in to use the admin area.
+    trait :admin do
+      admin { true }
+      two_factor
+    end
+
     trait :oauth_only do
       password { nil }
       after(:create) { |user| create(:identity, user:) }

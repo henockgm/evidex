@@ -601,6 +601,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Instance overview (admins only)
+         * @description Admin endpoints answer 404 to non-admins, and 403 with type urn:evidex:problem:two-factor-required to admins without two-factor sign-in.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description headline numbers */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            users: number;
+                            verified_users: number;
+                            two_factor_users: number;
+                            active_sessions: number;
+                            ai_calls_last_30_days: number;
+                        };
+                    };
+                };
+                /** @description not an admin */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{job_application_id}/contacts": {
         parameters: {
             query?: never;
@@ -2924,6 +2978,8 @@ export interface components {
             two_factor_enabled: boolean;
             recovery_codes_remaining: number;
             identities: components["schemas"]["Identity"][];
+            /** @description Can use the admin area (needs two-factor sign-in) */
+            admin: boolean;
             /** Format: date-time */
             created_at: string;
         };

@@ -380,6 +380,45 @@ paths:
       responses:
         '204':
           description: disconnected
+  "/api/v1/admin/overview":
+    get:
+      summary: Instance overview (admins only)
+      tags:
+      - Admin
+      security:
+      - session_cookie: []
+      description: Admin endpoints answer 404 to non-admins, and 403 with type urn:evidex:problem:two-factor-required
+        to admins without two-factor sign-in.
+      responses:
+        '200':
+          description: headline numbers
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - users
+                - verified_users
+                - two_factor_users
+                - active_sessions
+                - ai_calls_last_30_days
+                properties:
+                  users:
+                    type: integer
+                  verified_users:
+                    type: integer
+                  two_factor_users:
+                    type: integer
+                  active_sessions:
+                    type: integer
+                  ai_calls_last_30_days:
+                    type: integer
+        '404':
+          description: not an admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/job_applications/{job_application_id}/contacts":
     parameters:
     - name: job_application_id
@@ -2370,6 +2409,7 @@ components:
       - two_factor_enabled
       - recovery_codes_remaining
       - identities
+      - admin
       - created_at
       properties:
         id:
@@ -2395,6 +2435,9 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/Identity"
+        admin:
+          type: boolean
+          description: Can use the admin area (needs two-factor sign-in)
         created_at:
           type: string
           format: date-time

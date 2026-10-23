@@ -45,6 +45,10 @@ Rails.application.routes.draw do
         get :match_report, on: :member, to: "match_reports#latest"
       end
 
+      namespace :admin do
+        resource :overview, only: :show
+      end
+
       resource :me, only: %i[show destroy], controller: "me" do
         scope module: :me do
           resources :sessions, only: %i[index destroy] do

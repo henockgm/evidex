@@ -30,6 +30,11 @@ export function Layout() {
               <NavLink to="/settings/security" className="hover:underline">
                 Security
               </NavLink>
+              {user.admin && (
+                <NavLink to="/admin" className="hover:underline">
+                  Admin
+                </NavLink>
+              )}
               <button type="button" onClick={handleSignOut} className="font-medium hover:underline">
                 Sign out
               </button>

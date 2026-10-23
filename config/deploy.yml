@@ -41,6 +41,10 @@ env:
     APP_URL: https://<%= ENV.fetch("EVIDEX_DOMAIN") %>
     EVIDEX_DATABASE_HOST: evidex-db
     RAILS_LOG_LEVEL: info
+    # Brevo's SMTP relay (see lib/evidex/smtp_settings.rb)
+    SMTP_ADDRESS: <%= ENV.fetch("SMTP_ADDRESS", "smtp-relay.brevo.com") %>
+    SMTP_PORT: <%= ENV.fetch("SMTP_PORT", "587") %>
+    MAILER_FROM: <%= ENV.fetch("MAILER_FROM").to_json %>
   secret:
     - RAILS_MASTER_KEY
     - EVIDEX_DATABASE_PASSWORD
@@ -48,6 +52,8 @@ env:
     - ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
     - ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
     - ANTHROPIC_API_KEY
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
 
 # Uploaded documents (Active Storage, local disk)
 volumes:

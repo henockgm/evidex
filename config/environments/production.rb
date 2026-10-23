@@ -62,23 +62,20 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
-
   # Set host to be used by links generated in mailer templates.
   # Mail links use APP_URL; it also names the only host the app answers to.
   app_uri = URI(config.x.app_url)
   config.action_mailer.default_url_options = { host: app_uri.host, protocol: app_uri.scheme }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Outgoing mail goes through the SMTP server in SMTP_* (Brevo in the live app).
+  # Mail is sent by background jobs; a failed delivery raises, so it shows up as a
+  # failed job in Solid Queue instead of disappearing.
+  require_relative "../../lib/evidex/smtp_settings"
+  if (smtp_settings = Evidex::SmtpSettings.from(ENV))
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = smtp_settings
+    config.action_mailer.raise_delivery_errors = true
+  end
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

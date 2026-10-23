@@ -1,115 +1,80 @@
-# Name of your application. Used to uniquely configure containers.
-service: evidex
+# Deploys Evidex with Kamal to one server (Hetzner CAX11, Arm): the app plus
+# Postgres with pgvector as an accessory on the same machine. kamal-proxy
+# terminates HTTPS with a Let's Encrypt certificate.
+#
+# Server address, domain and secrets come from .env.production (git-ignored,
+# see .env.example), so none of them end up in this public repository.
+<% require "dotenv"; Dotenv.load(".env.production") %>
 
-# Name of the container image (use your-user/app-name on external registries).
+service: evidex
 image: evidex
 
-# Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
-  # job:
-  #   hosts:
-  #     - 192.168.0.1
-  #   cmd: bin/jobs
+    - <%= ENV.fetch("EVIDEX_SERVER_IP") %>
 
-# Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
-# If used with Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
-#
-# Using an SSL proxy like this requires turning on config.assume_ssl and config.force_ssl in production.rb!
-#
-# Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
-#
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("EVIDEX_DOMAIN") %>
+  # Thruster in the image listens on 80
+  app_port: 80
+  healthcheck:
+    path: /up
 
-# Where you keep your container images.
+# Kamal pushes the image through a registry it runs locally and tunnels over SSH,
+# so no Docker Hub or GHCR account is needed.
 registry:
-  # Alternatives: hub.docker.com / registry.digitalocean.com / ghcr.io / ...
   server: localhost:5555
 
-  # Needed for authenticated registries.
-  # username: your-user
+builder:
+  # Same as the Mac building it and the CAX11 running it
+  arch: arm64
 
-  # Always use an access token rather than real password when possible.
-  # password:
-  #   - KAMAL_REGISTRY_PASSWORD
+# The key made for this server (~/.ssh/evidex_hetzner); it must be in the SSH agent
+ssh:
+  keys_only: true
+  keys:
+    - ~/.ssh/evidex_hetzner
 
-# Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
+  clear:
+    APP_URL: https://<%= ENV.fetch("EVIDEX_DOMAIN") %>
+    EVIDEX_DATABASE_HOST: evidex-db
+    RAILS_LOG_LEVEL: info
+    # Brevo's SMTP relay (see lib/evidex/smtp_settings.rb)
+    SMTP_ADDRESS: <%= ENV.fetch("SMTP_ADDRESS", "smtp-relay.brevo.com") %>
+    SMTP_PORT: <%= ENV.fetch("SMTP_PORT", "587") %>
+    MAILER_FROM: <%= ENV.fetch("MAILER_FROM").to_json %>
   secret:
     - RAILS_MASTER_KEY
-  clear:
-    # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
-    # When you start using multiple servers, you should split out job processing to a dedicated machine.
-    SOLID_QUEUE_IN_PUMA: true
+    - EVIDEX_DATABASE_PASSWORD
+    - ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+    - ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+    - ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+    - ANTHROPIC_API_KEY
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
 
-    # Set number of processes dedicated to Solid Queue (default: 1)
-    # JOB_CONCURRENCY: 3
+# Uploaded documents (Active Storage, local disk)
+volumes:
+  - "evidex_storage:/rails/storage"
 
-    # Set number of cores available to the application on each server (default: 1).
-    # WEB_CONCURRENCY: 2
+accessories:
+  db:
+    image: pgvector/pgvector:pg17
+    host: <%= ENV.fetch("EVIDEX_SERVER_IP") %>
+    # Only reachable from the server itself; the app connects over Kamal's Docker network
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: evidex
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
 
-    # Match this to any external database server to configure Active Record correctly
-    # Use evidex-db for a db accessory server on same machine via local kamal docker network.
-    # DB_HOST: 192.168.0.2
-
-    # Log everything from Rails
-    # RAILS_LOG_LEVEL: debug
-
-# Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
-# "bin/kamal logs -r job" will tail logs from the first server in the job section.
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
   logs: app logs -f
   dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
-
-# Use a persistent storage volume for sqlite database files and local Active Storage files.
-# Recommended to change this to a mounted volume path that is backed up off server.
-volumes:
-  - "evidex_storage:/rails/storage"
-
-
-# Configure the image builder.
-builder:
-  arch: amd64
-
-  # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
-  # remote: ssh://docker@docker-builder-server
-  #
-  # # Pass arguments and secrets to the Docker build process
-  # args:
-  #   RUBY_VERSION: ruby-4.0.7
-  # secrets:
-  #   - GITHUB_TOKEN
-  #   - RAILS_MASTER_KEY
-
-# Use a different ssh user than root
-# ssh:
-#   user: app
-
-# Use accessory services (secrets come from .kamal/secrets).
-# accessories:
-#   db:
-#     image: mysql:8.0
-#     host: 192.168.0.2
-#     # Change to 3306 to expose port to the world instead of just local network.
-#     port: "127.0.0.1:3306:3306"
-#     env:
-#       clear:
-#         MYSQL_ROOT_HOST: '%'
-#       secret:
-#         - MYSQL_ROOT_PASSWORD
-#     files:
-#       - config/mysql/production.cnf:/etc/mysql/my.cnf
-#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-#     directories:
-#       - data:/var/lib/mysql
-#   redis:
-#     image: valkey/valkey:8
-#     host: 192.168.0.2
-#     port: 6379
-#     directories:
-#       - data:/data

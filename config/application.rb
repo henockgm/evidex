@@ -58,6 +58,8 @@ module Evidex
 
     # Public URL of the SPA, used in email links and OAuth redirects.
     config.x.app_url = ENV.fetch("APP_URL", "http://localhost:5173")
+    # The built React app (npm run build in frontend/), served by Rails in production.
+    config.x.spa_root = Rails.root.join(ENV.fetch("EVIDEX_SPA_ROOT", "frontend/dist"))
 
     # Reject passwords found in known breaches (Have I Been Pwned range API).
     config.x.pwned_passwords_check = ENV.fetch("PWNED_PASSWORDS_CHECK", "true") == "true"

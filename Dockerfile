@@ -8,7 +8,18 @@
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
+# and NODE_VERSION matches frontend/.nvmrc
 ARG RUBY_VERSION=4.0.7
+ARG NODE_VERSION=26
+
+# Build the React app (frontend/dist), served by Rails in production
+FROM docker.io/library/node:$NODE_VERSION-slim AS frontend
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -21,11 +32,15 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
+# Background jobs run inside Puma, so the embeddings model is loaded only once (spec §9.1).
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+    LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+    SOLID_QUEUE_IN_PUMA="1" \
+    EVIDEX_MODEL_DIR="/rails/models" \
+    INFORMERS_OFFLINE="1"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -51,6 +66,9 @@ COPY . .
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
+# Bake the embeddings model into the image: the app never downloads it at runtime
+RUN INFORMERS_OFFLINE= bin/download-embeddings-model
+
 
 
 
@@ -65,6 +83,7 @@ USER 1000:1000
 # Copy built artifacts: gems, application
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
+COPY --chown=rails:rails --from=frontend /frontend/dist /rails/frontend/dist
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]

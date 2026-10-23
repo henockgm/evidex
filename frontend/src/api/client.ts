@@ -2,6 +2,7 @@ import createClient, { type Middleware } from 'openapi-fetch'
 import type { components, paths } from './schema'
 
 export type User = components['schemas']['User']
+export type AdminUser = components['schemas']['AdminUser']
 export type Identity = components['schemas']['Identity']
 export type Session = components['schemas']['Session']
 export type AuditEvent = components['schemas']['AuditEvent']

@@ -79,6 +79,30 @@ RSpec.configure do |config|
               created_at: { type: :string, format: "date-time" }
             }
           },
+          AdminUser: {
+            type: :object,
+            description: "An account as admins see it: metadata only",
+            required: %w[id email_address admin email_verified has_password two_factor_enabled providers active_sessions ai_calls_last_30_days created_at],
+            properties: {
+              id: { type: :integer },
+              email_address: { type: :string, format: :email },
+              name: { type: :string, nullable: true },
+              admin: { type: :boolean },
+              email_verified: { type: :boolean },
+              has_password: { type: :boolean },
+              two_factor_enabled: { type: :boolean },
+              providers: { type: :array, items: { type: :string, enum: %w[google_oauth2 entra_id] } },
+              locked_until: { type: :string, format: "date-time", nullable: true, description: "Temporary lock after failed sign-ins" },
+              active_sessions: { type: :integer },
+              last_active_at: { type: :string, format: "date-time", nullable: true },
+              ai_calls_last_30_days: { type: :integer },
+              created_at: { type: :string, format: "date-time" }
+            }
+          },
+          PageMeta: {
+            type: :object, required: %w[page per_page total total_pages],
+            properties: { page: { type: :integer }, per_page: { type: :integer }, total: { type: :integer }, total_pages: { type: :integer } }
+          },
           UserEnvelope: {
             type: :object, required: %w[user],
             properties: { user: { "$ref" => "#/components/schemas/User" } }

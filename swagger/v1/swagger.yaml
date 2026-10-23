@@ -419,6 +419,45 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Problem"
+  "/api/v1/admin/users":
+    get:
+      summary: List accounts (admins only)
+      tags:
+      - Admin
+      security:
+      - session_cookie: []
+      description: Account metadata only, newest first, 25 per page. Never documents,
+        postings, reports or letters.
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Part of an email address or name
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - users
+                - meta
+                properties:
+                  users:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/AdminUser"
+                  meta:
+                    "$ref": "#/components/schemas/PageMeta"
   "/api/v1/job_applications/{job_application_id}/contacts":
     parameters:
     - name: job_application_id
@@ -2441,6 +2480,76 @@ components:
         created_at:
           type: string
           format: date-time
+    AdminUser:
+      type: object
+      description: 'An account as admins see it: metadata only'
+      required:
+      - id
+      - email_address
+      - admin
+      - email_verified
+      - has_password
+      - two_factor_enabled
+      - providers
+      - active_sessions
+      - ai_calls_last_30_days
+      - created_at
+      properties:
+        id:
+          type: integer
+        email_address:
+          type: string
+          format: email
+        name:
+          type: string
+          nullable: true
+        admin:
+          type: boolean
+        email_verified:
+          type: boolean
+        has_password:
+          type: boolean
+        two_factor_enabled:
+          type: boolean
+        providers:
+          type: array
+          items:
+            type: string
+            enum:
+            - google_oauth2
+            - entra_id
+        locked_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: Temporary lock after failed sign-ins
+        active_sessions:
+          type: integer
+        last_active_at:
+          type: string
+          format: date-time
+          nullable: true
+        ai_calls_last_30_days:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    PageMeta:
+      type: object
+      required:
+      - page
+      - per_page
+      - total
+      - total_pages
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
     UserEnvelope:
       type: object
       required:

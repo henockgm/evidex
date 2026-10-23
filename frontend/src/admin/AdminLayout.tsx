@@ -2,7 +2,10 @@ import { Link, NavLink, Navigate, Outlet } from 'react-router'
 import { useMe } from '../auth/useAuth'
 import { Alert, Spinner } from '../components/ui'
 
-const tabs = [{ to: '/admin', label: 'Overview', end: true }]
+const tabs = [
+  { to: '/admin', label: 'Overview', end: true },
+  { to: '/admin/users', label: 'Users', end: false },
+]
 
 /** The admin area: admins only, and only with two-factor sign-in on (the API enforces both). */
 export function AdminLayout() {

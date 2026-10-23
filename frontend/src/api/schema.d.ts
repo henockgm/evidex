@@ -655,6 +655,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List accounts (admins only)
+         * @description Account metadata only, newest first, 25 per page. Never documents, postings, reports or letters.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Part of an email address or name */
+                    q?: string;
+                    page?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description accounts */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            users: components["schemas"]["AdminUser"][];
+                            meta: components["schemas"]["PageMeta"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{job_application_id}/contacts": {
         parameters: {
             query?: never;
@@ -2982,6 +3028,35 @@ export interface components {
             admin: boolean;
             /** Format: date-time */
             created_at: string;
+        };
+        /** @description An account as admins see it: metadata only */
+        AdminUser: {
+            id: number;
+            /** Format: email */
+            email_address: string;
+            name?: string | null;
+            admin: boolean;
+            email_verified: boolean;
+            has_password: boolean;
+            two_factor_enabled: boolean;
+            providers: ("google_oauth2" | "entra_id")[];
+            /**
+             * Format: date-time
+             * @description Temporary lock after failed sign-ins
+             */
+            locked_until?: string | null;
+            active_sessions: number;
+            /** Format: date-time */
+            last_active_at?: string | null;
+            ai_calls_last_30_days: number;
+            /** Format: date-time */
+            created_at: string;
+        };
+        PageMeta: {
+            page: number;
+            per_page: number;
+            total: number;
+            total_pages: number;
         };
         UserEnvelope: {
             user: components["schemas"]["User"];

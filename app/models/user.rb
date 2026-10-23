@@ -18,6 +18,17 @@ class User < ApplicationRecord
   has_many :documents, dependent: :destroy
   has_many :document_chunks, dependent: :delete_all
 
+  # For the admin users list: session and AI usage figures per user, in one query.
+  scope :with_admin_stats, -> {
+    select("users.*",
+      sanitize_sql_array([ <<~SQL.squish, { idle: Session::IDLE_TIMEOUT.ago, absolute: Session::ABSOLUTE_TIMEOUT.ago, ai_since: 30.days.ago } ]))
+        (SELECT COUNT(*) FROM sessions s WHERE s.user_id = users.id
+          AND s.last_active_at >= :idle AND s.created_at >= :absolute) AS active_sessions_count,
+        (SELECT MAX(s.last_active_at) FROM sessions s WHERE s.user_id = users.id) AS last_active_at,
+        (SELECT COUNT(*) FROM ai_usages a WHERE a.user_id = users.id AND a.created_at >= :ai_since) AS ai_calls_last_30_days
+      SQL
+  }
+
   normalizes :email_address, with: ->(email) { email.strip.downcase }
 
   encrypts :otp_secret

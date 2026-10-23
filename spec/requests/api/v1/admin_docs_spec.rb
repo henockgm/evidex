@@ -29,4 +29,26 @@ RSpec.describe "Admin API", type: :request do
       end
     end
   end
+
+  path "/api/v1/admin/users" do
+    get "List accounts (admins only)" do
+      tags "Admin"
+      produces "application/json"
+      security [ { session_cookie: [] } ]
+      description "Account metadata only, newest first, 25 per page. Never documents, postings, reports or letters."
+      parameter name: :q, in: :query, required: false, schema: { type: :string }, description: "Part of an email address or name"
+      parameter name: :page, in: :query, required: false, schema: { type: :integer, minimum: 1 }
+
+      response "200", "accounts" do
+        schema type: :object, required: %w[users meta],
+          properties: {
+            users: { type: :array, items: { "$ref" => "#/components/schemas/AdminUser" } },
+            meta: { "$ref" => "#/components/schemas/PageMeta" }
+          }
+        let(:q) { nil }
+        let(:page) { nil }
+        run_test!
+      end
+    end
+  end
 end

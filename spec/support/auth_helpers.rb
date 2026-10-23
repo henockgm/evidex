@@ -3,6 +3,10 @@ module AuthHelpers
 
   def sign_in(user, password: PASSWORD)
     post "/api/v1/session", params: { email_address: user.email_address, password: }, as: :json
+    if user.two_factor_enabled?
+      expect(response).to have_http_status(:accepted)
+      post "/api/v1/session/second_factor", params: { code: ROTP::TOTP.new(user.reload.otp_secret).now }, as: :json
+    end
     expect(response).to have_http_status(:created)
   end
 

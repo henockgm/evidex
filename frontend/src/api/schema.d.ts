@@ -601,6 +601,330 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Instance overview (admins only)
+         * @description Admin endpoints answer 404 to non-admins, and 403 with type urn:evidex:problem:two-factor-required to admins without two-factor sign-in.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description headline numbers */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            users: number;
+                            verified_users: number;
+                            two_factor_users: number;
+                            active_sessions: number;
+                            ai_calls_last_30_days: number;
+                        };
+                    };
+                };
+                /** @description not an admin */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List accounts (admins only)
+         * @description Account metadata only, newest first, 25 per page. Never documents, postings, reports or letters.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Part of an email address or name */
+                    q?: string;
+                    page?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description accounts */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            users: components["schemas"]["AdminUser"][];
+                            meta: components["schemas"]["PageMeta"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lock an account (admins only)
+         * @description Signs the account out everywhere, blocks every sign-in until unlocked and emails the user. Needs a recent sign-in (403 urn:evidex:problem:reauthentication-required).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    user_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description locked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminUserEnvelope"];
+                    };
+                };
+                /** @description own account */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        /**
+         * Unlock an account (admins only)
+         * @description Lifts an admin lock and any temporary lock after failed sign-ins. Needs a recent sign-in.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    user_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description unlocked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminUserEnvelope"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/sign_out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign an account out on every device (admins only)
+         * @description Ends every session; the user can sign in again. Needs a recent sign-in.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    user_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description signed out */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminUserEnvelope"];
+                    };
+                };
+                /** @description re-authentication needed */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit_events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Security events across all accounts (admins only)
+         * @description Newest first, 50 per page.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    user_id?: number;
+                    event_action?: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed" | "admin_locked" | "admin_unlocked" | "admin_signed_out";
+                    page?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            events: components["schemas"]["AdminAuditEvent"][];
+                            meta: components["schemas"]["PageMeta"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai_usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** AI calls, tokens and estimated cost per account (admins only) */
+        get: {
+            parameters: {
+                query?: {
+                    days?: 7 | 30 | 90;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description usage */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            days: number;
+                            totals: components["schemas"]["AiUsageSummary"];
+                            /** @description Most expensive first */
+                            users: (components["schemas"]["AiUsageSummary"] & {
+                                user: {
+                                    id: number;
+                                    /** Format: email */
+                                    email_address: string;
+                                };
+                            })[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_applications/{job_application_id}/contacts": {
         parameters: {
             query?: never;
@@ -2924,8 +3248,85 @@ export interface components {
             two_factor_enabled: boolean;
             recovery_codes_remaining: number;
             identities: components["schemas"]["Identity"][];
+            /** @description Can use the admin area (needs two-factor sign-in) */
+            admin: boolean;
             /** Format: date-time */
             created_at: string;
+        };
+        /** @description An account as admins see it: metadata only */
+        AdminUser: {
+            id: number;
+            /** Format: email */
+            email_address: string;
+            name?: string | null;
+            admin: boolean;
+            email_verified: boolean;
+            has_password: boolean;
+            two_factor_enabled: boolean;
+            providers: ("google_oauth2" | "entra_id")[];
+            /**
+             * Format: date-time
+             * @description Temporary lock after failed sign-ins
+             */
+            locked_until?: string | null;
+            /**
+             * Format: date-time
+             * @description Locked by an admin until unlocked
+             */
+            suspended_at?: string | null;
+            active_sessions: number;
+            /** Format: date-time */
+            last_active_at?: string | null;
+            ai_calls_last_30_days: number;
+            /** Format: date-time */
+            created_at: string;
+        };
+        AdminUserEnvelope: {
+            user: components["schemas"]["AdminUser"];
+        };
+        AdminAuditEvent: {
+            id: number;
+            /** @enum {string} */
+            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed" | "admin_locked" | "admin_unlocked" | "admin_signed_out";
+            /** Format: date-time */
+            created_at: string;
+            /** @description Missing for failed sign-ins with an unknown email */
+            user?: {
+                id: number;
+                /** Format: email */
+                email_address: string;
+            } | null;
+            ip_address?: string | null;
+            device?: string | null;
+            details: {
+                provider?: string;
+                method?: string;
+                /** @enum {string} */
+                second_factor?: "authenticator" | "recovery_code";
+                /** Format: date-time */
+                until?: string;
+                /** @description Sessions ended by an admin sign-out */
+                sessions?: number;
+            };
+            /** @description The admin behind an admin_* action */
+            admin_email_address?: string | null;
+        };
+        AiUsageSummary: {
+            calls: number;
+            failed_calls: number;
+            input_tokens: number;
+            output_tokens: number;
+            /** @description At list prices (config/ai_prices.yml) */
+            estimated_cost_usd: number;
+            models: string[];
+            /** @description Models left out of the estimate */
+            unpriced_models: string[];
+        };
+        PageMeta: {
+            page: number;
+            per_page: number;
+            total: number;
+            total_pages: number;
         };
         UserEnvelope: {
             user: components["schemas"]["User"];
@@ -3136,7 +3537,7 @@ export interface components {
         AuditEvent: {
             id: number;
             /** @enum {string} */
-            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed";
+            action: "registered" | "registration_duplicate" | "signed_in" | "sign_in_failed" | "account_locked" | "signed_out" | "session_revoked" | "other_sessions_revoked" | "email_verified" | "password_reset_requested" | "password_reset" | "password_changed" | "identity_linked" | "identity_unlinked" | "oauth_signed_in" | "second_factor_failed" | "two_factor_enabled" | "two_factor_disabled" | "recovery_codes_regenerated" | "reauthenticated" | "reauthentication_failed" | "admin_locked" | "admin_unlocked" | "admin_signed_out";
             /** Format: date-time */
             created_at: string;
             ip_address?: string | null;

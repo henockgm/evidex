@@ -6,6 +6,7 @@ const messages: Record<string, string> = {
   email_missing: "The provider didn't share an email address, so we can't create an account.",
   reauthentication_failed:
     "That didn't confirm it's you. Use the Google or Microsoft account connected to Evidex, or your password and code if you have them.",
+  account_suspended: 'This account is locked. Contact the person who runs this Evidex site.',
   oauth_failed: 'Sign-in was cancelled or failed. Please try again.',
   invalid_response: 'Sign-in was cancelled or failed. Please try again.',
 }

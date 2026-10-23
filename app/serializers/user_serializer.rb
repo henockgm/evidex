@@ -14,6 +14,7 @@ class UserSerializer
       two_factor_enabled: @user.two_factor_enabled?,
       recovery_codes_remaining: @user.two_factor_enabled? ? @user.recovery_codes.unused.count : 0,
       identities: @user.identities.map { |identity| IdentitySerializer.new(identity).as_json },
+      admin: @user.admin?,
       created_at: @user.created_at.iso8601
     }
   end

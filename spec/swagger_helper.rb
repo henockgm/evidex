@@ -64,7 +64,7 @@ RSpec.configure do |config|
           },
           User: {
             type: :object,
-            required: %w[id email_address email_verified has_password ai_configured two_factor_enabled recovery_codes_remaining identities created_at],
+            required: %w[id email_address email_verified has_password ai_configured two_factor_enabled recovery_codes_remaining identities admin created_at],
             properties: {
               id: { type: :integer },
               email_address: { type: :string, format: :email },
@@ -75,8 +75,77 @@ RSpec.configure do |config|
               two_factor_enabled: { type: :boolean },
               recovery_codes_remaining: { type: :integer },
               identities: { type: :array, items: { "$ref" => "#/components/schemas/Identity" } },
+              admin: { type: :boolean, description: "Can use the admin area (needs two-factor sign-in)" },
               created_at: { type: :string, format: "date-time" }
             }
+          },
+          AdminUser: {
+            type: :object,
+            description: "An account as admins see it: metadata only",
+            required: %w[id email_address admin email_verified has_password two_factor_enabled providers active_sessions ai_calls_last_30_days created_at],
+            properties: {
+              id: { type: :integer },
+              email_address: { type: :string, format: :email },
+              name: { type: :string, nullable: true },
+              admin: { type: :boolean },
+              email_verified: { type: :boolean },
+              has_password: { type: :boolean },
+              two_factor_enabled: { type: :boolean },
+              providers: { type: :array, items: { type: :string, enum: %w[google_oauth2 entra_id] } },
+              locked_until: { type: :string, format: "date-time", nullable: true, description: "Temporary lock after failed sign-ins" },
+              suspended_at: { type: :string, format: "date-time", nullable: true, description: "Locked by an admin until unlocked" },
+              active_sessions: { type: :integer },
+              last_active_at: { type: :string, format: "date-time", nullable: true },
+              ai_calls_last_30_days: { type: :integer },
+              created_at: { type: :string, format: "date-time" }
+            }
+          },
+          AdminUserEnvelope: {
+            type: :object, required: %w[user],
+            properties: { user: { "$ref" => "#/components/schemas/AdminUser" } }
+          },
+          AdminAuditEvent: {
+            type: :object,
+            required: %w[id action created_at details],
+            properties: {
+              id: { type: :integer },
+              action: { type: :string, enum: AuditEvent::ACTIONS },
+              created_at: { type: :string, format: "date-time" },
+              user: {
+                type: :object, nullable: true, description: "Missing for failed sign-ins with an unknown email",
+                required: %w[id email_address],
+                properties: { id: { type: :integer }, email_address: { type: :string, format: :email } }
+              },
+              ip_address: { type: :string, nullable: true },
+              device: { type: :string, nullable: true },
+              details: {
+                type: :object,
+                properties: {
+                  provider: { type: :string }, method: { type: :string },
+                  second_factor: { type: :string, enum: %w[authenticator recovery_code] },
+                  until: { type: :string, format: "date-time" },
+                  sessions: { type: :integer, description: "Sessions ended by an admin sign-out" }
+                }
+              },
+              admin_email_address: { type: :string, nullable: true, description: "The admin behind an admin_* action" }
+            }
+          },
+          AiUsageSummary: {
+            type: :object,
+            required: %w[calls failed_calls input_tokens output_tokens estimated_cost_usd models unpriced_models],
+            properties: {
+              calls: { type: :integer },
+              failed_calls: { type: :integer },
+              input_tokens: { type: :integer },
+              output_tokens: { type: :integer },
+              estimated_cost_usd: { type: :number, description: "At list prices (config/ai_prices.yml)" },
+              models: { type: :array, items: { type: :string } },
+              unpriced_models: { type: :array, items: { type: :string }, description: "Models left out of the estimate" }
+            }
+          },
+          PageMeta: {
+            type: :object, required: %w[page per_page total total_pages],
+            properties: { page: { type: :integer }, per_page: { type: :integer }, total: { type: :integer }, total_pages: { type: :integer } }
           },
           UserEnvelope: {
             type: :object, required: %w[user],

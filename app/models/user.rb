@@ -18,6 +18,21 @@ class User < ApplicationRecord
   has_many :documents, dependent: :destroy
   has_many :document_chunks, dependent: :delete_all
 
+  # For the admin users list: session and AI usage figures per user, in one query.
+  # Last activity also counts sign-ins, so it survives sign-outs and admin locks.
+  scope :with_admin_stats, -> {
+    select("users.*",
+      sanitize_sql_array([ <<~SQL.squish, { idle: Session::IDLE_TIMEOUT.ago, absolute: Session::ABSOLUTE_TIMEOUT.ago, ai_since: 30.days.ago } ]))
+        (SELECT COUNT(*) FROM sessions s WHERE s.user_id = users.id
+          AND s.last_active_at >= :idle AND s.created_at >= :absolute) AS active_sessions_count,
+        GREATEST(
+          (SELECT MAX(s.last_active_at) FROM sessions s WHERE s.user_id = users.id),
+          (SELECT MAX(e.created_at) FROM audit_events e WHERE e.user_id = users.id AND e.action IN ('signed_in', 'oauth_signed_in'))
+        ) AS last_active_at,
+        (SELECT COUNT(*) FROM ai_usages a WHERE a.user_id = users.id AND a.created_at >= :ai_since) AS ai_calls_last_30_days
+      SQL
+  }
+
   normalizes :email_address, with: ->(email) { email.strip.downcase }
 
   encrypts :otp_secret
@@ -97,8 +112,32 @@ class User < ApplicationRecord
     end
   end
 
+  # Locked out of password and two-factor sign-in: temporarily after failed
+  # attempts, or until an admin unlocks the account.
   def locked?
+    suspended? || temporarily_locked?
+  end
+
+  def temporarily_locked?
     locked_until.present? && locked_until.future?
+  end
+
+  def suspended?
+    suspended_at.present?
+  end
+
+  # Admin lock: blocks every sign-in and ends every session.
+  def suspend!
+    transaction do
+      update!(suspended_at: Time.current)
+      sessions.delete_all
+    end
+  end
+
+  # Lifts the admin lock and any temporary lock after failed sign-ins.
+  def unsuspend!
+    update!(suspended_at: nil)
+    reset_failed_sign_ins!
   end
 
   # Returns true when this failure locked the account. Each consecutive lockout

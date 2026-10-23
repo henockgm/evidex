@@ -45,6 +45,7 @@ export const user = {
   two_factor_enabled: false,
   recovery_codes_remaining: 0,
   identities: [],
+  admin: false,
   created_at: '2026-10-20T10:00:00Z',
 }
 

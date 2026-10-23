@@ -7,6 +7,7 @@ class AuditEvent < ApplicationRecord
     identity_linked identity_unlinked oauth_signed_in
     second_factor_failed two_factor_enabled two_factor_disabled recovery_codes_regenerated
     reauthenticated reauthentication_failed
+    admin_locked admin_unlocked admin_signed_out
   ].freeze
 
   belongs_to :user, optional: true

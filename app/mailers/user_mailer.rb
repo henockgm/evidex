@@ -24,6 +24,10 @@ class UserMailer < ApplicationMailer
     mail subject: "Your Evidex account is temporarily locked"
   end
 
+  def account_suspended
+    mail subject: "Your Evidex account has been locked"
+  end
+
   def password_changed
     @reset_url = app_url("/forgot-password")
     mail subject: "Your Evidex password was changed"

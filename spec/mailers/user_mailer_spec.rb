@@ -19,6 +19,13 @@ RSpec.describe UserMailer do
     expect(described_class.with(user:).recovery_code_used.body.encoded).to include("You have 1 left.")
   end
 
+  it "tells a locked-out user who to contact" do
+    mail = described_class.with(user:).account_suspended
+
+    expect(mail.subject).to eq("Your Evidex account has been locked")
+    expect(mail.body.encoded).to include("signed out on all devices", "contact the person who runs this Evidex site")
+  end
+
   it "names the disconnected provider" do
     mail = described_class.with(user:, provider: "entra_id").identity_unlinked
 

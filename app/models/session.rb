@@ -21,7 +21,7 @@ class Session < ApplicationRecord
   def self.find_by_token(token)
     return if token.blank?
 
-    active.find_by(token_digest: digest(token))
+    active.joins(:user).where(users: { suspended_at: nil }).find_by(token_digest: digest(token))
   end
 
   def touch_activity!

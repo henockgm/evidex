@@ -19,6 +19,8 @@ class OmniauthCallbacksController < ApplicationController
     end
 
     user = result.user
+    return redirect_to("/login?error=account_suspended") if user.suspended?
+
     record_outcome(user, result.outcome)
 
     if linking

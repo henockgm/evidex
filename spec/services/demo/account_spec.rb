@@ -31,6 +31,17 @@ RSpec.describe Demo::Account do
     expect(User.where(demo: true).count).to eq(1)
   end
 
+  it "ends visitors' sessions older than a day" do
+    user = create(:user, demo: true)
+    old = user.sessions.create!(created_at: 2.days.ago)
+    recent = user.sessions.create!
+
+    described_class.reset!
+
+    expect(Session.exists?(old.id)).to be(false)
+    expect(Session.exists?(recent.id)).to be(true)
+  end
+
   it "is the only demo account" do
     create(:user, demo: true)
     expect { create(:user, demo: true) }.to raise_error(ActiveRecord::RecordNotUnique)

@@ -28,6 +28,7 @@ module Demo
         new_user.name = NAME
         new_user.email_verified_at = Time.current
       end
+      user.sessions.where(created_at: ...1.day.ago).delete_all
       user.job_postings.destroy_all
       user.documents.destroy_all
       documents = DOCUMENTS.map { |spec| add_document(user, spec) }

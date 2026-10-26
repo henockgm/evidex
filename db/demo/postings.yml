@@ -1,0 +1,120 @@
+# Fictional companies and ads. Dates are relative to the day of the reset.
+# The first posting gets the saved match report (match_report.yml).
+- title: Senior Ruby on Rails Developer
+  company: Polar Freight Oy
+  location: Tampere, Finland
+  work_model: hybrid
+  employment_type: Full-time
+  seniority: Senior
+  deadline_in_days: 12
+  source_url: https://jobs.example.com/polar-freight/senior-rails-developer
+  keywords: [Ruby on Rails, PostgreSQL, Sidekiq, Kubernetes, AWS]
+  description: |
+    Polar Freight moves pallets across the Nordics, and our booking platform is a Ruby on Rails
+    monolith that we are slowly splitting into services. We are looking for a senior developer to
+    help us get there safely.
+
+    What you'll do
+    - Design and build APIs for booking, pricing and tracking
+    - Move long-running work into background jobs and make it reliable
+    - Mentor two junior developers and review their code
+    - Take part in on-call for the systems you build
+
+    What we're looking for
+    - 5+ years of professional Ruby on Rails experience
+    - Strong PostgreSQL skills, including query tuning
+    - Experience with background job systems such as Sidekiq
+    - Experience running services on Kubernetes
+    - Good written English; Finnish is a plus
+
+    Nice to have
+    - AWS experience
+    - Event-driven architecture or message queues
+  requirements:
+    required:
+      - 5+ years of professional Ruby on Rails experience
+      - Strong PostgreSQL skills, including query tuning
+      - Experience with background job systems such as Sidekiq
+      - Experience running services on Kubernetes
+      - Good written English
+    preferred:
+      - Finnish language skills
+      - AWS experience
+      - Event-driven architecture or message queues
+    responsibility:
+      - Design and build APIs for booking, pricing and tracking
+      - Mentor junior developers and review their code
+  application:
+    statuses: [applied, interviewing]
+    applied_days_ago: 9
+    next_action: Prepare system design examples for the technical interview
+    next_action_in_days: 2
+    notes: Recruiter mentioned the team is moving from Heroku to Kubernetes this year.
+    contacts:
+      - name: Maria Sample
+        role: Recruiter
+        email: maria.sample@example.com
+    interviews:
+      - round: Technical interview
+        in_days: 3
+        format: video
+        location: Video call
+- title: Backend Engineer, Payments
+  company: Kuusi Commerce Ltd
+  location: Helsinki, Finland
+  work_model: remote
+  employment_type: Full-time
+  seniority: Mid-level
+  deadline_in_days: 20
+  source_url: https://jobs.example.com/kuusi/backend-engineer-payments
+  keywords: [Python, Django, payments, PostgreSQL]
+  description: |
+    Kuusi Commerce runs checkout and payments for 300 Nordic web shops. Join the payments team to build
+    the services that move money reliably.
+
+    Requirements
+    - 3+ years of backend development
+    - Python and Django, or another web framework and willingness to learn Python
+    - REST API design
+    - Automated testing as a habit
+
+    Bonus
+    - Payment or billing domain experience
+  requirements:
+    required:
+      - 3+ years of backend development
+      - Python and Django experience
+      - REST API design
+      - Automated testing
+    preferred:
+      - Payment or billing domain experience
+  application:
+    statuses: [applied]
+    applied_days_ago: 4
+    next_action: Follow up if no reply by Friday
+    next_action_in_days: 5
+- title: Full-Stack Developer
+  company: Fjord Analytics
+  location: Oulu, Finland
+  work_model: onsite
+  employment_type: Full-time
+  deadline_in_days: 6
+  source_url: https://jobs.example.com/fjord-analytics/full-stack-developer
+  keywords: [React, TypeScript, Ruby on Rails]
+  description: |
+    Fjord Analytics builds dashboards for energy companies. We need a full-stack developer who enjoys
+    both the Rails API and the React front end.
+
+    You have
+    - Experience with React and TypeScript
+    - Experience with Ruby on Rails or a similar backend framework
+    - An eye for usable interfaces
+  requirements:
+    required:
+      - Experience with React and TypeScript
+      - Experience with Ruby on Rails or a similar backend framework
+      - An eye for usable interfaces
+  application:
+    statuses: []
+    next_action: Decide whether to apply
+    next_action_in_days: 1

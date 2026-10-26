@@ -141,6 +141,22 @@ sign-in, which appear only once their credentials are set:
   `EVIDEX_AI_MODEL` (default `claude-opus-5-5`) and `EVIDEX_AI_DAILY_LIMIT` (default 20).
   Without a key the app works normally and hides the AI buttons.
 
+### Demo account
+
+The sign-in page offers **Try the demo** once a demo account exists. It is one
+shared account with fictional data (a CV, a project write-up, three postings at
+different stages and a saved match report) from [`db/demo`](db/demo):
+
+```bash
+bin/rails evidex:demo:reset   # create or rebuild it (no AI call)
+```
+
+In production it is rebuilt every night at 3:00 Helsinki time (`ResetDemoJob`).
+Account settings and document uploads are locked in the demo, and its AI use is
+capped by `EVIDEX_DEMO_AI_DAILY_LIMIT` (default 5 a day, shared by all visitors).
+To refresh the saved match report after changing the demo data, run a report on
+the first demo posting in the app and then `bin/rails evidex:demo:export_match_report`.
+
 ### Tests and checks
 
 ```bash

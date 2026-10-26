@@ -8,6 +8,12 @@ class ProcessDocumentJob < ApplicationJob
     return unless document.status == "pending"
 
     document.update!(status: "processing", error: nil)
+    self.class.process(document)
+  end
+
+  # Does the work for a document already marked "processing" (the demo account
+  # calls this directly so the documents are ready before its report is restored).
+  def self.process(document)
     pages = Library::TextExtractor.call(document.file.blob)
     chunks = Library::Chunker.call(pages, paginated: document.file.blob.content_type == "application/pdf")
     # The section is part of what gets embedded, so "Skills: Ruby" reads as a skill.

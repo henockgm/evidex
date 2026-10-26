@@ -1279,6 +1279,49 @@ paths:
                         created_at:
                           type: string
                           format: date-time
+  "/api/v1/demo_session":
+    get:
+      summary: Is the shared demo account available?
+      tags:
+      - Authentication
+      responses:
+        '200':
+          description: availability
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - available
+                properties:
+                  available:
+                    type: boolean
+    post:
+      summary: Sign in to the shared demo account
+      tags:
+      - Authentication
+      security:
+      - csrf_token: []
+      description: No password needed. The demo's data is fictional, shared by all
+        visitors and reset daily; account settings and document uploads are locked.
+      responses:
+        '201':
+          description: signed in to the demo
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - user
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/User"
+        '404':
+          description: no demo account on this server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/documents":
     get:
       summary: List your career documents, newest first
@@ -2679,6 +2722,7 @@ components:
       - recovery_codes_remaining
       - identities
       - admin
+      - demo
       - created_at
       properties:
         id:
@@ -2707,6 +2751,10 @@ components:
         admin:
           type: boolean
           description: Can use the admin area (needs two-factor sign-in)
+        demo:
+          type: boolean
+          description: 'The shared demo account: fictional data, reset daily, account
+            settings locked'
         created_at:
           type: string
           format: date-time

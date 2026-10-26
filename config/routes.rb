@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       get "auth/providers", to: "auth_providers#index", as: :auth_providers
 
       resource :registration, only: :create
+      resource :demo_session, only: %i[show create]
       resource :session, only: %i[create destroy] do
         resource :second_factor, only: :create
       end

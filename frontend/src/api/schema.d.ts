@@ -1633,6 +1633,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/demo_session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Is the shared demo account available? */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description availability */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            available: boolean;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Sign in to the shared demo account
+         * @description No password needed. The demo's data is fictional, shared by all visitors and reset daily; account settings and document uploads are locked.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description signed in to the demo */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            user: components["schemas"]["User"];
+                        };
+                    };
+                };
+                /** @description no demo account on this server */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents": {
         parameters: {
             query?: never;
@@ -3272,6 +3344,8 @@ export interface components {
             identities: components["schemas"]["Identity"][];
             /** @description Can use the admin area (needs two-factor sign-in) */
             admin: boolean;
+            /** @description The shared demo account: fictional data, reset daily, account settings locked */
+            demo: boolean;
             /** Format: date-time */
             created_at: string;
         };

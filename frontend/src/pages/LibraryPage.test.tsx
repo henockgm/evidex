@@ -164,4 +164,19 @@ describe('Career library', () => {
     expect(results.querySelector('mark')).toHaveTextContent('Skills')
     expect(results).toHaveTextContent('Skills · Ruby, Rails, PostgreSQL, RSpec')
   })
+
+  it('turns uploads off in the shared demo and hides the security settings link', async () => {
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => json({ user: { ...user, demo: true } }),
+      'GET /api/v1/documents': () => json({ documents: [{ ...cv, status: 'ready' }] }),
+    })
+
+    renderApp('/library')
+
+    expect(await screen.findByText(/Uploads are turned off in the demo/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('File')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Security' })).not.toBeInTheDocument()
+  })
 })
+

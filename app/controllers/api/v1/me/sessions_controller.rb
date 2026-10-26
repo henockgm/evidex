@@ -2,6 +2,8 @@ module Api
   module V1
     module Me
       class SessionsController < BaseController
+        locked_in_demo
+
         def index
           sessions = Current.user.sessions.active.order(last_active_at: :desc)
           render json: { sessions: sessions.map { |session| SessionSerializer.new(session, current: session == Current.session) } }

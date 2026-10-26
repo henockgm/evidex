@@ -17,7 +17,7 @@ module Api
         end
         if AiUsage.limit_reached?(Current.user)
           return render_problem(:too_many_requests, "Daily AI limit reached",
-            detail: "You can run #{AiUsage.daily_limit} AI extractions a day. Try again tomorrow.")
+            detail: "You can run #{AiUsage.daily_limit(Current.user)} AI extractions a day. Try again tomorrow.")
         end
 
         posting.update!(extraction_status: "pending", extraction_error: nil)

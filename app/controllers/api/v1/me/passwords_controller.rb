@@ -4,6 +4,8 @@ module Api
       # Changes the password, or adds a first one to an account that only uses
       # Google/Microsoft. Needs a recent sign-in. Signs out every other device.
       class PasswordsController < BaseController
+        locked_in_demo
+
         limit_requests to: 5, within: 15.minutes, by: -> { Current.user&.id || request.remote_ip }
         require_recent_authentication
 

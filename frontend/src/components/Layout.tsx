@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router'
 import { leaveApp, signOut, useMe } from '../auth/useAuth'
+import { DemoBanner } from './DemoBanner'
 
 export function Layout() {
   const { data: user } = useMe()
@@ -27,9 +28,11 @@ export function Layout() {
               <NavLink to="/library" className="hover:underline">
                 Library
               </NavLink>
-              <NavLink to="/settings/security" className="hover:underline">
-                Security
-              </NavLink>
+              {!user.demo && (
+                <NavLink to="/settings/security" className="hover:underline">
+                  Security
+                </NavLink>
+              )}
               {user.admin && (
                 <NavLink to="/admin" className="hover:underline">
                   Admin
@@ -42,6 +45,7 @@ export function Layout() {
           )}
         </nav>
       </header>
+      {user?.demo && <DemoBanner />}
       <main className="mx-auto max-w-4xl px-4 py-10">
         <Outlet />
       </main>

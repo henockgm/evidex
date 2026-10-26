@@ -94,4 +94,38 @@ describe('LoginPage', () => {
     renderApp('/login?next=//evil.example.com')
     expect(await screen.findByRole('heading', { name: 'Welcome, Ada' })).toBeInTheDocument()
   })
+
+  it('opens the shared demo without a password and shows the demo banner', async () => {
+    let signedIn = false
+    const demoUser = { ...user, name: 'Alex Example', email_address: 'demo@evidex.invalid', demo: true }
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => (signedIn ? json({ user: demoUser }) : problem(401, 'Authentication required')),
+      'GET /api/v1/demo_session': () => json({ available: true }),
+      'POST /api/v1/demo_session': () => {
+        signedIn = true
+        return json({ user: demoUser }, 201)
+      },
+      'GET /api/v1/dashboard': () => json({ counts: {}, upcoming_deadlines: [], next_actions: [], total: 0 }),
+    })
+
+    renderApp('/login')
+    await userEvent.click(await screen.findByRole('button', { name: 'Try the demo, no sign-up' }))
+
+    expect(await screen.findByText(/the data is fictional, shared with other visitors/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create your own account' })).toBeInTheDocument()
+  })
+
+  it('hides the demo button when the server has no demo account', async () => {
+    mockApi({
+      ...baseRoutes,
+      'GET /api/v1/me': () => problem(401, 'Authentication required'),
+      'GET /api/v1/demo_session': () => json({ available: false }),
+    })
+
+    renderApp('/login')
+
+    expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Try the demo/ })).not.toBeInTheDocument())
+  })
 })

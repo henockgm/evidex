@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_105149) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_123958) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -299,6 +299,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_105149) do
     t.integer "otp_last_timestep"
     t.boolean "admin", default: false, null: false
     t.datetime "suspended_at"
+    t.boolean "demo", default: false, null: false
+    t.index ["demo"], name: "index_users_on_demo", unique: true, where: "demo"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 

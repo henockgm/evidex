@@ -72,6 +72,7 @@ describe('Job postings', () => {
         source_url: null,
         description: 'Build APIs.',
       },
+      confirm_duplicate: false,
     })
   })
 

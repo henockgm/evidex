@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { api, unwrap, type JobPostingInput, type JobPostingSummary } from '../api/client'
+import { ApiError, api, unwrap, type DuplicatePostingProblem, type JobPostingInput, type JobPostingSummary } from '../api/client'
 import { Alert, Card } from '../components/ui'
 import { ImportFromLink } from '../postings/ImportFromLink'
 import { PostingForm } from '../postings/PostingForm'
@@ -20,12 +20,16 @@ export function NewPostingPage() {
   const [imported, setImported] = useState<Imported | null>(null)
 
   const create = useMutation({
-    mutationFn: (job_posting: JobPostingInput) => unwrap(api.POST('/api/v1/job_postings', { body: { job_posting } })),
+    mutationFn: ({ job_posting, confirm_duplicate }: { job_posting: JobPostingInput; confirm_duplicate: boolean }) =>
+      unwrap(api.POST('/api/v1/job_postings', { body: { job_posting, confirm_duplicate } })),
     onSuccess: ({ job_posting }) => {
       void queryClient.invalidateQueries({ queryKey: postingListsQueryKey })
       navigate(`/postings/${job_posting.id}`)
     },
   })
+
+  // A 409 lists the postings already saved for this ad; until then, show what the import found.
+  const duplicates = duplicatesIn(create.error) ?? imported?.duplicates
 
   return (
     <div className="space-y-6">
@@ -52,14 +56,19 @@ export function NewPostingPage() {
         <PostingForm
           key={imported?.count ?? 0}
           initial={imported?.draft}
-          duplicates={imported?.duplicates}
+          duplicates={duplicates}
           submitLabel="Save posting"
           pending={create.isPending}
-          error={create.error}
-          onSubmit={(input) => create.mutate(input)}
+          error={duplicatesIn(create.error) ? null : create.error}
+          onSubmit={(job_posting, { confirmDuplicate }) => create.mutate({ job_posting, confirm_duplicate: confirmDuplicate })}
           onCancel={() => navigate('/postings')}
         />
       </Card>
     </div>
   )
+}
+
+function duplicatesIn(error: Error | null) {
+  if (!(error instanceof ApiError) || error.status !== 409) return undefined
+  return (error.problem as DuplicatePostingProblem | undefined)?.possible_duplicates
 }

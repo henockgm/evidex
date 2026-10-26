@@ -1,6 +1,8 @@
 module Api
   module V1
     class JobPostingsController < BaseController
+      POSSIBLE_DUPLICATE = "urn:evidex:problem:possible-duplicate".freeze
+
       def index
         result = JobPostingsQuery.new(Current.user.job_postings, params.permit(:status, :q, :deadline, :sort, :page, :per_page)).call
         render json: {
@@ -18,12 +20,20 @@ module Api
         render json: { job_posting: JobPostingSerializer.new(job_posting, include_description: true) }
       end
 
+      # Answers 409 when the user already saved a posting for the same ad (see AdLink),
+      # unless the request confirms with confirm_duplicate: true.
       def create
         posting = Current.user.job_postings.new(job_posting_params)
-        if posting.save
-          render json: { job_posting: JobPostingSerializer.new(posting, include_description: true) }, status: :created
+        return render_validation_errors(posting) if posting.invalid?
+
+        duplicates = confirm_duplicate? ? [] : posting.possible_duplicates.to_a
+        if duplicates.any?
+          render_problem :conflict, "You've already saved this job ad", type: POSSIBLE_DUPLICATE,
+            detail: "Open the saved posting, or send confirm_duplicate: true to save it again.",
+            possible_duplicates: duplicates.map { |duplicate| JobPostingSerializer.new(duplicate) }
         else
-          render_validation_errors(posting)
+          posting.save!
+          render json: { job_posting: JobPostingSerializer.new(posting, include_description: true) }, status: :created
         end
       end
 
@@ -43,6 +53,10 @@ module Api
       private
         def job_posting
           @job_posting ||= Current.user.job_postings.find(params[:id])
+        end
+
+        def confirm_duplicate?
+          ActiveModel::Type::Boolean.new.cast(params[:confirm_duplicate]) == true
         end
 
         def job_posting_params

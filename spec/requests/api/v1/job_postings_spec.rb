@@ -65,9 +65,17 @@ RSpec.describe "Job postings API", type: :request do
       consumes "application/json"
       produces "application/json"
       security [ { session_cookie: [], csrf_token: [] } ]
+      description <<~TEXT
+        A posting whose link is the same ad as one you already saved (ignoring case, #fragments,
+        a trailing slash and tracking parameters such as utm_*) is a possible duplicate: the answer
+        is 409 listing the saved postings, unless confirm_duplicate is true. Postings without a link are never duplicates.
+      TEXT
       parameter name: :body, in: :body, schema: {
         type: :object, required: %w[job_posting],
-        properties: { job_posting: { "$ref" => "#/components/schemas/JobPostingInput" } }
+        properties: {
+          job_posting: { "$ref" => "#/components/schemas/JobPostingInput" },
+          confirm_duplicate: { type: :boolean, description: "Save even if you already saved a posting for the same ad" }
+        }
       }
 
       response "201", "created" do
@@ -79,6 +87,40 @@ RSpec.describe "Job postings API", type: :request do
 
         run_test! do
           expect(user.job_postings.sole).to have_attributes(title: "Rails Developer", deadline: Date.new(2026, 11, 30))
+        end
+      end
+
+      response "201", "created again after confirming a possible duplicate" do
+        schema "$ref" => "#/components/schemas/JobPostingEnvelope"
+        let(:body) do
+          { job_posting: { title: "Rails Developer", company: "Acme", description: "Build APIs.", source_url: "https://jobs.example.com/rails" },
+            confirm_duplicate: true }
+        end
+
+        before { create(:job_posting, user:, source_url: "https://jobs.example.com/rails") }
+
+        run_test! do
+          expect(user.job_postings.where(normalized_source_url: "https://jobs.example.com/rails").count).to eq(2)
+        end
+      end
+
+      response "409", "you already saved a posting for this ad" do
+        schema "$ref" => "#/components/schemas/DuplicatePostingProblem"
+        let(:body) do
+          { job_posting: { title: "Rails Developer", company: "Acme", description: "Build APIs.",
+                           source_url: "HTTPS://jobs.example.com/rails/?utm_source=linkedin&gclid=1#apply" } }
+        end
+        let!(:saved) { create(:job_posting, user:, title: "Rails Dev", source_url: "https://jobs.example.com/rails") }
+
+        before { create(:job_posting, source_url: "https://jobs.example.com/rails") } # someone else's
+
+        run_test! do
+          expect(response.media_type).to eq("application/problem+json")
+          expect(json).to include("type" => "urn:evidex:problem:possible-duplicate", "status" => 409)
+          expect(json["possible_duplicates"]).to contain_exactly(
+            a_hash_including("id" => saved.id, "title" => "Rails Dev", "company" => "Acme Oy", "status" => "saved", "created_at" => saved.created_at.iso8601)
+          )
+          expect(user.job_postings.count).to eq(1)
         end
       end
 
@@ -178,6 +220,26 @@ RSpec.describe "Job postings API", type: :request do
         end
       end
     end
+  end
+
+  it "never treats postings without a link, or another ad's link, as duplicates" do
+    create(:job_posting, user:, source_url: nil)
+    create(:job_posting, user:, source_url: "https://jobs.example.com/rails?ashby_jid=1")
+    attributes = { title: "Rails Developer", company: "Acme", description: "Build APIs." }
+
+    post "/api/v1/job_postings", params: { job_posting: attributes }, as: :json
+    expect(response).to have_http_status(:created)
+
+    post "/api/v1/job_postings", params: { job_posting: attributes.merge(source_url: "https://jobs.example.com/rails?ashby_jid=2") }, as: :json
+    expect(response).to have_http_status(:created)
+  end
+
+  it "doesn't treat a posting as a duplicate of itself when it's edited" do
+    posting = create(:job_posting, user:, source_url: "https://jobs.example.com/rails")
+
+    patch "/api/v1/job_postings/#{posting.id}", params: { job_posting: { title: "Lead Rails Developer" } }, as: :json
+
+    expect(response).to have_http_status(:ok)
   end
 
   it "requires signing in" do

@@ -2024,14 +2024,24 @@ paths:
       security:
       - session_cookie: []
         csrf_token: []
+      description: |
+        A posting whose link is the same ad as one you already saved (ignoring case, #fragments,
+        a trailing slash and tracking parameters such as utm_*) is a possible duplicate: the answer
+        is 409 listing the saved postings, unless confirm_duplicate is true. Postings without a link are never duplicates.
       parameters: []
       responses:
         '201':
-          description: created
+          description: created again after confirming a possible duplicate
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/JobPostingEnvelope"
+        '409':
+          description: you already saved a posting for this ad
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/DuplicatePostingProblem"
         '422':
           description: invalid
           content:
@@ -2048,6 +2058,10 @@ paths:
               properties:
                 job_posting:
                   "$ref": "#/components/schemas/JobPostingInput"
+                confirm_duplicate:
+                  type: boolean
+                  description: Save even if you already saved a posting for the same
+                    ad
   "/api/v1/job_postings/{id}":
     parameters:
     - name: id
@@ -2610,6 +2624,18 @@ components:
             type: array
             items:
               type: string
+    DuplicatePostingProblem:
+      allOf:
+      - "$ref": "#/components/schemas/Problem"
+      - type: object
+        required:
+        - possible_duplicates
+        properties:
+          possible_duplicates:
+            type: array
+            items:
+              "$ref": "#/components/schemas/JobPostingSummary"
+            description: Your postings already saved for the same ad, oldest first
     Message:
       type: object
       required:

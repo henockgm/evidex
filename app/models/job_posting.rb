@@ -9,6 +9,14 @@ class JobPosting < ApplicationRecord
   has_many :match_reports, dependent: :destroy
 
   after_create { create_job_application!(user:) }
+  before_save(if: :source_url_changed?) { self.normalized_source_url = AdLink.normalize(source_url) }
+
+  # Postings whose link is the same ad as any of these links (see AdLink).
+  # Postings without a link never match.
+  scope :linking_to, ->(*urls) do
+    links = urls.filter_map { |url| AdLink.normalize(url) }.uniq
+    links.empty? ? none : where(normalized_source_url: links)
+  end
 
   normalizes :title, :company, with: ->(value) { value.squish }
   normalizes :location, :work_model, :employment_type, :seniority, :salary, with: ->(value) { value.squish.presence }
@@ -21,6 +29,11 @@ class JobPosting < ApplicationRecord
   validates :description, presence: true, length: { maximum: DESCRIPTION_MAX_LENGTH }
   validates :source_url, length: { maximum: 2048 }, allow_nil: true
   validate :source_url_is_http
+
+  # The user's other postings for the same job ad, oldest first.
+  def possible_duplicates
+    user.job_postings.linking_to(source_url).where.not(id:).includes(:job_application).order(:created_at)
+  end
 
   # Fills in what the AI found without overwriting anything the user entered,
   # and adds requirements that aren't in the list yet.

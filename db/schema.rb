@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_23_112357) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_105149) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -186,7 +186,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_23_112357) do
     t.string "extraction_status", default: "none", null: false
     t.string "extraction_error"
     t.datetime "extracted_at"
+    t.string "normalized_source_url"
     t.index ["user_id", "created_at"], name: "index_job_postings_on_user_id_and_created_at"
+    t.index ["user_id", "normalized_source_url"], name: "index_job_postings_on_user_id_and_normalized_source_url"
     t.index ["user_id"], name: "index_job_postings_on_user_id"
   end
 

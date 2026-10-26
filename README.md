@@ -1,36 +1,63 @@
 # Evidex
 
-**Evidence-based job applications.** Evidex tracks job postings, matches each
-requirement against your own career documents, and drafts applications that only
-claim what you can back up with a citation.
+**Evidence-based job applications.** Evidex keeps track of the jobs you apply for
+and checks every requirement in a job ad against your own CV and project
+documents, so you know what you can prove before you write the application.
 
-> Status: early development. Authentication (M1) is done; job postings and application tracking (M2) are in review; the career library and AI matching come next.
+**Live:** https://evidex.henockmullissa.dev. Click **Try the demo, no sign-up**
+to explore it with a fictional job seeker's data.
 
-## Features
+![A 40-second walkthrough: opening the demo, the dashboard, a posting's requirements, the match report with cited evidence, and library search](docs/walkthrough.gif)
 
-- **Strong authentication** (done): email + password, Google and Microsoft sign-in,
-  email verification, password reset, device/session management, rate limiting
-  and account lockout. Two-factor auth is planned.
-- **Job postings** (done): add by pasting text or importing a link (SSRF-safe
-  fetching that reads schema.org `JobPosting` data); edit everything, keep a
-  requirements list per posting
-- **AI extraction** (done): Claude reads the ad in a background job and fills in
-  empty fields, requirements and keywords, using structured outputs; never
-  overwrites what the user entered; per-user daily limit and token usage tracking
-- **Application tracking** (done): status pipeline with a timeline, applied date,
-  next action, notes, links and contacts; filters, search, sorting, pagination;
-  a dashboard with counts per status, upcoming deadlines and next actions
-- **Admin area** (done): accounts with search, lock/unlock and sign-out
-  everywhere, the security audit log across accounts, and AI calls, tokens and
-  estimated cost per account; admins never see users' documents, postings or
-  reports
+![Match report: each requirement is judged evidenced, transferable or gap, with the passages from the CV that show it](docs/screenshots/match-report.png)
 
-Planned:
+## What it does
 
-- **Career library**: upload CVs and project notes (PDF, DOCX, Markdown);
-  chunked and embedded into PostgreSQL with pgvector
-- **Match report (RAG)**: every requirement classified as *Evidenced*,
-  *Transferable* or *Gap*, with citations to your own documents
+- **Match report (RAG):** every requirement of a posting is judged *Evidenced*,
+  *Transferable* or *Gap* by Claude, with citations to passages from your own
+  documents. Citations are checked on the server; you can override any verdict
+  and add notes, and earlier versions are kept.
+- **Career library:** upload CVs and project write-ups (PDF, DOCX, Markdown,
+  text). They are split into passages, embedded locally and searchable by
+  meaning as well as exact words, in English or Finnish.
+- **Job postings:** paste an ad or import it from a link (SSRF-safe fetching
+  that reads schema.org `JobPosting` data). Claude fills in empty fields,
+  requirements and keywords with structured outputs, and saving the same ad twice
+  shows a warning.
+- **Application tracking:** a status pipeline with a timeline, interviews,
+  contacts, next actions and notes, plus a dashboard of deadlines and follow-ups.
+- **Security:** email and password, Google and Microsoft sign-in, two-factor
+  sign-in with recovery codes, re-authentication for sensitive changes, security
+  emails and a personal activity log (details [below](#authentication-and-security-design)).
+- **Admin area and public demo:** accounts, locks, audit log and AI cost per
+  account for the admin, who never sees users' content; a shared demo account
+  with fictional data that resets every night.
+
+| Dashboard | Searching the career library |
+|-----------|------------------------------|
+| ![Dashboard with the application pipeline, upcoming interviews, deadlines and next actions](docs/screenshots/dashboard.png) | ![Library search finding passages by meaning and by words](docs/screenshots/library-search.png) |
+
+## How the match report works
+
+1. **Read and index the library.** Text is extracted from each document and split
+   along headings and paragraphs (up to 2,000 characters, with a little overlap).
+   Each passage is embedded in-process with a local open-source model
+   (`multilingual-e5-small`, ONNX), so no document text goes to an embeddings API,
+   and stored in PostgreSQL with pgvector.
+2. **Retrieve evidence per requirement.** Hybrid search runs a vector similarity
+   search and a PostgreSQL full-text search, both scoped to the user, and merges
+   the two rankings with Reciprocal Rank Fusion. The best passages for all
+   requirements are de-duplicated and numbered.
+3. **One structured Claude call.** The requirements and passages go to Claude in
+   delimited blocks that the prompt marks as data, not instructions (the model has
+   no tools, so injected text can't act). A JSON schema forces one verdict, a short
+   reasoning and the cited passage ids per requirement.
+4. **Check before saving.** The server keeps only citations to passages it
+   actually sent; an "evidenced" or "transferable" verdict without a valid citation
+   is downgraded to "gap". Cited passages are stored as snapshots, so a report
+   still reads correctly after a document changes.
+5. **Cost control.** Reports run in background jobs, every AI call is recorded
+   with its model, tokens and latency, and each account has a daily AI limit.
 
 ## Tech stack
 
@@ -39,26 +66,33 @@ Planned:
 | Backend | Ruby 4.0, Rails 8.1 (API mode) |
 | Database | PostgreSQL 17 + pgvector |
 | Jobs / cache / websockets | Solid Queue, Solid Cache, Solid Cable |
+| AI | Anthropic Ruby SDK (Claude, structured outputs); local embeddings with `informers` (ONNX) |
 | API docs | OpenAPI 3 generated from request specs (rswag) |
-| Auth | `has_secure_password` (bcrypt), OmniAuth (Google, Microsoft Entra ID), Rails rate limiting |
-| AI | Anthropic Ruby SDK, Claude with structured outputs, run in Active Job background jobs |
+| Auth | `has_secure_password` (bcrypt), OmniAuth (Google, Microsoft Entra ID), TOTP (`rotp`), Rails rate limiting |
 | Frontend | React 19 + TypeScript + Vite, React Router, TanStack Query, Tailwind CSS, in [`frontend/`](frontend) |
 | API client | Typed with `openapi-typescript` + `openapi-fetch`, generated from the OpenAPI spec |
 | Tests | RSpec, FactoryBot, WebMock, SimpleCov; Vitest + Testing Library |
 | Quality | RuboCop (Rails Omakase), Brakeman, bundler-audit, oxlint, npm audit |
-| CI | GitHub Actions |
+| CI / deploy | GitHub Actions; Docker image deployed with Kamal to a Hetzner server |
 
 ## Architecture
 
-```
-Browser ──► Vite dev server :5173 ──/api, /auth──► Rails API :3000 ──► PostgreSQL + pgvector
-                 (React SPA)                         │
-                                                     └──► Solid Queue jobs ──► LLM / embeddings APIs
+```mermaid
+flowchart LR
+    Browser["Browser<br/>React SPA"] -->|"/api, /auth<br/>same origin, HttpOnly cookie"| Rails["Rails 8.1 API<br/>(Puma, serves the SPA)"]
+    Rails --> PG[("PostgreSQL 17<br/>+ pgvector")]
+    Rails --> Jobs["Solid Queue jobs<br/>(in Puma)"]
+    Jobs --> Embed["Local embeddings<br/>multilingual-e5-small"]
+    Jobs --> Claude["Claude API<br/>extraction, match reports"]
+    Jobs --> PG
+    Rails --> Mail["SMTP<br/>security emails"]
 ```
 
 The SPA and the API share one origin (Vite proxies in development; Rails serves
 the built SPA in production), so authentication uses secure `HttpOnly` session
-cookies rather than tokens in browser storage.
+cookies rather than tokens in browser storage. In production one Docker image runs
+Rails, the SPA and the background jobs behind kamal-proxy (HTTPS with Let's
+Encrypt), with PostgreSQL as a Kamal accessory on the same server.
 
 ## Authentication and security design
 
@@ -88,7 +122,14 @@ cookies rather than tokens in browser storage.
 - **Re-authentication.** Changing the password requires the current one; adding a
   first password to a Google/Microsoft-only account requires a sign-in within the
   last 10 minutes. Users can't remove their last sign-in method.
-- **Audit trail.** Sign-ins, failures, lockouts, resets and linking are recorded.
+- **Two-factor sign-in.** Authenticator-app codes (TOTP with replay protection, the
+  secret encrypted at rest) and ten single-use recovery codes stored as digests;
+  Google and Microsoft sign-ins ask for the code too.
+- **Audit trail.** Sign-ins, failures, lockouts, resets and linking are recorded,
+  and users see their own activity with device and address.
+- **Public demo.** The shared demo account can't change account settings, link
+  sign-in methods or upload documents, has its own small AI allowance, and its
+  sign-ins are kept out of the audit log so visitors never see each other's addresses.
 - **Admin area.** Admin rights are granted only from the server
   (`bin/rails "evidex:admin:grant[email]"`), never through the API. The admin API
   answers 404 to everyone else and requires two-factor sign-in; locking, unlocking

@@ -2,6 +2,8 @@ module Api
   module V1
     module Me
       class IdentitiesController < BaseController
+        locked_in_demo
+
         require_recent_authentication only: :destroy
 
         def index

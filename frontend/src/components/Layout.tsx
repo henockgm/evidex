@@ -28,9 +28,11 @@ export function Layout() {
               <NavLink to="/library" className="hover:underline">
                 Library
               </NavLink>
-              <NavLink to="/settings/security" className="hover:underline">
-                Security
-              </NavLink>
+              {!user.demo && (
+                <NavLink to="/settings/security" className="hover:underline">
+                  Security
+                </NavLink>
+              )}
               {user.admin && (
                 <NavLink to="/admin" className="hover:underline">
                   Admin

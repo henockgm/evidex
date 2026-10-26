@@ -53,7 +53,7 @@ module Api
           elsif posting.match_reports.where(status: %w[pending running]).exists?
             [ :conflict, "Already running", "A match report for this posting is being prepared." ]
           elsif AiUsage.limit_reached?(Current.user)
-            [ :too_many_requests, "Daily AI limit reached", "You can run #{AiUsage.daily_limit} AI tasks a day. Try again tomorrow." ]
+            [ :too_many_requests, "Daily AI limit reached", "You can run #{AiUsage.daily_limit(Current.user)} AI tasks a day. Try again tomorrow." ]
           end
         end
     end

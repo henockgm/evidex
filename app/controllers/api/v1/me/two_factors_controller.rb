@@ -4,6 +4,8 @@ module Api
       # Turning two-factor sign-in on and off, and replacing recovery codes.
       # All of it needs a recent sign-in.
       class TwoFactorsController < BaseController
+        locked_in_demo
+
         limit_requests to: 10, within: 5.minutes, by: -> { Current.user&.id || request.remote_ip }
         require_recent_authentication
 

@@ -1,6 +1,7 @@
 module Api
   module V1
     class DocumentsController < BaseController
+      locked_in_demo only: %i[create update destroy retry]
       limit_requests to: 20, within: 1.hour, only: :create, by: -> { Current.user&.id || request.remote_ip }, name: "upload"
 
       def index

@@ -17,12 +17,15 @@ class AiUsage < ApplicationRecord
     (input_tokens * price[:input] + output_tokens * price[:output]) / 1_000_000.0
   end
 
-  def self.daily_limit
+  # The shared demo account gets a smaller allowance, used up by all its visitors together.
+  def self.daily_limit(user = nil)
+    return Integer(ENV.fetch("EVIDEX_DEMO_AI_DAILY_LIMIT", 5)) if user&.demo?
+
     Integer(ENV.fetch("EVIDEX_AI_DAILY_LIMIT", 20))
   end
 
   def self.limit_reached?(user)
-    where(user:).today.count >= daily_limit
+    where(user:).today.count >= daily_limit(user)
   end
 
   # Runs one AI call (the block returns [data, response]) and records its

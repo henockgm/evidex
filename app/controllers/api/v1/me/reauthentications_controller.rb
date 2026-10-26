@@ -6,6 +6,8 @@ module Api
       # code when two-factor sign-in is on. Accounts without a password confirm
       # with a code, or by signing in with Google/Microsoft again.
       class ReauthenticationsController < BaseController
+        locked_in_demo
+
         limit_requests to: 5, within: 15.minutes, by: -> { Current.user&.id || request.remote_ip }
 
         def create

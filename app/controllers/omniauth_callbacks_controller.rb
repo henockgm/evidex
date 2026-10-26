@@ -11,6 +11,9 @@ class OmniauthCallbacksController < ApplicationController
     resume_session
     return reauthenticate if Current.user && request.env["omniauth.params"]&.dig("intent") == "reauthenticate"
 
+    # The shared demo account can't have sign-in methods linked to it.
+    return redirect_to("/") if Current.user&.demo?
+
     linking = Current.user.present?
     result = OauthSignIn.new(auth: request.env["omniauth.auth"], current_user: Current.user).call
 

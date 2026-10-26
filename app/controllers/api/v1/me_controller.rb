@@ -1,6 +1,8 @@
 module Api
   module V1
     class MeController < BaseController
+      locked_in_demo only: :destroy
+
       require_recent_authentication only: :destroy
 
       def show

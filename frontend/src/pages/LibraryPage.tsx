@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { api, unwrap, type Document } from '../api/client'
+import { useMe } from '../auth/useAuth'
 import { Alert, Button, Card, Spinner } from '../components/ui'
 import { LibrarySearch } from '../library/LibrarySearch'
 import { UploadForm } from '../library/UploadForm'
@@ -11,6 +12,7 @@ const smallInput =
   'rounded-md border-0 bg-white px-2 py-1 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 dark:bg-slate-900 dark:ring-slate-700'
 
 export function LibraryPage() {
+  const { data: me } = useMe()
   const { data: documents, isPending, error } = useQuery({
     queryKey: libraryQueryKey,
     queryFn: async () => (await unwrap(api.GET('/api/v1/documents'))).documents,
@@ -29,9 +31,13 @@ export function LibraryPage() {
         </p>
       </div>
 
-      <Card title="Upload a document">
-        <UploadForm />
-      </Card>
+      {me?.demo ? (
+        <Alert tone="info">Uploads are turned off in the demo, because other visitors would see your files.</Alert>
+      ) : (
+        <Card title="Upload a document">
+          <UploadForm />
+        </Card>
+      )}
 
       {documents?.some((document) => document.status === 'ready') && (
         <Card title="Search your library" description="Finds passages by meaning as well as exact words, in English or Finnish.">

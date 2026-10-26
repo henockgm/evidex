@@ -4,6 +4,8 @@ module Api
       # The user's own security activity, newest first: sign-ins, failures,
       # and changes to passwords, 2FA, devices and connected accounts.
       class ActivitiesController < BaseController
+        locked_in_demo
+
         PER_PAGE = 20
 
         def show

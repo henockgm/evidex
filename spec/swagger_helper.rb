@@ -47,6 +47,20 @@ RSpec.configure do |config|
               errors: { type: :object, additionalProperties: { type: :array, items: { type: :string } } }
             }
           },
+          DuplicatePostingProblem: {
+            allOf: [
+              { "$ref" => "#/components/schemas/Problem" },
+              {
+                type: :object, required: %w[possible_duplicates],
+                properties: {
+                  possible_duplicates: {
+                    type: :array, items: { "$ref" => "#/components/schemas/JobPostingSummary" },
+                    description: "Your postings already saved for the same ad, oldest first"
+                  }
+                }
+              }
+            ]
+          },
           Message: {
             type: :object, required: %w[message],
             properties: { message: { type: :string } }

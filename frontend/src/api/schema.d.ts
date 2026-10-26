@@ -2431,7 +2431,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description draft */
+                /** @description draft of an ad you already saved */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2441,6 +2441,8 @@ export interface paths {
                             draft: components["schemas"]["JobPostingInput"];
                             /** @description The page had schema.org JobPosting data */
                             structured_data: boolean;
+                            /** @description Your postings already saved with a link to the same ad (ignoring case, #fragments, a trailing slash and tracking parameters such as utm_*), oldest first */
+                            possible_duplicates: components["schemas"]["JobPostingSummary"][];
                         };
                     };
                 };
@@ -2508,7 +2510,12 @@ export interface paths {
             };
         };
         put?: never;
-        /** Add a job posting from pasted text */
+        /**
+         * Add a job posting from pasted text
+         * @description A posting whose link is the same ad as one you already saved (ignoring case, #fragments,
+         *     a trailing slash and tracking parameters such as utm_*) is a possible duplicate: the answer
+         *     is 409 listing the saved postings, unless confirm_duplicate is true. Postings without a link are never duplicates.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -2520,17 +2527,28 @@ export interface paths {
                 content: {
                     "application/json": {
                         job_posting: components["schemas"]["JobPostingInput"];
+                        /** @description Save even if you already saved a posting for the same ad */
+                        confirm_duplicate?: boolean;
                     };
                 };
             };
             responses: {
-                /** @description created */
+                /** @description created again after confirming a possible duplicate */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description you already saved a posting for this ad */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DuplicatePostingProblem"];
                     };
                 };
                 /** @description invalid */
@@ -3222,6 +3240,10 @@ export interface components {
             errors?: {
                 [key: string]: string[];
             };
+        };
+        DuplicatePostingProblem: components["schemas"]["Problem"] & {
+            /** @description Your postings already saved for the same ad, oldest first */
+            possible_duplicates: components["schemas"]["JobPostingSummary"][];
         };
         Message: {
             message: string;

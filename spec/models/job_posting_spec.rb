@@ -25,6 +25,33 @@ RSpec.describe JobPosting do
     expect(posting).to be_valid
   end
 
+  it "stores the link in comparable form" do
+    posting.update!(source_url: "https://Jobs.Example.com/rails/?utm_source=x")
+    expect(posting.normalized_source_url).to eq("https://jobs.example.com/rails")
+
+    posting.update!(source_url: nil)
+    expect(posting.normalized_source_url).to be_nil
+  end
+
+  describe "#possible_duplicates" do
+    let(:user) { create(:user) }
+    let!(:first) { create(:job_posting, user:, source_url: "https://jobs.example.com/rails") }
+
+    it "finds the user's other postings for the same ad" do
+      posting = build(:job_posting, user:, source_url: "https://jobs.example.com/rails/?utm_medium=feed#top")
+      expect(posting.possible_duplicates).to eq([ first ])
+    end
+
+    it "doesn't match the posting itself, other ads, other users or postings without a link" do
+      create(:job_posting, user:, source_url: "https://jobs.example.com/rails-2")
+      create(:job_posting, source_url: "https://jobs.example.com/rails")
+      create(:job_posting, user:, source_url: nil)
+
+      expect(first.possible_duplicates).to be_empty
+      expect(build(:job_posting, user:, source_url: nil).possible_duplicates).to be_empty
+    end
+  end
+
   it "is deleted with its user" do
     posting.save!
     expect { posting.user.destroy }.to change(described_class, :count).by(-1)

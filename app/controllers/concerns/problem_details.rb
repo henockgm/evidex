@@ -19,9 +19,10 @@ module ProblemDetails
   end
 
   private
-    def render_problem(status, title, detail: nil, errors: nil, type: "about:blank")
+    # extensions are extra members for this type of problem (RFC 9457 section 3.2).
+    def render_problem(status, title, detail: nil, errors: nil, type: "about:blank", **extensions)
       code = Rack::Utils.status_code(status)
-      body = { type:, title:, status: code, detail:, errors: }.compact
+      body = { type:, title:, status: code, detail:, errors:, **extensions }.compact
       render json: body, status: code, content_type: "application/problem+json"
     end
 

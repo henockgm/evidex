@@ -1,6 +1,7 @@
-import type { FormEvent } from 'react'
-import { ApiError, type JobPostingInput } from '../api/client'
+import { useRef, type FormEvent } from 'react'
+import { ApiError, type JobPostingInput, type JobPostingSummary } from '../api/client'
 import { Alert, Button, Field, Select, TextArea } from '../components/ui'
+import { DuplicateWarning } from './DuplicateWarning'
 import { workModelLabels } from './labels'
 
 const workModelOptions = [
@@ -14,20 +15,22 @@ function text(form: FormData, name: string) {
 
 interface Props {
   initial?: JobPostingInput
+  /** Postings already saved for the same job ad; the form offers "Save anyway". */
+  duplicates?: JobPostingSummary[]
   submitLabel: string
   pending: boolean
   error: Error | null
-  onSubmit: (input: JobPostingInput) => void
+  onSubmit: (input: JobPostingInput, options: { confirmDuplicate: boolean }) => void
   onCancel: () => void
 }
 
-export function PostingForm({ initial, submitLabel, pending, error, onSubmit, onCancel }: Props) {
+export function PostingForm({ initial, duplicates, submitLabel, pending, error, onSubmit, onCancel }: Props) {
   const apiError = error instanceof ApiError ? error : null
   const errorsFor = (field: string) => apiError?.fieldErrors(field)
+  const formRef = useRef<HTMLFormElement>(null)
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
+  function submit(formElement: HTMLFormElement, confirmDuplicate: boolean) {
+    const form = new FormData(formElement)
     onSubmit({
       title: text(form, 'title'),
       company: text(form, 'company'),
@@ -39,12 +42,32 @@ export function PostingForm({ initial, submitLabel, pending, error, onSubmit, on
       deadline: text(form, 'deadline') || null,
       source_url: text(form, 'source_url') || null,
       description: text(form, 'description'),
-    })
+    }, { confirmDuplicate })
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    submit(event.currentTarget, false)
+  }
+
+  function saveAnyway() {
+    const form = formRef.current
+    if (form?.reportValidity()) submit(form, true)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
       {error && !apiError?.problem?.errors && <Alert tone="error">{error.message}</Alert>}
+      {duplicates && duplicates.length > 0 && (
+        <DuplicateWarning duplicates={duplicates}>
+          <p className="mt-3 flex flex-wrap items-center gap-3">
+            <span>Is this a different job, or do you want a second copy?</span>
+            <Button type="button" variant="secondary" disabled={pending} onClick={saveAnyway}>
+              Save anyway
+            </Button>
+          </p>
+        </DuplicateWarning>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Job title" name="title" required maxLength={200} defaultValue={initial?.title ?? ''} errors={errorsFor('title')} />
         <Field label="Company" name="company" required maxLength={200} defaultValue={initial?.company ?? ''} errors={errorsFor('company')} />

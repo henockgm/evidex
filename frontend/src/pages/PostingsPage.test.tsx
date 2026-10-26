@@ -72,6 +72,7 @@ describe('Job postings', () => {
         source_url: null,
         description: 'Build APIs.',
       },
+      confirm_duplicate: false,
     })
   })
 
@@ -192,6 +193,7 @@ describe('Job postings', () => {
             description: 'Run Rails in production.',
           },
           structured_data: true,
+          possible_duplicates: [],
         })
       },
     })
@@ -206,6 +208,7 @@ describe('Job postings', () => {
     expect(screen.getByLabelText('Work model')).toHaveValue('remote')
     expect(screen.getByLabelText('Application deadline')).toHaveValue('2026-12-01')
     expect(screen.getByLabelText('Job ad text')).toHaveValue('Run Rails in production.')
+    expect(screen.queryByText(/already saved this job ad/)).not.toBeInTheDocument()
   })
 
   it('suggests pasting the text when a link can\'t be imported', async () => {

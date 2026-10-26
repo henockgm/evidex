@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { api, unwrap, type JobPostingInput } from '../api/client'
+import { api, unwrap, type JobPostingInput, type JobPostingSummary } from '../api/client'
 import { Alert, Card } from '../components/ui'
 import { ImportFromLink } from '../postings/ImportFromLink'
 import { PostingForm } from '../postings/PostingForm'
@@ -10,6 +10,7 @@ import { postingListsQueryKey } from '../postings/queries'
 interface Imported {
   draft: JobPostingInput
   structured: boolean
+  duplicates: JobPostingSummary[]
   count: number // remounts the form so it picks up each new draft
 }
 
@@ -32,8 +33,8 @@ export function NewPostingPage() {
 
       <Card title="Import from a link" description="Evidex fetches the page and fills in the form below for you to check.">
         <ImportFromLink
-          onImported={(draft, structured) =>
-            setImported((previous) => ({ draft, structured, count: (previous?.count ?? 0) + 1 }))
+          onImported={(draft, structured, duplicates) =>
+            setImported((previous) => ({ draft, structured, duplicates, count: (previous?.count ?? 0) + 1 }))
           }
         />
       </Card>
@@ -51,6 +52,7 @@ export function NewPostingPage() {
         <PostingForm
           key={imported?.count ?? 0}
           initial={imported?.draft}
+          duplicates={imported?.duplicates}
           submitLabel="Save posting"
           pending={create.isPending}
           error={create.error}

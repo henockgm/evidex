@@ -2431,7 +2431,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description draft */
+                /** @description draft of an ad you already saved */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2441,6 +2441,8 @@ export interface paths {
                             draft: components["schemas"]["JobPostingInput"];
                             /** @description The page had schema.org JobPosting data */
                             structured_data: boolean;
+                            /** @description Your postings already saved with a link to the same ad (ignoring case, #fragments, a trailing slash and tracking parameters such as utm_*), oldest first */
+                            possible_duplicates: components["schemas"]["JobPostingSummary"][];
                         };
                     };
                 };

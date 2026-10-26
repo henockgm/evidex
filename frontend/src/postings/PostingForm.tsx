@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react'
-import { ApiError, type JobPostingInput } from '../api/client'
+import { ApiError, type JobPostingInput, type JobPostingSummary } from '../api/client'
 import { Alert, Button, Field, Select, TextArea } from '../components/ui'
+import { DuplicateWarning } from './DuplicateWarning'
 import { workModelLabels } from './labels'
 
 const workModelOptions = [
@@ -14,6 +15,8 @@ function text(form: FormData, name: string) {
 
 interface Props {
   initial?: JobPostingInput
+  /** Postings already saved for the same job ad. */
+  duplicates?: JobPostingSummary[]
   submitLabel: string
   pending: boolean
   error: Error | null
@@ -21,7 +24,7 @@ interface Props {
   onCancel: () => void
 }
 
-export function PostingForm({ initial, submitLabel, pending, error, onSubmit, onCancel }: Props) {
+export function PostingForm({ initial, duplicates, submitLabel, pending, error, onSubmit, onCancel }: Props) {
   const apiError = error instanceof ApiError ? error : null
   const errorsFor = (field: string) => apiError?.fieldErrors(field)
 
@@ -45,6 +48,7 @@ export function PostingForm({ initial, submitLabel, pending, error, onSubmit, on
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && !apiError?.problem?.errors && <Alert tone="error">{error.message}</Alert>}
+      {duplicates && duplicates.length > 0 && <DuplicateWarning duplicates={duplicates} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Job title" name="title" required maxLength={200} defaultValue={initial?.title ?? ''} errors={errorsFor('title')} />
         <Field label="Company" name="company" required maxLength={200} defaultValue={initial?.company ?? ''} errors={errorsFor('company')} />

@@ -1,12 +1,16 @@
 import { useMutation } from '@tanstack/react-query'
 import type { FormEvent } from 'react'
-import { api, unwrap, type JobPostingInput } from '../api/client'
+import { api, unwrap, type JobPostingInput, type JobPostingSummary } from '../api/client'
 import { Alert, Button } from '../components/ui'
 
-export function ImportFromLink({ onImported }: { onImported: (draft: JobPostingInput, structured: boolean) => void }) {
+interface Props {
+  onImported: (draft: JobPostingInput, structured: boolean, duplicates: JobPostingSummary[]) => void
+}
+
+export function ImportFromLink({ onImported }: Props) {
   const fetchPage = useMutation({
     mutationFn: (url: string) => unwrap(api.POST('/api/v1/job_posting_import', { body: { url } })),
-    onSuccess: ({ draft, structured_data }) => onImported(draft, structured_data),
+    onSuccess: ({ draft, structured_data, possible_duplicates }) => onImported(draft, structured_data, possible_duplicates),
   })
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {

@@ -7,6 +7,8 @@ documents, so you know what you can prove before you write the application.
 **Live:** https://evidex.henockmullissa.dev. Click **Try the demo, no sign-up**
 to explore it with a fictional job seeker's data.
 
+![A 40-second walkthrough: opening the demo, the dashboard, a posting's requirements, the match report with cited evidence, and library search](docs/walkthrough.gif)
+
 ![Match report: each requirement is judged evidenced, transferable or gap, with the passages from the CV that show it](docs/screenshots/match-report.png)
 
 ## What it does

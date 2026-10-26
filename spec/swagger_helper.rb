@@ -78,7 +78,7 @@ RSpec.configure do |config|
           },
           User: {
             type: :object,
-            required: %w[id email_address email_verified has_password ai_configured two_factor_enabled recovery_codes_remaining identities admin created_at],
+            required: %w[id email_address email_verified has_password ai_configured two_factor_enabled recovery_codes_remaining identities admin demo created_at],
             properties: {
               id: { type: :integer },
               email_address: { type: :string, format: :email },
@@ -90,6 +90,7 @@ RSpec.configure do |config|
               recovery_codes_remaining: { type: :integer },
               identities: { type: :array, items: { "$ref" => "#/components/schemas/Identity" } },
               admin: { type: :boolean, description: "Can use the admin area (needs two-factor sign-in)" },
+              demo: { type: :boolean, description: "The shared demo account: fictional data, reset daily, account settings locked" },
               created_at: { type: :string, format: "date-time" }
             }
           },

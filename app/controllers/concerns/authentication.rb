@@ -63,7 +63,10 @@ module Authentication
 
     # A random token per browser that outlives sign-outs, so a sign-in from a
     # browser the user hasn't used before can be emailed to them.
+    # Not for the shared demo account, whose visitors are all "new devices".
     def notify_if_new_device(user)
+      return if user.demo?
+
       token = cookies.signed[DEVICE_COOKIE].presence || SecureRandom.base58(32)
       cookies.signed[DEVICE_COOKIE] = { value: token, expires: 2.years.from_now, httponly: true, secure: Rails.env.production?, same_site: :lax }
       return unless KnownDevice.new_for?(user, token, request)

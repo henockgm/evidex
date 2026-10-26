@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { ApiError, api, resetCsrfToken, unwrap } from '../api/client'
+import { DemoButton } from '../auth/DemoButton'
 import { oauthErrorMessage } from '../auth/oauthErrors'
 import { safeNext } from '../auth/safeNext'
 import { useAuthChanged } from '../auth/useAuth'
@@ -69,6 +70,7 @@ export function LoginPage() {
         </Button>
       </form>
       <OAuthButtons verb="Sign in" />
+      <DemoButton />
     </AuthCard>
   )
 }

@@ -46,6 +46,7 @@ export const user = {
   recovery_codes_remaining: 0,
   identities: [],
   admin: false,
+  demo: false,
   created_at: '2026-10-20T10:00:00Z',
 }
 

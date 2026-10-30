@@ -12,6 +12,16 @@ describe('RegisterPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
   }
 
+  it('links to the privacy page without leaving the form', async () => {
+    mockApi({ ...baseRoutes, ...signedOut })
+
+    renderApp('/register')
+
+    const link = await screen.findByRole('link', { name: 'Privacy page' })
+    expect(link).toHaveAttribute('href', '/privacy')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
+
   it('shows the confirmation message', async () => {
     mockApi({
       ...baseRoutes,

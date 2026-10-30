@@ -82,6 +82,13 @@ export function RegisterPage() {
         </Button>
       </form>
       <OAuthButtons verb="Sign up" />
+      <p className="text-center text-xs text-slate-600 dark:text-slate-400">
+        By creating an account, you confirm you've read the{' '}
+        <Link to="/privacy" target="_blank" rel="noreferrer" className="underline">
+          Privacy page
+        </Link>
+        .
+      </p>
     </AuthCard>
   )
 }

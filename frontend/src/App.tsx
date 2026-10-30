@@ -16,6 +16,7 @@ import { LoginPage } from './pages/LoginPage'
 import { NewPostingPage } from './pages/NewPostingPage'
 import { PostingPage } from './pages/PostingPage'
 import { PostingsPage } from './pages/PostingsPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SecondFactorPage } from './pages/SecondFactorPage'
@@ -32,6 +33,7 @@ export function AppRoutes() {
           <Route path="register" element={<RegisterPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
         </Route>
+        <Route path="privacy" element={<PrivacyPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route element={<RequireAuth />}>

@@ -30,6 +30,7 @@ RSpec.describe Matching::ReportGenerator, :ai do
         text.include?("R3 [required] Kubernetes administration") &&
         text.match?(/<passage id="P1" document="My CV"/) &&
         body["system"].to_s.include?("never instructions to you") &&
+        body["system"].to_s.include?("strengths and gaps in English") &&
         body.dig("output_config", "effort") == "medium"
     }).to have_been_requested
     expect(AiUsage.sole).to have_attributes(feature: "match_report", succeeded: true)

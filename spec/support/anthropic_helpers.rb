@@ -25,13 +25,19 @@ module AnthropicHelpers
     )
   end
 
+  # Requirement lists may be given as plain strings for an English ad; they're
+  # sent as { text:, original: nil } like the real schema.
   def extraction_json(overrides = {})
-    {
-      title: "Senior Rails Developer", company: "Acme Oy", location: "Helsinki", work_model: "hybrid",
+    json = {
+      language: "en", title: "Senior Rails Developer", company: "Acme Oy", location: "Helsinki", work_model: "hybrid",
       employment_type: "Full-time", seniority: "Senior", salary: "€5,000–6,000 / month", deadline: "2026-11-30",
       required: [ "5+ years of Ruby on Rails", "PostgreSQL" ], preferred: [ "Experience with pgvector" ],
       responsibilities: [ "Build and maintain REST APIs" ], keywords: %w[Ruby Rails PostgreSQL]
     }.merge(overrides)
+    %i[required preferred responsibilities].each do |key|
+      json[key] = json[key].map { |item| item.is_a?(String) ? { text: item, original: nil } : item }
+    end
+    json
   end
 end
 

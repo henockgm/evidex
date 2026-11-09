@@ -28,7 +28,8 @@ module Matching
       - reasoning: one or two plain sentences that refer to what the passages actually say.
       - strengths: up to 5 short phrases on what the documents show best for this posting.
         gaps: up to 5 short phrases on the most important missing evidence.
-      - Write reasoning, strengths and gaps in the same language as the requirements.
+      - Write reasoning, strengths and gaps in English, even if the requirements or passages are
+        in another language.
     PROMPT
 
     SCHEMA = {

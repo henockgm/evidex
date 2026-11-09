@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_123958) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_09_125534) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -187,6 +187,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_123958) do
     t.string "extraction_error"
     t.datetime "extracted_at"
     t.string "normalized_source_url"
+    t.string "language"
     t.index ["user_id", "created_at"], name: "index_job_postings_on_user_id_and_created_at"
     t.index ["user_id", "normalized_source_url"], name: "index_job_postings_on_user_id_and_normalized_source_url"
     t.index ["user_id"], name: "index_job_postings_on_user_id"
@@ -267,6 +268,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_123958) do
     t.integer "position", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "source_text"
     t.index ["job_posting_id", "kind", "position"], name: "index_requirements_on_job_posting_id_and_kind_and_position"
     t.index ["job_posting_id"], name: "index_requirements_on_job_posting_id"
   end

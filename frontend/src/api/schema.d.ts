@@ -3589,7 +3589,10 @@ export interface components {
             id: number;
             /** @enum {string} */
             kind: "required" | "preferred" | "responsibility";
+            /** @description In English */
             text: string;
+            /** @description The ad's own wording, for an ad in another language */
+            source_text: string | null;
             /** @description Order within its kind, starting at 1 */
             position: number;
         };
@@ -3600,6 +3603,8 @@ export interface components {
             /** @description As stated in the ad */
             salary: string | null;
             keywords: string[];
+            /** @description ISO 639-1 code of the ad's language, once read */
+            language: string | null;
             extraction: {
                 /** @enum {string} */
                 status: "none" | "pending" | "done" | "failed";

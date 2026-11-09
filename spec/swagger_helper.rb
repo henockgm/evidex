@@ -323,11 +323,12 @@ RSpec.configure do |config|
           },
           Requirement: {
             type: :object,
-            required: %w[id kind text position],
+            required: %w[id kind text source_text position],
             properties: {
               id: { type: :integer },
               kind: { type: :string, enum: Requirement::KINDS },
-              text: { type: :string },
+              text: { type: :string, description: "In English" },
+              source_text: { type: :string, nullable: true, description: "The ad's own wording, for an ad in another language" },
               position: { type: :integer, description: "Order within its kind, starting at 1" }
             }
           },
@@ -335,13 +336,14 @@ RSpec.configure do |config|
             allOf: [
               { "$ref" => "#/components/schemas/JobPostingSummary" },
               {
-                type: :object, required: %w[description requirements application employment_type seniority salary keywords extraction],
+                type: :object, required: %w[description requirements application employment_type seniority salary keywords language extraction],
                 properties: {
                   description: { type: :string },
                   employment_type: { type: :string, nullable: true },
                   seniority: { type: :string, nullable: true },
                   salary: { type: :string, nullable: true, description: "As stated in the ad" },
                   keywords: { type: :array, items: { type: :string } },
+                  language: { type: :string, nullable: true, description: "ISO 639-1 code of the ad's language, once read" },
                   extraction: {
                     type: :object, required: %w[status error extracted_at],
                     properties: {

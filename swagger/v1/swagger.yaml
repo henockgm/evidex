@@ -3415,6 +3415,7 @@ components:
       - id
       - kind
       - text
+      - source_text
       - position
       properties:
         id:
@@ -3427,6 +3428,11 @@ components:
           - responsibility
         text:
           type: string
+          description: In English
+        source_text:
+          type: string
+          nullable: true
+          description: The ad's own wording, for an ad in another language
         position:
           type: integer
           description: Order within its kind, starting at 1
@@ -3442,6 +3448,7 @@ components:
         - seniority
         - salary
         - keywords
+        - language
         - extraction
         properties:
           description:
@@ -3460,6 +3467,10 @@ components:
             type: array
             items:
               type: string
+          language:
+            type: string
+            nullable: true
+            description: ISO 639-1 code of the ad's language, once read
           extraction:
             type: object
             required:

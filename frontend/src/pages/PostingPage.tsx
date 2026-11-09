@@ -136,7 +136,7 @@ export function PostingPage() {
 
       <AiExtractionCard posting={posting} />
 
-      <RequirementsCard postingId={posting.id} requirements={posting.requirements} />
+      <RequirementsCard posting={posting} />
 
       <MatchReportCard postingId={posting.id} />
 

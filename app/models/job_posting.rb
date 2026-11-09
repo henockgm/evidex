@@ -21,6 +21,7 @@ class JobPosting < ApplicationRecord
   normalizes :title, :company, with: ->(value) { value.squish }
   normalizes :location, :work_model, :employment_type, :seniority, :salary, with: ->(value) { value.squish.presence }
   normalizes :source_url, with: ->(value) { value.strip.presence }
+  normalizes :language, with: ->(value) { value.strip.downcase.presence }
 
   validates :title, :company, presence: true, length: { maximum: 200 }
   validates :location, :employment_type, :seniority, :salary, length: { maximum: 200 }
@@ -28,6 +29,8 @@ class JobPosting < ApplicationRecord
   validates :work_model, inclusion: { in: WORK_MODELS }, allow_nil: true
   validates :description, presence: true, length: { maximum: DESCRIPTION_MAX_LENGTH }
   validates :source_url, length: { maximum: 2048 }, allow_nil: true
+  # ISO 639-1 code of the ad's language, e.g. "fi"; set when the ad is read
+  validates :language, format: { with: /\A[a-z]{2}\z/ }, allow_nil: true
   validate :source_url_is_http
 
   # The user's other postings for the same job ad, oldest first.
@@ -36,21 +39,24 @@ class JobPosting < ApplicationRecord
   end
 
   # Fills in what the AI found without overwriting anything the user entered,
-  # and adds requirements that aren't in the list yet.
+  # and adds requirements that aren't in the list yet. A requirement counts as
+  # already there when its English text or its original wording matches.
   def apply_extraction!(result)
     transaction do
       result.fields.each do |field, value|
         self[field] = value if self[field].blank?
       end
+      self.language = result.language if language.blank?
       self.keywords = (keywords + result.keywords).uniq { |keyword| keyword.downcase }
 
-      existing = requirements.map { |requirement| [ requirement.kind, requirement.text.downcase ] }.to_set
-      result.requirements.each do |kind, texts|
-        texts.each do |text|
-          next if existing.include?([ kind, text.downcase ])
+      existing = requirements.flat_map { |requirement| requirement_keys(requirement.kind, requirement.text, requirement.source_text) }.to_set
+      result.requirements.each do |kind, items|
+        items.each do |item|
+          keys = requirement_keys(kind, item[:text], item[:source_text])
+          next if keys.any? { |key| existing.include?(key) }
 
-          requirements.create!(kind:, text:)
-          existing << [ kind, text.downcase ]
+          requirements.create!(kind:, text: item[:text], source_text: item[:source_text])
+          existing.merge(keys)
         end
       end
 
@@ -58,7 +64,29 @@ class JobPosting < ApplicationRecord
     end
   end
 
+  # Swaps the requirements' text for English and keeps the old wording as
+  # source_text (see Ai::RequirementTranslator). Requirements already in
+  # English, or already translated, keep what they have.
+  def apply_translation!(language:, translations:)
+    transaction do
+      self.language = language if self.language.blank?
+      if self.language != "en"
+        requirements.each do |requirement|
+          english = translations[requirement.id]
+          next if requirement.source_text.present? || english.blank? || english.casecmp?(requirement.text)
+
+          requirement.update!(source_text: requirement.text, text: english)
+        end
+      end
+      save!
+    end
+  end
+
   private
+    def requirement_keys(kind, *texts)
+      texts.compact_blank.map { |text| [ kind, text.squish.downcase ] }
+    end
+
     def source_url_is_http
       return if source_url.nil?
 

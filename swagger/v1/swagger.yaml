@@ -1974,6 +1974,67 @@ paths:
                 url:
                   type: string
                   format: uri
+  "/api/v1/job_postings/{job_posting_id}/translation":
+    parameters:
+    - name: job_posting_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Translate the posting's requirements into English
+      tags:
+      - Job postings
+      security:
+      - session_cookie: []
+        csrf_token: []
+      description: |
+        For postings read before Evidex started reading ads into English. Detects the ad's language,
+        moves each requirement's wording to source_text and puts the English in text. Requirements that
+        already have source_text are left alone. Runs in the request; counts toward the daily AI limit.
+      responses:
+        '200':
+          description: translated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JobPostingEnvelope"
+        '403':
+          description: email not confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '409':
+          description: posting is being read
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '422':
+          description: nothing to translate
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '429':
+          description: daily limit reached
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '502':
+          description: the AI call failed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        '503':
+          description: AI not configured on the server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
   "/api/v1/job_postings":
     get:
       summary: List, filter and search your job postings
@@ -3415,6 +3476,7 @@ components:
       - id
       - kind
       - text
+      - source_text
       - position
       properties:
         id:
@@ -3427,6 +3489,11 @@ components:
           - responsibility
         text:
           type: string
+          description: In English
+        source_text:
+          type: string
+          nullable: true
+          description: The ad's own wording, for an ad in another language
         position:
           type: integer
           description: Order within its kind, starting at 1
@@ -3442,6 +3509,7 @@ components:
         - seniority
         - salary
         - keywords
+        - language
         - extraction
         properties:
           description:
@@ -3460,6 +3528,10 @@ components:
             type: array
             items:
               type: string
+          language:
+            type: string
+            nullable: true
+            description: ISO 639-1 code of the ad's language, once read
           extraction:
             type: object
             required:

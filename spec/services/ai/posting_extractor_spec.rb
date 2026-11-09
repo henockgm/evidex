@@ -9,10 +9,11 @@ RSpec.describe Ai::PostingExtractor, :ai do
     result = described_class.new(posting, today: Date.new(2026, 10, 20)).call
 
     expect(result.fields).to include("title" => "Senior Rails Developer", "work_model" => "hybrid", "deadline" => Date.new(2026, 11, 30))
+    expect(result.language).to eq("en")
     expect(result.requirements).to eq(
-      "required" => [ "5+ years of Ruby on Rails", "PostgreSQL" ],
-      "preferred" => [ "Experience with pgvector" ],
-      "responsibility" => [ "Build and maintain REST APIs" ]
+      "required" => [ { text: "5+ years of Ruby on Rails", source_text: nil }, { text: "PostgreSQL", source_text: nil } ],
+      "preferred" => [ { text: "Experience with pgvector", source_text: nil } ],
+      "responsibility" => [ { text: "Build and maintain REST APIs", source_text: nil } ]
     )
     expect(result.keywords).to eq(%w[Ruby Rails PostgreSQL])
 
@@ -42,7 +43,36 @@ RSpec.describe Ai::PostingExtractor, :ai do
     result = described_class.new(posting).call
 
     expect(result.fields).not_to include("work_model", "deadline", "salary")
-    expect(result.requirements["required"]).to eq([ "Rails" ])
+    expect(result.requirements["required"]).to eq([ { text: "Rails", source_text: nil } ])
+  end
+
+  it "returns English requirements with the ad's own wording for an ad in another language" do
+    stub = stub_claude(json: extraction_json(
+      language: "FI",
+      required: [
+        { text: "Experience with CI/CD tools", original: "Kokemus CI/CD-työkaluista" },
+        { text: "PostgreSQL", original: "PostgreSQL" }
+      ]
+    ))
+
+    result = described_class.new(posting).call
+
+    expect(result.language).to eq("fi")
+    expect(result.requirements["required"]).to eq([
+      { text: "Experience with CI/CD tools", source_text: "Kokemus CI/CD-työkaluista" },
+      { text: "PostgreSQL", source_text: nil }
+    ])
+    expect(stub.with { |request| JSON.parse(request.body)["system"].to_s.include?("in English") }).to have_been_requested
+  end
+
+  it "drops the original for an English ad" do
+    stub_claude(json: extraction_json(required: [ { text: "Rails", original: "Rails 8" } ]))
+    expect(described_class.new(posting).call.requirements["required"]).to eq([ { text: "Rails", source_text: nil } ])
+  end
+
+  it "leaves the language empty when it isn't a two-letter code" do
+    stub_claude(json: extraction_json(language: "English"))
+    expect(described_class.new(posting).call.language).to be_nil
   end
 
   it "raises on a refusal and records the failed call" do

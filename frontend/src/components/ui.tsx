@@ -122,10 +122,24 @@ export function Alert({ tone = 'info', children }: { tone?: keyof typeof tones; 
   )
 }
 
-export function Card({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function Card({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title: string
+  description?: string
+  /** Shown at the right of the title, e.g. a view toggle */
+  action?: ReactNode
+  children: ReactNode
+}) {
   return (
     <section className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-      <h2 className="text-base font-semibold">{title}</h2>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <h2 className="text-base font-semibold">{title}</h2>
+        {action}
+      </div>
       {description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>}
       <div className="mt-4">{children}</div>
     </section>
@@ -149,5 +163,28 @@ export function Spinner({ label = 'Loading…' }: { label?: string }) {
     <p role="status" className="py-12 text-center text-sm text-slate-500">
       {label}
     </p>
+  )
+}
+
+/** An on/off switch with its label to the left. */
+export function Switch({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="inline-flex items-center gap-2 rounded-md text-sm font-medium text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-slate-300"
+    >
+      {label}
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+      >
+        <span
+          className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4.5' : 'translate-x-0.5'}`}
+        />
+      </span>
+    </button>
   )
 }

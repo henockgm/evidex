@@ -2535,6 +2535,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/job_postings/{job_posting_id}/translation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Translate the posting's requirements into English
+         * @description For postings read before Evidex started reading ads into English. Detects the ad's language,
+         *     moves each requirement's wording to source_text and puts the English in text. Requirements that
+         *     already have source_text are left alone. Runs in the request; counts toward the daily AI limit.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    job_posting_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description translated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobPostingEnvelope"];
+                    };
+                };
+                /** @description email not confirmed */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description posting is being read */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description nothing to translate */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description daily limit reached */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description the AI call failed */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description AI not configured on the server */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/job_postings": {
         parameters: {
             query?: never;
@@ -3589,7 +3688,10 @@ export interface components {
             id: number;
             /** @enum {string} */
             kind: "required" | "preferred" | "responsibility";
+            /** @description In English */
             text: string;
+            /** @description The ad's own wording, for an ad in another language */
+            source_text: string | null;
             /** @description Order within its kind, starting at 1 */
             position: number;
         };
@@ -3600,6 +3702,8 @@ export interface components {
             /** @description As stated in the ad */
             salary: string | null;
             keywords: string[];
+            /** @description ISO 639-1 code of the ad's language, once read */
+            language: string | null;
             extraction: {
                 /** @enum {string} */
                 status: "none" | "pending" | "done" | "failed";

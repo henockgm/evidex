@@ -24,6 +24,7 @@ class JobPostingSerializer
         seniority: @job_posting.seniority,
         salary: @job_posting.salary,
         keywords: @job_posting.keywords,
+        language: @job_posting.language,
         extraction: {
           status: @job_posting.extraction_status,
           error: @job_posting.extraction_error,

@@ -22,6 +22,26 @@ RSpec.describe ExtractPostingJob, :ai do
     expect(posting.requirements.count).to eq(4)
   end
 
+  it "saves the ad's language and each requirement's original wording" do
+    create(:requirement, job_posting: posting, kind: "required", text: "Kokemus tietokannoista")
+    stub_claude(json: extraction_json(
+      language: "fi",
+      required: [
+        { text: "Experience with databases", original: "Kokemus tietokannoista" },
+        { text: "Experience with CI/CD tools", original: "Kokemus CI/CD-työkaluista" }
+      ],
+      preferred: [], responsibilities: []
+    ))
+
+    described_class.perform_now(posting.id)
+
+    expect(posting.reload.language).to eq("fi")
+    expect(posting.requirements.pluck(:text, :source_text)).to eq([
+      [ "Kokemus tietokannoista", nil ],
+      [ "Experience with CI/CD tools", "Kokemus CI/CD-työkaluista" ]
+    ])
+  end
+
   it "records a readable failure" do
     stub_claude(json: {}, stop_reason: "refusal")
 

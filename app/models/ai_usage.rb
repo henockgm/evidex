@@ -1,6 +1,6 @@
 # One call to an AI model, for cost tracking and per-user daily limits.
 class AiUsage < ApplicationRecord
-  FEATURES = %w[posting_extraction match_report].freeze
+  FEATURES = %w[posting_extraction match_report requirement_translation].freeze
 
   belongs_to :user
 

@@ -64,6 +64,24 @@ class JobPosting < ApplicationRecord
     end
   end
 
+  # Swaps the requirements' text for English and keeps the old wording as
+  # source_text (see Ai::RequirementTranslator). Requirements already in
+  # English, or already translated, keep what they have.
+  def apply_translation!(language:, translations:)
+    transaction do
+      self.language = language if self.language.blank?
+      if self.language != "en"
+        requirements.each do |requirement|
+          english = translations[requirement.id]
+          next if requirement.source_text.present? || english.blank? || english.casecmp?(requirement.text)
+
+          requirement.update!(source_text: requirement.text, text: english)
+        end
+      end
+      save!
+    end
+  end
+
   private
     def requirement_keys(kind, *texts)
       texts.compact_blank.map { |text| [ kind, text.squish.downcase ] }

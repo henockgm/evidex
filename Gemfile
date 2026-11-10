@@ -55,7 +55,7 @@ gem "omniauth-entra-id", "~> 3.1"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
 
 group :development, :test do
-  gem "rspec-rails", "~> 8.0"
+  gem "rspec-rails", "~> 8.1"
   gem "rswag-specs", "~> 2.17"
   gem "factory_bot_rails", "~> 6.5"
   gem "faker", "~> 3.8"

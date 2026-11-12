@@ -49,7 +49,7 @@ gem "rswag-api", "~> 2.17"
 gem "rswag-ui", "~> 2.17"
 
 # Google and Microsoft sign-in
-gem "omniauth", "~> 2.1"
+gem "omniauth", "~> 2.3"
 gem "omniauth-google-oauth2", "~> 1.2"
 gem "omniauth-entra-id", "~> 3.1"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
